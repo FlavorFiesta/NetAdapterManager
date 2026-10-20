@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>NetAdapterManagerSetup</AssemblyName>
+    <RootNamespace>NetAdapterManagerSetup</RootNamespace>
+    <ApplicationIcon>..\Assets\AppIcon.ico</ApplicationIcon>
+    <Version>1.4.10</Version>
+    <AssemblyVersion>1.4.10.0</AssemblyVersion>
+    <FileVersion>1.4.10.0</FileVersion>
+    <InformationalVersion>1.4.10</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Payload.zip" Condition="Exists('Payload.zip')" />
+  </ItemGroup>
+</Project>

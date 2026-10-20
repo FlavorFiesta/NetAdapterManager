@@ -1,0 +1,114 @@
+<Window x:Class="NetAdapterManager.Views.PresetEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="560" Height="620" MinWidth="520" MinHeight="560"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
+    <Border Background="{DynamicResource WindowBackground}" BorderBrush="{DynamicResource CardBorder}"
+            BorderThickness="1" CornerRadius="6" Padding="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="58" />
+            </Grid.RowDefinitions>
+
+            <Grid x:Name="TitleBar" Background="{DynamicResource HeaderBackground}"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <TextBlock Text="保存预设" FontSize="15" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="16,0,0,0" />
+                <Button Content="×" Width="36" Height="32" Padding="0" Margin="0,5,6,5"
+                        HorizontalAlignment="Right" Click="Close_Click" Style="{StaticResource QuietButton}" />
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" Padding="14,12" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Border Background="{DynamicResource SoftBlue}" BorderBrush="{DynamicResource HeaderBadgeBorder}"
+                            BorderThickness="1" CornerRadius="4" Padding="11" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="当前网卡" Foreground="{DynamicResource MutedText}" FontSize="11" />
+                            <TextBlock x:Name="AdapterNameText" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,0" />
+                            <ComboBox x:Name="PresetAdapterSelector" Visibility="Collapsed" Margin="0,5,0,0"
+                                      SelectionChanged="PresetAdapterSelector_SelectionChanged" MaxDropDownHeight="300">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid MinWidth="420">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="1" Text="{Binding MacAddressText}" Foreground="{DynamicResource MutedText}" FontSize="11" Margin="12,0,0,0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock x:Name="AdapterMacText" Foreground="{DynamicResource MutedText}" FontSize="11" Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="预设名称" Foreground="{DynamicResource MutedText}" FontSize="11" />
+                            <TextBox x:Name="NameBox" Margin="0,3,0,7" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="分组" Foreground="{DynamicResource MutedText}" FontSize="11" />
+                            <ComboBox x:Name="GroupBox" Margin="0,3,0,7"
+                                      ToolTip="选择已有分组；新分组请先使用“添加分组”创建" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Style="{StaticResource CardBorderStyle}" Padding="11" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="IPv4 配置" Style="{StaticResource SectionTitleStyle}" FontSize="15" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="DhcpRadio" Content="DHCP 自动获取" GroupName="PresetIpMode" />
+                                <RadioButton x:Name="StaticRadio" Content="静态 IPv4" GroupName="PresetIpMode" />
+                            </StackPanel>
+                            <Grid IsEnabled="{Binding ElementName=StaticRadio, Path=IsChecked}" Margin="0,0,0,1">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                                <TextBlock Text="主 IPv4 地址" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" x:Name="IpBox" />
+                                <TextBlock Grid.Row="1" Text="子网掩码 / CIDR" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1" Grid.Column="1" x:Name="PrefixBox" />
+                                <TextBlock Grid.Row="2" Text="默认网关" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="2" Grid.Column="1" x:Name="GatewayBox" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorderStyle}" Padding="11" Margin="0,0,0,2">
+                        <StackPanel>
+                            <TextBlock Text="DNS 配置" Style="{StaticResource SectionTitleStyle}" FontSize="15" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="DnsAutomaticRadio" Content="自动获取 DNS" GroupName="PresetDnsMode"
+                                             ToolTip="DNS 可选；需要时可切换为静态 DNS" />
+                                <RadioButton x:Name="DnsStaticRadio" Content="静态 DNS" GroupName="PresetDnsMode" />
+                            </StackPanel>
+                            <Grid IsEnabled="{Binding ElementName=DnsStaticRadio, Path=IsChecked}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                                <TextBlock Text="首选 DNS" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" x:Name="PreferredDnsBox" />
+                                <TextBlock Grid.Row="1" Text="备用 DNS" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1" Grid.Column="1" x:Name="AlternateDnsBox" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="ValidationMessage" Foreground="{DynamicResource DangerColor}"
+                               TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
+                               Visibility="Collapsed" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" Background="{DynamicResource HeaderBackground}" BorderBrush="{DynamicResource HeaderBorder}"
+                    BorderThickness="0,1,0,0" Padding="14,10">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="取消" Click="Cancel_Click" Style="{StaticResource QuietButton}" />
+                    <Button x:Name="SavePresetButton" Content="保存预设" Click="Save_Click" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

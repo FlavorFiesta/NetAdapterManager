@@ -1,0 +1,39 @@
+# Build and release output
+**/bin/
+**/obj/
+/artifacts/
+/test-results/
+/.vs/
+*.user
+*.suo
+__pycache__/
+.venv/
+
+# Runtime data (keep user data locally)
+presets.json
+preset-groups.json
+managed-addresses.json
+history.json
+storage-probe.json
+**/logs/
+*.log
+*.log.old
+*.json.tmp
+/Installer/Payload.zip
+
+# Local evidence and internal working notes
+/*-smoke.png
+/docs/PROJECT-MEMORY.md
+/docs/PROJECT-STATUS.md
+/docs/GAUNTLET-REVIEW.md
+/docs/PRE-OPEN-SOURCE-AUDIT.md
+/方案.md
+
+# Credentials and local settings
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
