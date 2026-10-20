@@ -17,7 +17,7 @@ internal static class Program
 internal sealed class InstallerForm : Form
 {
     private const string ProductDisplayName = "网络适配器管理器";
-    private const string Version = "1.4.10";
+    private const string Version = "1.4.11";
     private const string InstallFolderName = "NetAdapterManager";
     private readonly string _installRoot = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

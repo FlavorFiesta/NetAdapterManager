@@ -21,8 +21,35 @@ public sealed class NetworkService
 {
     private readonly JsonStore<Dictionary<string, string?>> _managedStore = new("managed-addresses.json");
     private static readonly Encoding NetshEncoding = CreateNetshEncoding();
+    private readonly Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> _snapshotReader;
+    private readonly Action<AdapterSnapshot, NetworkConfig, bool> _configurationWriter;
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay;
+    private readonly Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> _saveManagedAddress;
 
-    public async Task<IReadOnlyList<AdapterSnapshot>> GetAdaptersAsync(CancellationToken cancellationToken = default)
+    public NetworkService()
+    {
+        _snapshotReader = ReadAdaptersCoreAsync;
+        _configurationWriter = (before, target, exact) => ApplyConfiguration(before, target, exact);
+        _delay = Task.Delay;
+        _saveManagedAddress = SaveManagedAddressAsync;
+    }
+
+    // Test the complete apply/rollback flow without WMI, netsh, timers or user files.
+    internal NetworkService(Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> snapshotReader,
+        Action<AdapterSnapshot, NetworkConfig, bool> configurationWriter,
+        Func<TimeSpan, CancellationToken, Task> delay,
+        Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> saveManagedAddress)
+    {
+        _snapshotReader = snapshotReader;
+        _configurationWriter = configurationWriter;
+        _delay = delay;
+        _saveManagedAddress = saveManagedAddress;
+    }
+
+    public Task<IReadOnlyList<AdapterSnapshot>> GetAdaptersAsync(CancellationToken cancellationToken = default)
+        => _snapshotReader(cancellationToken);
+
+    private async Task<IReadOnlyList<AdapterSnapshot>> ReadAdaptersCoreAsync(CancellationToken cancellationToken)
     {
         var managed = await _managedStore.LoadAsync([], cancellationToken);
         return await Task.Run(() => ReadAdapters(managed), cancellationToken);
@@ -89,19 +116,14 @@ public sealed class NetworkService
 
         try
         {
-            await Task.Run(() => ApplyConfiguration(before, target, exactAddressSet), cancellationToken);
+            await Task.Run(() => _configurationWriter(before, target, exactAddressSet), cancellationToken);
             var after = await WaitForSnapshotAsync(before.InterfaceGuid, target, exactAddressSet, cancellationToken);
             if (after is null)
                 throw new InvalidOperationException("配置已写入，但复核时找不到目标网卡。");
             if (!MatchesTarget(after, target, exactAddressSet))
                 throw new InvalidOperationException("最终复核不一致，实际网卡状态未达到目标配置。");
 
-            var managedMap = await _managedStore.LoadAsync([], cancellationToken);
-            if (target.IpMode == IpMode.Static && !string.IsNullOrWhiteSpace(target.ManagedIPv4Address))
-                managedMap[before.InterfaceGuid] = target.ManagedIPv4Address;
-            else if (target.IpMode == IpMode.Dhcp)
-                managedMap.Remove(before.InterfaceGuid);
-            await _managedStore.SaveAsync(managedMap, cancellationToken);
+            await _saveManagedAddress(before, target, cancellationToken);
 
             after.Config.ManagedIPv4Address = target.IpMode == IpMode.Static ? target.ManagedIPv4Address : null;
             foreach (var address in after.Config.IPv4Addresses)
@@ -117,7 +139,7 @@ public sealed class NetworkService
         }
         catch (Exception ex)
         {
-            var rollback = await TryRollbackAsync(before, cancellationToken);
+            var rollback = await TryRollbackAsync(before);
             return new ApplyResult
             {
                 Message = rollback.Succeeded ? "配置失败，已恢复修改前状态。" : "配置失败，自动回滚也失败。",
@@ -126,6 +148,17 @@ public sealed class NetworkService
                 Warnings = validation.Warnings
             };
         }
+    }
+
+    private async Task SaveManagedAddressAsync(AdapterSnapshot before, NetworkConfig target,
+        CancellationToken cancellationToken)
+    {
+        var managedMap = await _managedStore.LoadAsync([], cancellationToken);
+        if (target.IpMode == IpMode.Static && !string.IsNullOrWhiteSpace(target.ManagedIPv4Address))
+            managedMap[before.InterfaceGuid] = target.ManagedIPv4Address;
+        else if (target.IpMode == IpMode.Dhcp)
+            managedMap.Remove(before.InterfaceGuid);
+        await _managedStore.SaveAsync(managedMap, cancellationToken);
     }
 
     private static IReadOnlyList<AdapterSnapshot> ReadAdapters(Dictionary<string, string?> managed)
@@ -171,9 +204,7 @@ public sealed class NetworkService
                 var config = new NetworkConfig
                 {
                     IpMode = configuration?.DhcpEnabled == true ? IpMode.Dhcp : IpMode.Static,
-                    DnsMode = configuration?.DhcpEnabled == true
-                        ? DnsMode.Automatic
-                        : resolvedDnsServers.Count > 0 ? DnsMode.Static : DnsMode.Automatic,
+                    DnsMode = WindowsDnsSettings.ReadMode(guid),
                     DnsServers = resolvedDnsServers
                 };
                 if (configuration is not null)
@@ -419,7 +450,7 @@ public sealed class NetworkService
         AdapterSnapshot? last = null;
         for (var attempt = 0; attempt < 8; attempt++)
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(350), cancellationToken);
+            await _delay(TimeSpan.FromMilliseconds(350), cancellationToken);
             var snapshots = await GetAdaptersAsync(cancellationToken);
             last = snapshots.FirstOrDefault(x => SameId(x.InterfaceGuid, interfaceGuid));
             if (last is not null && MatchesTarget(last, target, exactAddressSet))
@@ -428,12 +459,21 @@ public sealed class NetworkService
         return last;
     }
 
-    private async Task<(bool Succeeded, string? ErrorDetail)> TryRollbackAsync(AdapterSnapshot before,
-        CancellationToken cancellationToken)
+    private async Task<(bool Succeeded, string? ErrorDetail)> TryRollbackAsync(AdapterSnapshot before)
     {
+        // A caller cancelling the failed operation must not cancel its recovery.
+        using var recovery = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         try
         {
-            await Task.Run(() => ApplyConfiguration(before, before.Config, exactAddressSet: true), cancellationToken);
+            // Use fresh state for idempotency: the original snapshot is only the
+            // restore target. Re-enabling already active DHCP can fail in netsh.
+            var snapshots = await GetAdaptersAsync(recovery.Token);
+            var current = snapshots.FirstOrDefault(x => SameId(x.InterfaceGuid, before.InterfaceGuid))
+                ?? throw new InvalidOperationException("回滚前找不到目标网卡，请检查网卡是否仍连接。");
+            await Task.Run(() => _configurationWriter(current, before.Config, true), recovery.Token);
+            var restored = await WaitForSnapshotAsync(before.InterfaceGuid, before.Config, true, recovery.Token);
+            if (restored is null || !MatchesTarget(restored, before.Config, true))
+                return (false, "回滚命令已执行，但实际 IPv4/DNS 状态未恢复到修改前配置。");
             return (true, null);
         }
         catch (Exception ex)
@@ -442,11 +482,13 @@ public sealed class NetworkService
         }
     }
 
-    private static bool MatchesTarget(AdapterSnapshot actual, NetworkConfig target, bool exactAddressSet)
+    internal static bool MatchesTarget(AdapterSnapshot actual, NetworkConfig target, bool exactAddressSet)
     {
-        if (target.IpMode == IpMode.Dhcp && actual.Config.IpMode != IpMode.Dhcp) return false;
+        if (actual.Config.IpMode != target.IpMode) return false;
         if (target.IpMode == IpMode.Static)
         {
+            if (exactAddressSet && target.IPv4Addresses.Count == 0)
+                return actual.Config.IPv4Addresses.Count == 0 && MatchesDnsTarget(actual.Config, target);
             var desired = target.IPv4Addresses.FirstOrDefault(x =>
                               string.Equals(x.Address, target.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase))
                           ?? target.IPv4Addresses.FirstOrDefault();
@@ -465,13 +507,18 @@ public sealed class NetworkService
             }
         }
 
-        // WMI 对“静态但没有 DNS”的状态通常返回空数组，无法区分 static/none 与 automatic。
+        return MatchesDnsTarget(actual.Config, target);
+    }
+
+    private static bool MatchesDnsTarget(NetworkConfig actual, NetworkConfig target)
+    {
+        // Windows 对“静态但没有 DNS”的状态可能无法区分 static/none 与 automatic。
         // 目标明确为静态空 DNS 时，只要求实际 DNS 列表为空，不能要求模式字符串相等。
         if (target.DnsMode == DnsMode.Static && target.DnsServers.Count == 0)
-            return actual.Config.DnsServers.Count == 0;
-        if (target.DnsMode != actual.Config.DnsMode) return false;
+            return actual.DnsServers.Count == 0;
+        if (target.DnsMode != actual.DnsMode) return false;
         return target.DnsMode != DnsMode.Static
-            || target.DnsServers.SequenceEqual(actual.Config.DnsServers, StringComparer.OrdinalIgnoreCase);
+            || target.DnsServers.SequenceEqual(actual.DnsServers, StringComparer.OrdinalIgnoreCase);
     }
 
     private static ManagementObject? FindNetworkAdapter(AdapterSnapshot adapter)

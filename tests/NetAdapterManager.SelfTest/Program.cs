@@ -13,6 +13,9 @@ using System.Windows.Threading;
 if (args.Any(x => string.Equals(x, "--ui-smoke", StringComparison.OrdinalIgnoreCase)))
     return RunUiSmokeTest();
 
+if (args.Any(x => string.Equals(x, "--network-regression", StringComparison.OrdinalIgnoreCase)))
+    return await NetworkRegressionTests.RunStandaloneAsync();
+
 var writeTest = args.Any(x => string.Equals(x, "--write-test", StringComparison.OrdinalIgnoreCase));
 var autoConfirm = args.Any(x => string.Equals(x, "--yes", StringComparison.OrdinalIgnoreCase));
 var resultFile = GetOption(args, "--result");
@@ -24,6 +27,7 @@ void Fail(string name, string detail) => checks.Add((name, false, detail));
 
 try
 {
+    await NetworkRegressionTests.RunAsync(Pass, Fail);
     var valid = ValidationService.ValidateManualConfig(new NetworkConfig
     {
         IpMode = IpMode.Static,
@@ -649,7 +653,8 @@ static int RunUiSmokeTest()
             presetDialog.Close();
             window.Show();
             var viewModel = (MainViewModel)window.DataContext;
-            if (viewModel.VersionText != "版本 1.4.10") throw new InvalidOperationException($"底部版本号不正确：{viewModel.VersionText}");
+            var expectedVersion = $"版本 {typeof(MainWindow).Assembly.GetName().Version!.ToString(3)}";
+            if (viewModel.VersionText != expectedVersion) throw new InvalidOperationException($"底部版本号不正确：{viewModel.VersionText}");
             if (Math.Abs(window.Width - 1160) > 0.1) throw new InvalidOperationException($"主窗口初始宽度不正确：{window.Width}");
             if (!viewModel.PresetGroups.Contains("全部分组") || string.IsNullOrWhiteSpace(viewModel.PresetGroupFilter))
                 throw new InvalidOperationException("预设分组没有始终保留“全部分组”。");

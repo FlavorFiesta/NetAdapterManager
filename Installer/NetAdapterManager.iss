@@ -1,15 +1,15 @@
 #define AppName "网络适配器管理器"
 #ifndef AppVersion
-#define AppVersion "1.4.10"
+#define AppVersion "1.4.11"
 #endif
 #define AppPublisher "NetAdapterManager"
 #define AppExeName "NetAdapterManager.exe"
 #define AppId "{8B0F4E6F-7A2E-4C0D-9B7A-5E8A6C2D1F40}"
 #ifndef SourceRoot
-#define SourceRoot "..\artifacts\1.4.10\publish"
+#define SourceRoot "..\artifacts\1.4.11\publish"
 #endif
 #ifndef OutputRoot
-#define OutputRoot "..\artifacts\1.4.10"
+#define OutputRoot "..\artifacts\1.4.11"
 #endif
 
 [Setup]

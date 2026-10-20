@@ -209,7 +209,7 @@ public sealed class MainViewModel : ObservableObject
             }
         }
     }
-    public string VersionText => $"版本 {typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.4.10"}";
+    public string VersionText => $"版本 {typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.4.11"}";
     public string LastRefreshText => _lastRefresh is null ? "尚未刷新" : $"最后刷新：{_lastRefresh:yyyy-MM-dd HH:mm:ss}";
     public bool IsTopmost
     {

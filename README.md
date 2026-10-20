@@ -1,7 +1,7 @@
 # 网络适配器管理器
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前版本：**1.4.10**，采用 [MIT 许可证](LICENSE)。
+当前版本：**1.4.11**，采用 [MIT 许可证](LICENSE)。
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
 
@@ -19,8 +19,8 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 
 在 [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest) 选择 Windows x64 包：
 
-- `NetAdapterManager-v1.4.10-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
-- `NetAdapterManager-v1.4.10-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
+- `NetAdapterManager-v1.4.11-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
+- `NetAdapterManager-v1.4.11-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
 
 发布包自带 .NET 运行时，无需另装运行时。免安装版必须保留解压出的全部文件，不能只复制 EXE。
 本仓库不包含预生成二进制，公开下载以实际发布的 Release 为准。
@@ -52,8 +52,18 @@ dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-FullTest.ps1
 ```
 
+只运行无需网卡、WMI 或用户文件的网络回归（包含中途失败、回滚复核及 DNS 模式组合）：
+
+```powershell
+dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --network-regression
+```
+
 UI 自测使用演示数据；全功能脚本的 WMI 检查仍需要本机存在网卡，
-不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建与依赖漏洞查询。
+不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建、隔离网络回归与依赖漏洞查询。
+
+DNS 自动/手动模式独立于 IP 的 DHCP 状态读取：优先使用 Windows DNS 设置 API，
+较早版本 Windows 10 使用只读的网卡注册表配置兼容路径。有效 DNS 地址列表仍由 Windows DNS 客户端读取。
+失败回滚强制恢复原 IPv4/DNS 配置，并在读回复核一致后才报告成功。
 
 真实写入 / 回滚测试必须显式指定 `-RunSafeWriteTest`，并使用管理员 PowerShell。
 它仅允许无默认网关、已有静态 IPv4 的安全虚拟网卡，排除 Wi-Fi 和物理网卡；
@@ -69,7 +79,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
 正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.4.10\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
+默认输出到 `artifacts\1.4.11\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
 重建只覆盖这两个指定产物，保留目录中的其他文件。
 `-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
 版本从主项目读取并传给安装脚本。
