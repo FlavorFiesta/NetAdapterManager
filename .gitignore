@@ -11,6 +11,10 @@ __pycache__/
 
 # Runtime data (keep user data locally)
 presets.json
+preset-library.json
+*.json.bak
+*.json.corrupt-*
+*.json.*.tmp
 preset-groups.json
 managed-addresses.json
 history.json

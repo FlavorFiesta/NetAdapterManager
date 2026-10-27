@@ -1,31 +1,88 @@
 using NetAdapterManager.Models;
+using System.IO;
+using System.Text.Json.Serialization;
 
 namespace NetAdapterManager.Services;
 
 public sealed class PresetService
 {
-    private readonly JsonStore<List<Preset>> _store;
+    private readonly JsonStore<PresetLibrary> _store;
+    private readonly string? _legacyPresets;
+    private readonly string? _legacyGroups;
+    private readonly SemaphoreSlim _gate;
 
-    public PresetService(string fileName = "presets.json") => _store = new(fileName);
+    public PresetService(string fileName = "preset-library.json")
+        : this(fileName, fileName == "preset-library.json" ? "presets.json" : null,
+            fileName == "preset-library.json" ? "preset-groups.json" : null) { }
+
+    internal PresetService(string fileName, string? legacyPresets, string? legacyGroups)
+    {
+        _store = new(fileName);
+        _legacyPresets = legacyPresets;
+        _legacyGroups = legacyGroups;
+        _gate = StorageLocks.For(_store.FilePath + ".library");
+    }
 
     public async Task<List<Preset>> LoadAsync(CancellationToken cancellationToken = default)
     {
-        var loaded = await _store.LoadAsync([], cancellationToken);
-        var unique = Deduplicate(loaded);
-        if (unique.Count != loaded.Count)
-            await _store.SaveAsync(unique, cancellationToken);
-        return unique;
+        var library = await ReadLibraryAsync(cancellationToken);
+        return Deduplicate(library.Presets);
     }
 
     public async Task SaveAsync(List<Preset> entries, CancellationToken cancellationToken = default)
     {
         var unique = Deduplicate(entries);
+        await UpdateLibraryAsync(unique, null, cancellationToken);
         if (unique.Count != entries.Count)
         {
             entries.Clear();
             entries.AddRange(unique);
         }
-        await _store.SaveAsync(entries, cancellationToken);
+    }
+
+    public async Task<List<string>> LoadGroupsAsync(CancellationToken token = default) =>
+        (await ReadLibraryAsync(token)).Groups;
+
+    public Task SaveGroupsAsync(List<string> groups, CancellationToken token = default) =>
+        UpdateLibraryAsync(null, groups, token);
+
+    public Task SaveLibraryAsync(List<Preset> presets, List<string> groups, CancellationToken token = default) =>
+        UpdateLibraryAsync(Deduplicate(presets), groups, token);
+
+    private async Task UpdateLibraryAsync(List<Preset>? presets, List<string>? groups, CancellationToken token)
+    {
+        await _gate.WaitAsync(token);
+        try
+        {
+            var previous = await ReadLibraryAsync(token);
+            await _store.SaveAsync(new PresetLibrary
+            {
+                Presets = presets ?? previous.Presets,
+                Groups = groups ?? previous.Groups
+            }, token);
+        }
+        finally { _gate.Release(); }
+    }
+
+    private async Task<PresetLibrary> ReadLibraryAsync(CancellationToken token)
+    {
+        if (!Path.Exists(_store.FilePath) && _legacyPresets is not null && _legacyGroups is not null)
+            return new PresetLibrary
+            {
+                Presets = await new JsonStore<List<Preset>>(_legacyPresets).LoadAsync([], token),
+                Groups = await new JsonStore<List<string>>(_legacyGroups).LoadAsync([], token)
+            };
+        var library = await _store.LoadAsync(new PresetLibrary(), token);
+        if (library.Version != 1 || library.Presets is null || library.Groups is null)
+            throw new IOException("预设库格式不受支持或不完整，原文件已保留。");
+        return library;
+    }
+
+    public async Task RestoreBackupAsync(CancellationToken token = default)
+    {
+        await _gate.WaitAsync(token);
+        try { await _store.RestoreBackupAsync(token); }
+        finally { _gate.Release(); }
     }
 
     private static List<Preset> Deduplicate(IEnumerable<Preset> entries)
@@ -89,16 +146,17 @@ public sealed class PresetService
 
 public sealed class PresetGroupService
 {
-    private readonly JsonStore<List<string>> _store = new("preset-groups.json");
+    private readonly PresetService _presets;
+    public PresetGroupService(PresetService? presets = null) => _presets = presets ?? new PresetService();
 
     public async Task<List<string>> LoadAsync(CancellationToken cancellationToken = default)
     {
-        var groups = await _store.LoadAsync([], cancellationToken);
+        var groups = await _presets.LoadGroupsAsync(cancellationToken);
         return Normalize(groups);
     }
 
     public Task SaveAsync(IEnumerable<string> groups, CancellationToken cancellationToken = default) =>
-        _store.SaveAsync(Normalize(groups), cancellationToken);
+        _presets.SaveGroupsAsync(Normalize(groups), cancellationToken);
 
     public static int DeleteGroup(string groupName, IList<Preset> presets, IList<string> customGroups)
     {
@@ -129,4 +187,11 @@ public sealed class PresetGroupService
         .Where(x => !string.Equals(x, "全部分组", StringComparison.OrdinalIgnoreCase))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
+}
+
+public sealed class PresetLibrary
+{
+    [JsonRequired] public int Version { get; set; } = 1;
+    [JsonRequired] public List<Preset> Presets { get; set; } = [];
+    [JsonRequired] public List<string> Groups { get; set; } = [];
 }

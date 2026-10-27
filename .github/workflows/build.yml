@@ -14,6 +14,6 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore tests/NetAdapterManager.SelfTest/NetAdapterManager.SelfTest.csproj
       - run: dotnet build tests/NetAdapterManager.SelfTest/NetAdapterManager.SelfTest.csproj -c Release --no-restore -warnaserror
-      - run: dotnet tests/NetAdapterManager.SelfTest/bin/Release/net8.0-windows/NetAdapterManager.SelfTest.dll --network-regression
+      - run: dotnet tests/NetAdapterManager.SelfTest/bin/Release/net8.0-windows/NetAdapterManager.SelfTest.dll --isolated
       - run: dotnet list NetAdapterManager.csproj package --vulnerable --include-transitive
       # Hardware/WMI and UI tests run locally; hosted runners have no required adapters.

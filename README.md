@@ -1,7 +1,7 @@
 # 网络适配器管理器
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前版本：**1.4.11**，采用 [MIT 许可证](LICENSE)。
+当前版本：**1.4.12**，采用 [MIT 许可证](LICENSE)。
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
 
@@ -19,17 +19,21 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 
 在 [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest) 选择 Windows x64 包：
 
-- `NetAdapterManager-v1.4.11-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
-- `NetAdapterManager-v1.4.11-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
+- `NetAdapterManager-v1.4.12-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
+- `NetAdapterManager-v1.4.12-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
 
 发布包自带 .NET 运行时，无需另装运行时。免安装版必须保留解压出的全部文件，不能只复制 EXE。
 本仓库不包含预生成二进制，公开下载以实际发布的 Release 为准。
 
 ## 数据与隐私
 
-数据保存在程序目录：`presets.json`、`preset-groups.json`、`managed-addresses.json`；
+数据保存在程序目录：`preset-library.json`（预设与分组统一保存）、`managed-addresses.json`；
 错误日志位于 `logs/NetAdapterManager.log`。升级时保留数据，卸载后可能仍保留运行时生成的文件。
-首次使用旧版数据时，会读取并迁移 `%AppData%\NetAdapterManager` 中的这三类 JSON。
+首次使用 1.4.12 时，会读取程序目录中的旧 `presets.json` 和 `preset-groups.json`；没有本地旧文件时兼容读取 `%AppData%\NetAdapterManager` 中的数据。
+第一次成功保存时建立统一预设库，原文件保留。统一库建立后，不再从旧文件导入。
+每次替换已存在的数据文件会保留上一份 `.bak`；预设区域的“恢复备份”可同时恢复预设和分组，恢复前文件另存为 `.corrupt-*`。
+读取损坏或无法访问的数据时会显示错误并阻止覆盖。降级到 1.4.11 不会读取统一库中的后续修改，请先保留完整程序目录。
+同一用户只允许一个实例；配置应用、复核或恢复期间关闭窗口，会等待操作结束后再退出。
 
 预设和截图可能包含网卡名称、MAC、IP、DNS 等信息。提交问题前请脱敏；
 这些运行数据、编译输出和本地测试证据已纳入 `.gitignore`。
@@ -58,12 +62,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-FullTest.ps1
 dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --network-regression
 ```
 
+运行全部无需真实网卡的校验、预设、存储、进程超时与取消回归（CI 默认执行）：
+
+```powershell
+dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --isolated
+```
+
 UI 自测使用演示数据；全功能脚本的 WMI 检查仍需要本机存在网卡，
-不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建、隔离网络回归与依赖漏洞查询。
+不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建、完整隔离回归与依赖漏洞查询。
 
 DNS 自动/手动模式独立于 IP 的 DHCP 状态读取：优先使用 Windows DNS 设置 API，
 较早版本 Windows 10 使用只读的网卡注册表配置兼容路径。有效 DNS 地址列表仍由 Windows DNS 客户端读取。
-失败回滚强制恢复原 IPv4/DNS 配置，并在读回复核一致后才报告成功。
+应用与恢复都复核完整 IPv4 地址集合、网关和 DNS，仅 DNS 改变时不会重写静态 IP。
+系统命令有超时和取消处理，终止并确认退出后才进入恢复；恢复仍须读回复核后才报告成功。
+正常关闭窗口保护不覆盖系统强杀或断电。
 
 真实写入 / 回滚测试必须显式指定 `-RunSafeWriteTest`，并使用管理员 PowerShell。
 它仅允许无默认网关、已有静态 IPv4 的安全虚拟网卡，排除 Wi-Fi 和物理网卡；
@@ -79,7 +91,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
 正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.4.11\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
+默认输出到 `artifacts\1.4.12\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
 重建只覆盖这两个指定产物，保留目录中的其他文件。
 `-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
 版本从主项目读取并传给安装脚本。

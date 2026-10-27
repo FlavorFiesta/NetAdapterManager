@@ -1,8 +1,15 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NetAdapterManager.Services;
+
+internal static class StorageLocks
+{
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> Gates = new(StringComparer.OrdinalIgnoreCase);
+    internal static SemaphoreSlim For(string path) => Gates.GetOrAdd(Path.GetFullPath(path), _ => new(1, 1));
+}
 
 public sealed class JsonStore<T>
 {
@@ -10,6 +17,7 @@ public sealed class JsonStore<T>
     public string FilePath => _path;
     private readonly string _path;
     private readonly string _legacyPath;
+    private bool _loadFailed;
     private readonly JsonSerializerOptions _options = new()
     {
         WriteIndented = true,
@@ -20,61 +28,88 @@ public sealed class JsonStore<T>
     public JsonStore(string fileName)
     {
         _path = Path.Combine(StorageDirectory, fileName);
-        _legacyPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        _legacyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "NetAdapterManager", fileName);
     }
 
     public async Task<T> LoadAsync(T fallback, CancellationToken cancellationToken = default)
     {
+        var gate = StorageLocks.For(_path);
+        await gate.WaitAsync(cancellationToken);
         try
         {
-            var sourcePath = File.Exists(_path)
-                ? _path
-                : IsMigratableFile() && File.Exists(_legacyPath) ? _legacyPath : string.Empty;
-            if (string.IsNullOrWhiteSpace(sourcePath)) return fallback;
-            await using var stream = File.OpenRead(sourcePath);
-            var value = await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken) ?? fallback;
-            if (!string.Equals(sourcePath, _path, StringComparison.OrdinalIgnoreCase))
-            {
-                try { await SaveAsync(value, cancellationToken); }
-                catch (IOException) { /* 便携版放在只读目录时保留旧数据读取能力。 */ }
-                catch (UnauthorizedAccessException) { /* 后续保存时继续显示明确的权限错误。 */ }
-            }
+            var source = Path.Exists(_path) ? _path
+                : IsMigratableFile() && Path.Exists(_legacyPath) ? _legacyPath : null;
+            if (source is null) { _loadFailed = false; return fallback; }
+            var value = await ReadAsync(source, cancellationToken);
+            _loadFailed = false;
             return value;
         }
-        catch (JsonException ex)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            AppLogger.Error($"读取 JSON 数据失败：{_path}", ex);
-            return fallback;
+            _loadFailed = true;
+            AppLogger.Error($"读取数据失败，原文件保留：{_path}", ex);
+            throw new IOException($"无法读取数据：{_path}。原文件已保留，禁止覆盖；请修复文件或恢复备份。", ex);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            AppLogger.Error($"读取 JSON 文件权限不足：{_path}", ex);
-            return fallback;
-        }
-        catch (IOException ex)
-        {
-            AppLogger.Error($"读取 JSON 文件失败：{_path}", ex);
-            return fallback;
-        }
+        finally { gate.Release(); }
+    }
+
+    private async Task<T> ReadAsync(string path, CancellationToken token)
+    {
+        await using var stream = File.OpenRead(path);
+        return await JsonSerializer.DeserializeAsync<T>(stream, _options, token)
+            ?? throw new JsonException("数据文件不能为 null。");
     }
 
     private bool IsMigratableFile() => Path.GetFileName(_path) is "presets.json" or "preset-groups.json" or "managed-addresses.json";
 
     public async Task SaveAsync(T value, CancellationToken cancellationToken = default)
     {
-        var directory = Path.GetDirectoryName(_path)!;
-        Directory.CreateDirectory(directory);
-        var tempPath = _path + ".tmp";
-        await using (var stream = File.Create(tempPath))
+        var gate = StorageLocks.For(_path);
+        await gate.WaitAsync(cancellationToken);
+        var tempPath = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
         {
-            await JsonSerializer.SerializeAsync(stream, value, _options, cancellationToken);
+            if (_loadFailed) throw new IOException($"数据读取失败后禁止覆盖：{_path}。请重新读取或恢复备份。");
+            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+            // Validate even for a fresh store instance: corruption must never be replaced by a fallback.
+            if (Path.Exists(_path)) await ReadAsync(_path, cancellationToken);
+            await using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                await JsonSerializer.SerializeAsync(stream, value, _options, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+                stream.Flush(flushToDisk: true);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            if (File.Exists(_path)) File.Replace(tempPath, _path, _path + ".bak");
+            else File.Move(tempPath, _path);
         }
+        finally
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+            finally { gate.Release(); }
+        }
+    }
 
-        if (File.Exists(_path))
-            File.Replace(tempPath, _path, null);
-        else
-            File.Move(tempPath, _path);
+    public async Task RestoreBackupAsync(CancellationToken cancellationToken = default)
+    {
+        var gate = StorageLocks.For(_path);
+        await gate.WaitAsync(cancellationToken);
+        var tempPath = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            await ReadAsync(_path + ".bak", cancellationToken);
+            File.Copy(_path + ".bak", tempPath);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (File.Exists(_path))
+                File.Replace(tempPath, _path, _path + ".corrupt-" + Guid.NewGuid().ToString("N"));
+            else File.Move(tempPath, _path);
+            _loadFailed = false;
+        }
+        finally
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+            finally { gate.Release(); }
+        }
     }
 }

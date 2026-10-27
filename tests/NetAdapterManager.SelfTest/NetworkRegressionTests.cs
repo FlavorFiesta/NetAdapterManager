@@ -130,6 +130,41 @@ internal static class NetworkRegressionTests
             var h = new Harness(original) { FailForwardDns = true };
             Require((await h.ApplyAsync(Static())).RolledBack, "应能复核恢复静态但无地址的原始状态。");
         });
+        await Check("GUID 冲突不能按索引启停", () =>
+        {
+            var requested = Snapshot(Dhcp());
+            Require(!NetworkService.MatchesAdapterIdentity("00000000-0000-0000-0000-000000000099", requested), "不同 GUID 不得匹配同索引网卡。");
+            Require(NetworkService.MatchesAdapterIdentity(requested.InterfaceGuid.Trim('{', '}'), requested), "相同 GUID 应接受格式差异。");
+            requested.InterfaceGuid = "";
+            Require(!NetworkService.MatchesAdapterIdentity("", requested), "没有稳定身份必须停止。");
+            return Task.CompletedTask;
+        });
+        await Check("仅改 DNS 不重写静态 IP", async () =>
+        {
+            var original = Static(DnsMode.Automatic);
+            original.IPv4Addresses.Add(new() { Address = "192.0.2.11", PrefixLength = 24 });
+            var h = new Harness(original);
+            Require((await h.ApplyAsync(Static())).Succeeded, "DNS 修改失败。");
+            Require(h.Commands.Count == 1 && h.Commands[0].Contains("dnsservers"), "仅 DNS 变化不能产生地址命令。");
+            Require(h.State.Config.IPv4Addresses.Count == 2, "额外 IP 必须保留。");
+        });
+        await Check("附加地址逐条恢复与验证", async () =>
+        {
+            var original = Static();
+            original.IPv4Addresses.Add(new() { Address = "192.0.2.11", PrefixLength = 24 });
+            var target = NetworkConfig.ForPreset("192.0.2.20", 24, null, DnsMode.Static, ["192.0.2.53"]);
+            var h = new Harness(original);
+            Require((await h.ApplyAsync(target)).Succeeded && h.State.Config.IPv4Addresses.Count == 2, "主地址更新应保留附加地址。");
+            Require(h.Commands.Count == 2, "IP 更新应逐条 set/add，DNS 无变化不得重写。");
+        });
+        await Check("附加地址未生效必须回滚", async () =>
+        {
+            var original = Static();
+            original.IPv4Addresses.Add(new() { Address = "192.0.2.11", PrefixLength = 24 });
+            var h = new Harness(original) { IgnoreForwardAddedAddress = true };
+            var result = await h.ApplyAsync(NetworkConfig.ForPreset("192.0.2.20", 24, null, DnsMode.Static, ["192.0.2.53"]));
+            Require(!result.Succeeded && result.RolledBack && NetworkService.MatchesTarget(h.State, original, true), "丢失附加地址不能报告成功。");
+        });
     }
 
     private static NetworkConfig Dhcp(DnsMode dns = DnsMode.Automatic, params string[] servers) =>
@@ -158,6 +193,7 @@ internal static class NetworkRegressionTests
         public bool IgnoreRecovery { get; init; }
         public bool MissingOnRecovery { get; init; }
         public bool FailSave { get; init; }
+        public bool IgnoreForwardAddedAddress { get; init; }
         public Action? AfterForwardWrite { get; init; }
         public int RecoveryReads { get; private set; }
         public int SaveCalls { get; private set; }
@@ -201,16 +237,28 @@ internal static class NetworkRegressionTests
                 {
                     if (!restoring && FailForwardDns) throw new IOException("synthetic DNS failure");
                     if ((!restoring && IgnoreForwardDns) || (restoring && IgnoreRecovery)) return;
-                    State.Config.DnsMode = target.DnsMode;
-                    State.Config.DnsServers = target.DnsServers.ToList();
+                    if (command.Contains("set")) State.Config.DnsServers.Clear();
+                    State.Config.DnsMode = IsAutomaticDns(command) ? DnsMode.Automatic : DnsMode.Static;
+                    var dns = Argument(command, "address");
+                    if (dns is not null && dns != "none") State.Config.DnsServers.Add(dns);
                 }
                 else if (!(restoring && IgnoreRecovery))
                 {
-                    State.Config.IpMode = target.IpMode;
-                    State.Config.IPv4Addresses = target.IPv4Addresses.Select(x => x.Clone()).ToList();
+                    if (!restoring && IgnoreForwardAddedAddress && command.Contains("add")) return;
+                    if (command.Contains("set")) State.Config.IPv4Addresses.Clear();
+                    State.Config.IpMode = IsDhcp(command) ? IpMode.Dhcp : IpMode.Static;
+                    var ip = Argument(command, "address");
+                    if (ip is not null)
+                    {
+                        Require(ValidationService.TryParsePrefix(Argument(command, "mask")!, out var prefix), "无效命令掩码。");
+                        var gateway = Argument(command, "gateway");
+                        State.Config.IPv4Addresses.Add(new() { Address = ip, PrefixLength = prefix, Gateway = gateway == "none" ? null : gateway });
+                    }
                 }
             });
             if (!restoring) AfterForwardWrite?.Invoke();
         }
+        private static string? Argument(string[] command, string name) =>
+            command.FirstOrDefault(x => x.StartsWith(name + "=", StringComparison.Ordinal))?[(name.Length + 1)..];
     }
 }

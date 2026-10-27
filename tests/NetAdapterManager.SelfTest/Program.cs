@@ -10,6 +10,21 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
+if (args.FirstOrDefault() == "--process-helper")
+    return await ReliabilityRegressionTests.RunHelperAsync(args);
+
+if (args.Contains("--isolated"))
+{
+    var failures = 0;
+    var passes = 0;
+    void Green(string name, string detail) { passes++; Console.WriteLine($"[GREEN] {name}: {detail}"); }
+    void Red(string name, string detail) { failures++; Console.WriteLine($"[RED] {name}: {detail}"); }
+    await NetworkRegressionTests.RunAsync(Green, Red);
+    await ReliabilityRegressionTests.RunAsync(Green, Red);
+    Console.WriteLine($"Isolated regression: {passes} passed, {failures} failed; no real network writes.");
+    return failures == 0 ? 0 : 1;
+}
+
 if (args.Any(x => string.Equals(x, "--ui-smoke", StringComparison.OrdinalIgnoreCase)))
     return RunUiSmokeTest();
 
@@ -28,6 +43,7 @@ void Fail(string name, string detail) => checks.Add((name, false, detail));
 try
 {
     await NetworkRegressionTests.RunAsync(Pass, Fail);
+    await ReliabilityRegressionTests.RunAsync(Pass, Fail);
     var valid = ValidationService.ValidateManualConfig(new NetworkConfig
     {
         IpMode = IpMode.Static,
@@ -765,8 +781,26 @@ static int RunUiSmokeTest()
             window.UpdateLayout();
             if (window.Topmost) throw new InvalidOperationException("取消窗口置顶命令未生效。");
             var output = Path.Combine(Environment.CurrentDirectory, "ui-smoke.png");
+            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+            window.Dispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
+            if (window.FindName("RestorePresetBackupButton") is not Button { IsEnabled: true })
+                throw new InvalidOperationException("操作结束后恢复备份入口未启用。");
             SaveScreenshot(window, output);
+            var operationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var operation = viewModel.RunBusyAsync(() => operationRelease.Task);
+            var wasClosed = false;
+            window.Closed += (_, _) => wasClosed = true;
             window.Close();
+            if (wasClosed || !window.IsVisible) throw new InvalidOperationException("操作未完成时关闭窗口未被阻止。");
+            operationRelease.SetResult();
+            var closeFrame = new DispatcherFrame();
+            var closeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
+            var closeDeadline = DateTime.UtcNow.AddSeconds(5);
+            closeTimer.Tick += (_, _) => { if (wasClosed || DateTime.UtcNow > closeDeadline) closeFrame.Continue = false; };
+            closeTimer.Start();
+            Dispatcher.PushFrame(closeFrame);
+            closeTimer.Stop();
+            if (!wasClosed || !operation.IsCompleted) throw new InvalidOperationException("完成操作后没有自动关闭窗口。");
             passed = true;
             Console.WriteLine($"UI smoke screenshot: {output}");
             Console.WriteLine($"Preset dialog screenshot: {dialogOutput}");
@@ -783,7 +817,7 @@ static int RunUiSmokeTest()
 
     Console.ForegroundColor = passed ? ConsoleColor.Green : ConsoleColor.Red;
     Console.WriteLine(passed
-        ? "[绿] UI 冒烟测试：固定深色界面、网卡下拉选择、预设保存弹窗、窗口置顶/取消和渲染均成功。"
+        ? "[绿] UI 冒烟测试：深色界面、网卡选择、预设弹窗、窗口置顶、渲染及操作期间关闭保护均成功。"
         : $"[红] UI 冒烟测试：{failure}");
     Console.ResetColor();
     return passed ? 0 : 1;

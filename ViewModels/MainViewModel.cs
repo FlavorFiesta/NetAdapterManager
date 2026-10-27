@@ -12,7 +12,12 @@ public sealed class MainViewModel : ObservableObject
 {
     private readonly NetworkService _networkService;
     private readonly PresetService _presetService;
-    private readonly PresetGroupService _presetGroupService = new();
+    private readonly PresetGroupService _presetGroupService;
+    private TaskCompletionSource? _activeOperation;
+    private TaskCompletionSource? _presetOperation;
+    internal Task ActiveOperation => Task.WhenAll(_activeOperation?.Task ?? Task.CompletedTask,
+        _presetOperation?.Task ?? Task.CompletedTask);
+    internal bool HasPendingOperation => IsBusy || _isPresetDialogOpen;
     private List<Preset> _allPresets = [];
     private List<string> _customPresetGroups = [];
     private bool _hideVirtual;
@@ -241,8 +246,9 @@ public sealed class MainViewModel : ObservableObject
             && (parameter as Preset ?? SelectedPreset) is { } preset
             && ResolvePresetAdapter(preset) is not null);
     public RelayCommand DeletePresetCommand => new(DeletePresetAsync, () => SelectedPreset is not null);
-    public RelayCommand AddPresetGroupCommand => new(AddPresetGroupAsync);
-    public RelayCommand DeletePresetGroupCommand => new(DeletePresetGroupAsync);
+    public RelayCommand AddPresetGroupCommand => new(AddPresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
+    public RelayCommand DeletePresetGroupCommand => new(DeletePresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
+    public RelayCommand RestorePresetBackupCommand => new(RestorePresetBackupAsync, () => !IsBusy && !_isPresetDialogOpen);
     public RelayCommand OpenNetworkConnectionsCommand => new(OpenNetworkConnections);
     public RelayCommand ViewAllPresetsCommand => new(ShowAllPresets);
     public RelayCommand ClearPresetFilterCommand => new(ResetPresetFilter);
@@ -252,6 +258,7 @@ public sealed class MainViewModel : ObservableObject
     {
         _networkService = networkService ?? new NetworkService();
         _presetService = presetService ?? new PresetService();
+        _presetGroupService = new PresetGroupService(_presetService);
     }
 
     public async Task InitializeAsync()
@@ -272,7 +279,7 @@ public sealed class MainViewModel : ObservableObject
             _customPresetGroups = [];
             RefreshPresetGroups();
             RefreshPresetFilter();
-            StatusMessage = "预设数据读取失败，已使用空列表启动。";
+            StatusMessage = "预设数据读取失败，原文件已保留。请修复数据或恢复预设备份。";
             DetailMessage = ex.Message;
         }
     }
@@ -443,6 +450,7 @@ public sealed class MainViewModel : ObservableObject
         if (preset is null) return;
         var index = _allPresets.IndexOf(preset);
         if (index < 0) return;
+        SetPresetDialogOpen(true);
         _allPresets.RemoveAt(index);
         SelectedPreset = null;
         RefreshPresetGroups();
@@ -464,6 +472,7 @@ public sealed class MainViewModel : ObservableObject
             DetailMessage = ex.Message;
             ShowToast("预设删除失败", FirstLine(ex.Message), false);
         }
+        finally { SetPresetDialogOpen(false); }
     }
 
     private void OpenNetworkConnections()
@@ -569,8 +578,11 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(LastRefreshText));
     }
 
-    private async Task RunBusyAsync(Func<Task> action)
+    internal async Task RunBusyAsync(Func<Task> action)
     {
+        if (IsBusy) return;
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _activeOperation = completion;
         try { IsBusy = true; await action(); }
         catch (Exception ex)
         {
@@ -579,7 +591,7 @@ public sealed class MainViewModel : ObservableObject
             DetailMessage = ex.Message;
             ShowToast("操作失败", FirstLine(ex.Message), false);
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; completion.TrySetResult(); }
     }
 
     /// <summary>
@@ -856,6 +868,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async void AddPresetGroupAsync()
     {
+        if (IsBusy || _isPresetDialogOpen) return;
         try
         {
             var dialog = new PresetGroupWindow
@@ -878,11 +891,7 @@ public sealed class MainViewModel : ObservableObject
                 return;
             }
 
-            _customPresetGroups.Add(groupName);
-            await _presetGroupService.SaveAsync(_customPresetGroups);
-            RefreshPresetGroups();
-            StatusMessage = $"已添加分组“{groupName}”。";
-            DetailMessage = string.Empty;
+            await ChangePresetGroupAsync(groupName, delete: false);
         }
         catch (Exception ex)
         {
@@ -894,6 +903,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async void DeletePresetGroupAsync()
     {
+        if (IsBusy || _isPresetDialogOpen) return;
         try
         {
             var groupName = NormalizeGroupName(PresetGroupFilter);
@@ -918,15 +928,7 @@ public sealed class MainViewModel : ObservableObject
                 != MessageBoxResult.Yes)
                 return;
 
-            PresetGroupService.DeleteGroup(groupName, _allPresets, _customPresetGroups);
-            await _presetGroupService.SaveAsync(_customPresetGroups);
-            await SavePresetsAsync();
-            RefreshPresetGroups();
-            ResetPresetFilter();
-            StatusMessage = affected.Count == 0
-                ? $"已删除分组“{groupName}”。"
-                : $"已删除分组“{groupName}”，{affected.Count} 个预设已移到“未分组”。";
-            DetailMessage = string.Empty;
+            await ChangePresetGroupAsync(groupName, delete: true);
         }
         catch (Exception ex)
         {
@@ -934,6 +936,56 @@ public sealed class MainViewModel : ObservableObject
             StatusMessage = "删除分组失败。";
             DetailMessage = ex.Message;
         }
+    }
+
+    internal async Task<bool> ChangePresetGroupAsync(string groupName, bool delete)
+    {
+        if (IsBusy || _isPresetDialogOpen) return false;
+        SetPresetDialogOpen(true);
+        await _presetStorageGate.WaitAsync();
+        try
+        {
+            var groups = _customPresetGroups.ToList();
+            var presets = _allPresets.Select(x => x.Clone()).ToList();
+            if (delete) PresetGroupService.DeleteGroup(groupName, presets, groups);
+            else if (!groups.Contains(groupName, StringComparer.OrdinalIgnoreCase)) groups.Add(groupName);
+            await _presetService.SaveLibraryAsync(presets, groups);
+            var selected = SelectedPreset?.Id;
+            _allPresets = presets;
+            _customPresetGroups = groups;
+            RefreshPresetGroups();
+            ResetPresetFilter();
+            SelectedPreset = Presets.FirstOrDefault(x => x.Id == selected);
+            StatusMessage = delete ? $"已删除分组“{groupName}”，关联预设已移到“未分组”。" : $"已添加分组“{groupName}”。";
+            DetailMessage = string.Empty;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("保存预设分组失败", ex);
+            StatusMessage = "保存分组失败，原预设和分组已保留。";
+            DetailMessage = ex.Message;
+            ShowToast("保存分组失败", FirstLine(ex.Message), false);
+            return false;
+        }
+        finally { _presetStorageGate.Release(); SetPresetDialogOpen(false); }
+    }
+
+    private async void RestorePresetBackupAsync()
+    {
+        if (IsBusy || _isPresetDialogOpen) return;
+        if (MessageBox.Show("将恢复上一次保存前的预设和分组。当前文件会另存保留，是否继续？", "恢复预设备份",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        await RunBusyAsync(async () =>
+        {
+            await _presetService.RestoreBackupAsync();
+            _allPresets = await _presetService.LoadAsync();
+            _customPresetGroups = await _presetGroupService.LoadAsync();
+            RefreshPresetGroups();
+            ResetPresetFilter();
+            StatusMessage = "预设和分组已从备份恢复，恢复前文件已另存。";
+            DetailMessage = string.Empty;
+        });
     }
 
     private IReadOnlyList<string> GetEditablePresetGroups() => PresetGroups
@@ -944,6 +996,8 @@ public sealed class MainViewModel : ObservableObject
     {
         if (_isPresetDialogOpen == value) return;
         _isPresetDialogOpen = value;
+        if (value) _presetOperation = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        else _presetOperation?.TrySetResult();
         OnPropertyChanged(nameof(CanSavePreset));
         CommandManager.InvalidateRequerySuggested();
     }

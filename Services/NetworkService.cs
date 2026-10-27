@@ -22,14 +22,19 @@ public sealed class NetworkService
     private readonly JsonStore<Dictionary<string, string?>> _managedStore = new("managed-addresses.json");
     private static readonly Encoding NetshEncoding = CreateNetshEncoding();
     private readonly Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> _snapshotReader;
-    private readonly Action<AdapterSnapshot, NetworkConfig, bool> _configurationWriter;
+    private readonly Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> _recoverySnapshotReader;
+    private bool _writesUnsafe;
+    private static readonly SemaphoreSlim WriteGate = new(1, 1);
+    private readonly Func<AdapterSnapshot, NetworkConfig, bool, CancellationToken, Task> _configurationWriter;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay;
     private readonly Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> _saveManagedAddress;
 
     public NetworkService()
     {
         _snapshotReader = ReadAdaptersCoreAsync;
-        _configurationWriter = (before, target, exact) => ApplyConfiguration(before, target, exact);
+        // Recovery must still read OS state if local managed-address metadata becomes unreadable.
+        _recoverySnapshotReader = token => Task.Run<IReadOnlyList<AdapterSnapshot>>(() => ReadAdapters([]), token).WaitAsync(token);
+        _configurationWriter = ApplyConfigurationAsync;
         _delay = Task.Delay;
         _saveManagedAddress = SaveManagedAddressAsync;
     }
@@ -39,8 +44,21 @@ public sealed class NetworkService
         Action<AdapterSnapshot, NetworkConfig, bool> configurationWriter,
         Func<TimeSpan, CancellationToken, Task> delay,
         Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> saveManagedAddress)
+        : this(snapshotReader, (before, target, exact, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            configurationWriter(before, target, exact);
+            return Task.CompletedTask;
+        }, delay, saveManagedAddress) { }
+
+    internal NetworkService(Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> snapshotReader,
+        Func<AdapterSnapshot, NetworkConfig, bool, CancellationToken, Task> configurationWriter,
+        Func<TimeSpan, CancellationToken, Task> delay,
+        Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> saveManagedAddress,
+        Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>>? recoverySnapshotReader = null)
     {
         _snapshotReader = snapshotReader;
+        _recoverySnapshotReader = recoverySnapshotReader ?? snapshotReader;
         _configurationWriter = configurationWriter;
         _delay = delay;
         _saveManagedAddress = saveManagedAddress;
@@ -51,8 +69,18 @@ public sealed class NetworkService
 
     private async Task<IReadOnlyList<AdapterSnapshot>> ReadAdaptersCoreAsync(CancellationToken cancellationToken)
     {
-        var managed = await _managedStore.LoadAsync([], cancellationToken);
-        return await Task.Run(() => ReadAdapters(managed), cancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        try
+        {
+            var managed = await _managedStore.LoadAsync([], timeout.Token);
+            // A timed-out WMI reader may finish later, but it never writes network state.
+            return await Task.Run(() => ReadAdapters(managed), timeout.Token).WaitAsync(timeout.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("读取网卡状态超时，请稍后刷新。");
+        }
     }
 
     public async Task<ApplyResult> ApplyAsync(AdapterSnapshot adapter, NetworkConfig target,
@@ -66,8 +94,10 @@ public sealed class NetworkService
     public async Task<(bool Succeeded, string? ErrorDetail)> SetAdapterEnabledAsync(AdapterSnapshot adapter,
         bool enabled, CancellationToken cancellationToken = default)
     {
+        await WriteGate.WaitAsync(cancellationToken);
         try
         {
+            if (_writesUnsafe) throw new InvalidOperationException("上一个命令的退出状态不确定，已禁止继续写入。请检查系统状态后重启程序。");
             var code = await Task.Run(() =>
             {
                 using var networkAdapter = FindNetworkAdapter(adapter);
@@ -83,9 +113,22 @@ public sealed class NetworkService
         {
             return (false, ex.Message);
         }
+        finally { WriteGate.Release(); }
     }
 
     private async Task<ApplyResult> ApplyInternalAsync(AdapterSnapshot adapter, NetworkConfig target,
+        bool exactAddressSet, CancellationToken cancellationToken)
+    {
+        await WriteGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (_writesUnsafe) return new ApplyResult { Message = "已禁止继续写入，请检查系统状态后重启程序。" };
+            return await ApplyCoreAsync(adapter, target.Clone(), exactAddressSet, cancellationToken);
+        }
+        finally { WriteGate.Release(); }
+    }
+
+    private async Task<ApplyResult> ApplyCoreAsync(AdapterSnapshot adapter, NetworkConfig target,
         bool exactAddressSet, CancellationToken cancellationToken)
     {
         var validation = ValidationService.ValidateManualConfig(target);
@@ -116,11 +159,12 @@ public sealed class NetworkService
 
         try
         {
-            await Task.Run(() => _configurationWriter(before, target, exactAddressSet), cancellationToken);
-            var after = await WaitForSnapshotAsync(before.InterfaceGuid, target, exactAddressSet, cancellationToken);
+            var expected = BuildExpectedConfiguration(before, target, exactAddressSet);
+            await _configurationWriter(before, expected, true, cancellationToken);
+            var after = await WaitForSnapshotAsync(before.InterfaceGuid, expected, true, cancellationToken);
             if (after is null)
                 throw new InvalidOperationException("配置已写入，但复核时找不到目标网卡。");
-            if (!MatchesTarget(after, target, exactAddressSet))
+            if (!MatchesTarget(after, expected, true))
                 throw new InvalidOperationException("最终复核不一致，实际网卡状态未达到目标配置。");
 
             await _saveManagedAddress(before, target, cancellationToken);
@@ -139,6 +183,11 @@ public sealed class NetworkService
         }
         catch (Exception ex)
         {
+            if (ex is ProcessTerminationException)
+            {
+                _writesUnsafe = true;
+                return new ApplyResult { Message = "无法确认网络命令已停止，请勿重复操作。", ErrorDetail = ex.Message };
+            }
             var rollback = await TryRollbackAsync(before);
             return new ApplyResult
             {
@@ -307,9 +356,9 @@ public sealed class NetworkService
     }
 
     internal static void ApplyConfiguration(AdapterSnapshot before, NetworkConfig target, bool exactAddressSet,
-        Action<string[]>? commandRunner = null)
+        Action<string[]> commandRunner)
     {
-        void Execute(params string[] arguments) => (commandRunner ?? RunNetsh)(arguments);
+        void Execute(params string[] arguments) => commandRunner(arguments);
         var interfaceSelector = GetNetshInterfaceSelector(before);
         if (target.IpMode == IpMode.Dhcp)
         {
@@ -322,32 +371,39 @@ public sealed class NetworkService
         else
         {
             var desired = BuildDesiredAddresses(before, target, exactAddressSet);
-            if (desired.Count == 0)
+            var expected = target.Clone();
+            expected.IPv4Addresses = desired;
+            if (!MatchesIpTarget(before.Config, expected))
             {
-                // 允许回滚到“静态但当前没有地址”的原始状态。
-                Execute("interface", "ipv4", "set", "address",
-                    interfaceSelector, "source=static");
-            }
-            else
-            {
-                var managed = target.IPv4Addresses.FirstOrDefault(x =>
-                    string.Equals(x.Address, target.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase));
-                var gateway = managed?.Gateway ?? target.IPv4Addresses.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Gateway))?.Gateway;
-                var first = desired[0];
-                Execute("interface", "ipv4", "set", "address",
-                    interfaceSelector, "source=static", $"address={first.Address}",
-                    $"mask={PrefixToMask(first.PrefixLength)}",
-                    $"gateway={(string.IsNullOrWhiteSpace(gateway) ? "none" : gateway)}");
-
-                foreach (var address in desired.Skip(1))
+                if (desired.Count == 0)
                 {
-                    Execute("interface", "ipv4", "add", "address",
-                        interfaceSelector, $"address={address.Address}",
-                        $"mask={PrefixToMask(address.PrefixLength)}");
+                    // 允许回滚到“静态但当前没有地址”的原始状态。
+                    Execute("interface", "ipv4", "set", "address",
+                        interfaceSelector, "source=static");
+                }
+                else
+                {
+                    var managed = target.IPv4Addresses.FirstOrDefault(x =>
+                        string.Equals(x.Address, target.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase));
+                    var gateway = managed?.Gateway ?? target.IPv4Addresses.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Gateway))?.Gateway;
+                    var first = desired[0];
+                    Execute("interface", "ipv4", "set", "address",
+                        interfaceSelector, "source=static", $"address={first.Address}",
+                        $"mask={PrefixToMask(first.PrefixLength)}",
+                        $"gateway={(string.IsNullOrWhiteSpace(gateway) ? "none" : gateway)}");
+
+                    foreach (var address in desired.Skip(1))
+                    {
+                        Execute("interface", "ipv4", "add", "address",
+                            interfaceSelector, $"address={address.Address}",
+                            $"mask={PrefixToMask(address.PrefixLength)}");
+                    }
                 }
             }
         }
 
+        if (MatchesDnsTarget(before.Config, target) && before.Config.IpMode == target.IpMode)
+            return;
         if (target.DnsMode == DnsMode.Automatic)
         {
             if (before.Config.DnsMode != DnsMode.Automatic || before.Config.IpMode != target.IpMode)
@@ -360,7 +416,7 @@ public sealed class NetworkService
         {
             Execute("interface", "ipv4", "set", "dnsservers",
                 interfaceSelector, "source=static", $"address={target.DnsServers[0]}", "validate=no");
-                for (var i = 1; i < target.DnsServers.Count; i++)
+            for (var i = 1; i < target.DnsServers.Count; i++)
             {
                 Execute("interface", "ipv4", "add", "dnsservers",
                     interfaceSelector, $"address={target.DnsServers[i]}", $"index={i + 1}", "validate=no");
@@ -374,33 +430,42 @@ public sealed class NetworkService
         }
     }
 
-    private static void RunNetsh(params string[] arguments)
+    private static async Task ApplyConfigurationAsync(AdapterSnapshot before, NetworkConfig target, bool exact,
+        CancellationToken cancellationToken)
     {
-        var startInfo = new ProcessStartInfo
+        var commands = new List<string[]>();
+        ApplyConfiguration(before, target, exact, commands.Add);
+        foreach (var arguments in commands)
         {
-            FileName = "netsh.exe",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = NetshEncoding,
-            StandardErrorEncoding = NetshEncoding
-        };
-        foreach (var argument in arguments)
-            startInfo.ArgumentList.Add(argument);
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe"),
+                StandardOutputEncoding = NetshEncoding, StandardErrorEncoding = NetshEncoding
+            };
+            foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+            var result = await ProcessRunner.RunAsync(startInfo, TimeSpan.FromSeconds(10), cancellationToken);
+            if (result.ExitCode != 0)
+                throw new InvalidOperationException($"Windows netsh 执行失败（退出码 {result.ExitCode}）：{result.Output}");
+        }
+    }
 
-        using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("无法启动 Windows netsh.exe。");
-        var stdout = process.StandardOutput.ReadToEnd();
-        var stderr = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-        if (process.ExitCode == 0) return;
+    internal static NetworkConfig BuildExpectedConfiguration(AdapterSnapshot before, NetworkConfig target, bool exact)
+    {
+        var expected = target.Clone();
+        if (target.IpMode == IpMode.Static)
+            expected.IPv4Addresses = BuildDesiredAddresses(before, target, exact);
+        return expected;
+    }
 
-        var detail = string.Join(" ", new[] { stdout.Trim(), stderr.Trim() }
-            .Where(x => !string.IsNullOrWhiteSpace(x)));
-        throw new InvalidOperationException(string.IsNullOrWhiteSpace(detail)
-            ? $"Windows netsh 执行失败，退出码 {process.ExitCode}。"
-            : $"Windows netsh 执行失败（退出码 {process.ExitCode}）：{detail}");
+    private static bool MatchesIpTarget(NetworkConfig actual, NetworkConfig expected)
+    {
+        if (actual.IpMode != expected.IpMode) return false;
+        if (expected.IpMode == IpMode.Dhcp) return true;
+        var left = actual.IPv4Addresses.Select(x => $"{x.Address}/{x.PrefixLength}").OrderBy(x => x);
+        var right = expected.IPv4Addresses.Select(x => $"{x.Address}/{x.PrefixLength}").OrderBy(x => x);
+        var leftGateway = actual.IPv4Addresses.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Gateway))?.Gateway ?? "";
+        var rightGateway = expected.IPv4Addresses.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Gateway))?.Gateway ?? "";
+        return left.SequenceEqual(right, StringComparer.OrdinalIgnoreCase) && leftGateway.Trim() == rightGateway.Trim();
     }
 
     private static string GetNetshInterfaceSelector(AdapterSnapshot adapter) =>
@@ -445,13 +510,13 @@ public sealed class NetworkService
     }
 
     private async Task<AdapterSnapshot?> WaitForSnapshotAsync(string interfaceGuid, NetworkConfig target,
-        bool exactAddressSet, CancellationToken cancellationToken)
+        bool exactAddressSet, CancellationToken cancellationToken, bool recovering = false)
     {
         AdapterSnapshot? last = null;
         for (var attempt = 0; attempt < 8; attempt++)
         {
             await _delay(TimeSpan.FromMilliseconds(350), cancellationToken);
-            var snapshots = await GetAdaptersAsync(cancellationToken);
+            var snapshots = await (recovering ? _recoverySnapshotReader(cancellationToken) : GetAdaptersAsync(cancellationToken));
             last = snapshots.FirstOrDefault(x => SameId(x.InterfaceGuid, interfaceGuid));
             if (last is not null && MatchesTarget(last, target, exactAddressSet))
                 return last;
@@ -467,17 +532,18 @@ public sealed class NetworkService
         {
             // Use fresh state for idempotency: the original snapshot is only the
             // restore target. Re-enabling already active DHCP can fail in netsh.
-            var snapshots = await GetAdaptersAsync(recovery.Token);
+            var snapshots = await _recoverySnapshotReader(recovery.Token);
             var current = snapshots.FirstOrDefault(x => SameId(x.InterfaceGuid, before.InterfaceGuid))
                 ?? throw new InvalidOperationException("回滚前找不到目标网卡，请检查网卡是否仍连接。");
-            await Task.Run(() => _configurationWriter(current, before.Config, true), recovery.Token);
-            var restored = await WaitForSnapshotAsync(before.InterfaceGuid, before.Config, true, recovery.Token);
+            await _configurationWriter(current, before.Config, true, recovery.Token);
+            var restored = await WaitForSnapshotAsync(before.InterfaceGuid, before.Config, true, recovery.Token, recovering: true);
             if (restored is null || !MatchesTarget(restored, before.Config, true))
                 return (false, "回滚命令已执行，但实际 IPv4/DNS 状态未恢复到修改前配置。");
             return (true, null);
         }
         catch (Exception ex)
         {
+            if (ex is ProcessTerminationException) _writesUnsafe = true;
             return (false, ex.Message);
         }
     }
@@ -529,13 +595,15 @@ public sealed class NetworkService
         foreach (ManagementObject networkAdapter in searcher.Get())
         {
             var guid = ReadString(networkAdapter, "GUID");
-            var index = ReadInt(networkAdapter, "InterfaceIndex", ReadInt(networkAdapter, "Index", 0));
-            if (SameId(guid, adapter.InterfaceGuid) || index == adapter.InterfaceIndex)
+            if (MatchesAdapterIdentity(guid, adapter))
                 return networkAdapter;
             networkAdapter.Dispose();
         }
         return null;
     }
+
+    internal static bool MatchesAdapterIdentity(string guid, AdapterSnapshot requested) =>
+        Guid.TryParse(requested.InterfaceGuid, out _) && SameId(guid, requested.InterfaceGuid);
 
     private static uint InvokeReturnCode(ManagementObject target, string method, object[] arguments,
         string operation, bool allowRebootRequired)

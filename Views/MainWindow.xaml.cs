@@ -17,6 +17,22 @@ public partial class MainWindow : Window
     }
     private readonly MainViewModel _viewModel;
     private readonly bool _initializeOnLoad;
+    private bool _closingRequested;
+    private bool _readyToClose;
+
+    protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        base.OnClosing(e);
+        if (_readyToClose || !_viewModel.HasPendingOperation) return;
+        e.Cancel = true;
+        if (_closingRequested) return;
+        _closingRequested = true;
+        IsEnabled = false;
+        _viewModel.ShowToast("正在完成操作", "写入、复核或恢复完成后会自动关闭窗口。", false);
+        await _viewModel.ActiveOperation;
+        _readyToClose = true;
+        Close();
+    }
 
     public MainWindow() : this(new MainViewModel(), true) { }
 

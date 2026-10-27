@@ -141,8 +141,11 @@
                                         <TextBlock x:Name="PresetCountText" Text="{Binding PresetCountText}" Foreground="{DynamicResource PrimaryColor}" FontSize="11" />
                                     </Border>
                                 </StackPanel>
-                                <Button x:Name="PresetOverviewButton" Content="查看全部" Command="{Binding ViewAllPresetsCommand}" Style="{StaticResource QuietButton}"
-                                        HorizontalAlignment="Right" Padding="10,4" ToolTip="打开窗口查看全部预设" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button x:Name="RestorePresetBackupButton" Content="恢复备份" Command="{Binding RestorePresetBackupCommand}" Style="{StaticResource QuietButton}" Padding="10,4" ToolTip="恢复上一次保存前的预设和分组" />
+                                    <Button x:Name="PresetOverviewButton" Content="查看全部" Command="{Binding ViewAllPresetsCommand}" Style="{StaticResource QuietButton}"
+                                            Padding="10,4" ToolTip="打开窗口查看全部预设" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock Text="可复用的 IPv4 / DNS 模板" Foreground="{DynamicResource MutedText}" FontSize="12" Margin="0,4,0,10" />
                             <TextBlock Text="分组筛选 / 搜索预设" Foreground="{DynamicResource MutedText}" FontSize="11" Margin="0,0,0,1" />
