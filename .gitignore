@@ -18,6 +18,8 @@ preset-library.json
 preset-groups.json
 managed-addresses.json
 history.json
+settings.json
+install-language.txt
 storage-probe.json
 **/logs/
 *.log

@@ -8,36 +8,52 @@ namespace NetAdapterManager;
 public partial class App : Application
 {
     private SingleInstanceLease? _instance;
+    private readonly bool _suppressStartup;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
+        if (_suppressStartup) return;
+        PreferencesService.Default.Load();
+        PreferencesService.Default.Apply();
+        ThemeService.Start();
         var user = System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value
-            ?? throw new InvalidOperationException("无法确认当前用户身份。");
+            ?? throw new InvalidOperationException(L.T("Loc_4B9AC26F8B2F"));
         try { _instance = new SingleInstanceLease(@"Global\NetAdapterManager-" + user); }
         catch (Exception ex)
         {
             AppLogger.Error("无法建立单实例保护", ex);
-            MessageBox.Show("无法确认是否已有程序运行，本次启动已停止。请关闭其他实例后重试。", "启动失败");
+            MessageBox.Show(L.T("Loc_19A5E080978D"), L.T("Loc_0CF642CF998C"));
             Shutdown();
             return;
         }
         if (!_instance.Acquired)
         {
-            MessageBox.Show("网络适配器管理器已在运行，请使用已打开的窗口。", "程序已运行");
+            MessageBox.Show(L.T("Loc_65E25A5E51DE"), L.T("Loc_D04AE84E1D93"));
             Shutdown();
             return;
         }
+        // Persist the first-run installation language once; upgrades must not overwrite it.
+        if (!System.IO.File.Exists(System.IO.Path.Combine(AppContext.BaseDirectory, "settings.json")))
+        {
+            try { await PreferencesService.Default.SaveAsync(PreferencesService.Default.Current); }
+            catch (Exception ex) { AppLogger.Error("Could not persist first-run preferences", ex); }
+        }
         base.OnStartup(e);
+        MainWindow = new Views.MainWindow();
+        MainWindow.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        ThemeService.Stop();
         _instance?.Dispose();
         base.OnExit(e);
     }
 
-    public App()
+    public App() : this(false) { }
+    internal App(bool suppressStartup)
     {
+        _suppressStartup = suppressStartup;
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;

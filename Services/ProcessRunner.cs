@@ -14,7 +14,7 @@ internal static class ProcessRunner
         startInfo.CreateNoWindow = true;
         startInfo.RedirectStandardOutput = true;
         startInfo.RedirectStandardError = true;
-        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("无法启动系统命令。");
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException(L.T("Loc_6D779B4E21E3"));
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         lifetime.CancelAfter(timeout);
         // Drain both pipes concurrently, including while stopping the child.
@@ -37,11 +37,11 @@ internal static class ProcessRunner
             }
             catch (Exception ex)
             {
-                throw new ProcessTerminationException("无法确认系统命令已完全退出；已停止后续写入，请检查系统网络状态。", ex);
+                throw new ProcessTerminationException(L.T("Loc_604827F11691"), ex);
             }
             if (cancellationToken.IsCancellationRequested)
                 throw new OperationCanceledException(cancellationToken);
-            throw new TimeoutException($"系统命令超过 {timeout.TotalSeconds:0.#} 秒，已终止并等待退出。");
+            throw new TimeoutException(L.F("Loc_8F590BC3455A", timeout.TotalSeconds));
         }
     }
 }

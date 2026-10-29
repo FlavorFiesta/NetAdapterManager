@@ -1,7 +1,9 @@
 # 网络适配器管理器
 
+简体中文 | [English](README.en.md)
+
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前版本：**1.4.12**，采用 [MIT 许可证](LICENSE)。
+当前源码版本：**1.5.2**，采用 [MIT 许可证](LICENSE)。
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
 
@@ -11,6 +13,8 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 - 按所属网卡保存、编辑和应用预设，支持分组、搜索、批量换组及删除。
 - 写入前获取快照，写入后复核；失败时尝试回滚。
 - 启用 / 禁用网卡、窗口置顶、打开系统网络连接。
+- 设置中切换简体中文、繁体中文、英语或跟随系统，界面即时更新。
+- 浅色、深色与跟随系统主题；保存偏好，兼容系统高对比度。
 
 修改网络配置需要管理员权限，启动时会出现 Windows UAC 提示。
 更改当前联网网卡可能中断网络；请先确认目标网卡。
@@ -19,21 +23,27 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 
 在 [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest) 选择 Windows x64 包：
 
-- `NetAdapterManager-v1.4.12-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
-- `NetAdapterManager-v1.4.12-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
+- `NetAdapterManager-v<版本>-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
+- `NetAdapterManager-v<版本>-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
 
 发布包自带 .NET 运行时，无需另装运行时。免安装版必须保留解压出的全部文件，不能只复制 EXE。
 本仓库不包含预生成二进制，公开下载以实际发布的 Release 为准。
 
+安装器默认选择 Windows 显示语言，用户可在语言选择框改选；不支持的语言回退英语。
+首次启动沿用安装选择，便携版首次启动跟随系统。已有语言与主题偏好在升级时保留。
+“设置”中可随时切换主题；网络操作期间暂不可切换语言。系统原生对话框外观和错误原文由 Windows 决定。
+
 ## 数据与隐私
 
-数据保存在程序目录：`preset-library.json`（预设与分组统一保存）、`managed-addresses.json`；
+数据保存在程序目录：`preset-library.json`（预设与分组统一保存）、`managed-addresses.json`、`settings.json`（语言与主题）；
 错误日志位于 `logs/NetAdapterManager.log`。升级时保留数据，卸载后可能仍保留运行时生成的文件。
 首次使用 1.4.12 时，会读取程序目录中的旧 `presets.json` 和 `preset-groups.json`；没有本地旧文件时兼容读取 `%AppData%\NetAdapterManager` 中的数据。
 第一次成功保存时建立统一预设库，原文件保留。统一库建立后，不再从旧文件导入。
 每次替换已存在的数据文件会保留上一份 `.bak`；预设区域的“恢复备份”可同时恢复预设和分组，恢复前文件另存为 `.corrupt-*`。
 读取损坏或无法访问的数据时会显示错误并阻止覆盖。降级到 1.4.11 不会读取统一库中的后续修改，请先保留完整程序目录。
 同一用户只允许一个实例；配置应用、复核或恢复期间关闭窗口，会等待操作结束后再退出。
+启停网卡超过 15 秒或被取消时，界面停止等待，但 Windows 操作可能仍在进行；程序阻止继续写入，直到用户确认系统状态后重启。
+设置按程序目录保存，提权为不同账号运行同一份安装时仍使用同一份显式偏好；“跟随系统”读取当前运行账号的显示语言和应用颜色模式。
 
 预设和截图可能包含网卡名称、MAC、IP、DNS 等信息。提交问题前请脱敏；
 这些运行数据、编译输出和本地测试证据已纳入 `.gitignore`。
@@ -68,6 +78,12 @@ dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --network-
 dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --isolated
 ```
 
+三语言与浅色/深色组合的界面、设置保存及对比度验收（合成数据）：
+
+```powershell
+dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --appearance-smoke
+```
+
 UI 自测使用演示数据；全功能脚本的 WMI 检查仍需要本机存在网卡，
 不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建、完整隔离回归与依赖漏洞查询。
 
@@ -91,7 +107,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
 正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.4.12\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
+默认输出到 `artifacts\1.5.2\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
 重建只覆盖这两个指定产物，保留目录中的其他文件。
 `-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
 版本从主项目读取并传给安装脚本。

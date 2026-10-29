@@ -25,6 +25,7 @@ public sealed class NetworkService
     private readonly Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> _recoverySnapshotReader;
     private bool _writesUnsafe;
     private static readonly SemaphoreSlim WriteGate = new(1, 1);
+    private static int _pendingUncertainWrite;
     private readonly Func<AdapterSnapshot, NetworkConfig, bool, CancellationToken, Task> _configurationWriter;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay;
     private readonly Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> _saveManagedAddress;
@@ -79,7 +80,7 @@ public sealed class NetworkService
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new TimeoutException("读取网卡状态超时，请稍后刷新。");
+            throw new TimeoutException(L.T("Loc_7AC3CB4533C7"));
         }
     }
 
@@ -93,36 +94,61 @@ public sealed class NetworkService
 
     public async Task<(bool Succeeded, string? ErrorDetail)> SetAdapterEnabledAsync(AdapterSnapshot adapter,
         bool enabled, CancellationToken cancellationToken = default)
+        => await ToggleWithTimeoutAsync(() => Task.Run(() =>
+        {
+            using var networkAdapter = FindNetworkAdapter(adapter);
+            if (networkAdapter is null)
+                throw new InvalidOperationException(L.T("Loc_9535528D5A38"));
+            return InvokeReturnCode(networkAdapter, enabled ? "Enable" : "Disable", [],
+                enabled ? L.T("Loc_DCCAF4BB4CF6") : L.T("Loc_36A3D36016FA"), allowRebootRequired: false);
+        }, cancellationToken), TimeSpan.FromSeconds(15), cancellationToken);
+
+    internal async Task<(bool Succeeded, string? ErrorDetail)> ToggleWithTimeoutAsync(
+        Func<Task<uint>> start, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
+        if (_writesUnsafe || Volatile.Read(ref _pendingUncertainWrite) != 0)
+            return (false, L.T("Loc_8968C86B7D02"));
         await WriteGate.WaitAsync(cancellationToken);
+        var releaseGate = true;
         try
         {
-            if (_writesUnsafe) throw new InvalidOperationException("上一个命令的退出状态不确定，已禁止继续写入。请检查系统状态后重启程序。");
-            var code = await Task.Run(() =>
+            if (_writesUnsafe) throw new InvalidOperationException(L.T("Loc_8968C86B7D02"));
+            var operation = start();
+            uint code;
+            try { code = await operation.WaitAsync(timeout, cancellationToken); }
+            catch (Exception ex) when (ex is TimeoutException or OperationCanceledException)
             {
-                using var networkAdapter = FindNetworkAdapter(adapter);
-                if (networkAdapter is null)
-                    throw new InvalidOperationException("找不到目标网卡的 Windows 管理对象。");
-
-                return InvokeReturnCode(networkAdapter, enabled ? "Enable" : "Disable", [],
-                    enabled ? "启用网卡" : "禁用网卡", allowRebootRequired: false);
-            }, cancellationToken);
-            return (code == 0, code == 0 ? null : FormatWmiError(code, "网卡启停"));
+                _writesUnsafe = true;
+                Interlocked.Exchange(ref _pendingUncertainWrite, 1);
+                releaseGate = false;
+                _ = ObserveUncertainWriteAsync(operation);
+                return (false, L.T("Loc_0D7FFA6FE9AB"));
+            }
+            return (code == 0, code == 0 ? null : FormatWmiError(code, L.T("Loc_C6473D2926B7")));
         }
         catch (Exception ex)
         {
             return (false, ex.Message);
         }
-        finally { WriteGate.Release(); }
+        finally { if (releaseGate) WriteGate.Release(); }
+    }
+
+    private static async Task ObserveUncertainWriteAsync(Task<uint> operation)
+    {
+        try { await operation; }
+        catch (Exception ex) { AppLogger.Error("超时后的网卡启停结束", ex); }
+        finally { Interlocked.Exchange(ref _pendingUncertainWrite, 0); WriteGate.Release(); }
     }
 
     private async Task<ApplyResult> ApplyInternalAsync(AdapterSnapshot adapter, NetworkConfig target,
         bool exactAddressSet, CancellationToken cancellationToken)
     {
+        if (_writesUnsafe || Volatile.Read(ref _pendingUncertainWrite) != 0)
+            return new ApplyResult { Message = L.T("Loc_4BFF1AF76C86") };
         await WriteGate.WaitAsync(cancellationToken);
         try
         {
-            if (_writesUnsafe) return new ApplyResult { Message = "已禁止继续写入，请检查系统状态后重启程序。" };
+            if (_writesUnsafe) return new ApplyResult { Message = L.T("Loc_4BFF1AF76C86") };
             return await ApplyCoreAsync(adapter, target.Clone(), exactAddressSet, cancellationToken);
         }
         finally { WriteGate.Release(); }
@@ -135,8 +161,8 @@ public sealed class NetworkService
         if (!validation.IsValid)
             return new ApplyResult
             {
-                Message = "输入校验失败。",
-                ErrorDetail = string.Join(Environment.NewLine, validation.Errors),
+                Message = L.T("Loc_E78333A422B7"),
+                ErrorDetail = L.Join(Environment.NewLine, validation.Errors.ToArray()),
                 Warnings = validation.Warnings
             };
 
@@ -145,13 +171,13 @@ public sealed class NetworkService
         {
             var current = await GetAdaptersAsync(cancellationToken);
             before = current.FirstOrDefault(x => SameId(x.InterfaceGuid, adapter.InterfaceGuid))
-                ?? throw new InvalidOperationException("目标网卡已不存在，请刷新网卡列表。");
+                ?? throw new InvalidOperationException(L.T("Loc_82216E310560"));
         }
         catch (Exception ex)
         {
             return new ApplyResult
             {
-                Message = "读取修改前网卡状态失败。",
+                Message = L.T("Loc_BF067030E680"),
                 ErrorDetail = ex.Message,
                 Warnings = validation.Warnings
             };
@@ -163,9 +189,9 @@ public sealed class NetworkService
             await _configurationWriter(before, expected, true, cancellationToken);
             var after = await WaitForSnapshotAsync(before.InterfaceGuid, expected, true, cancellationToken);
             if (after is null)
-                throw new InvalidOperationException("配置已写入，但复核时找不到目标网卡。");
+                throw new InvalidOperationException(L.T("Loc_1B0A00450922"));
             if (!MatchesTarget(after, expected, true))
-                throw new InvalidOperationException("最终复核不一致，实际网卡状态未达到目标配置。");
+                throw new InvalidOperationException(L.T("Loc_B576104ABD7B"));
 
             await _saveManagedAddress(before, target, cancellationToken);
 
@@ -176,7 +202,7 @@ public sealed class NetworkService
             return new ApplyResult
             {
                 Succeeded = true,
-                Message = "配置已应用并复核一致。",
+                Message = L.T("Loc_58EF0332A611"),
                 Warnings = validation.Warnings,
                 FinalSnapshot = after
             };
@@ -186,12 +212,12 @@ public sealed class NetworkService
             if (ex is ProcessTerminationException)
             {
                 _writesUnsafe = true;
-                return new ApplyResult { Message = "无法确认网络命令已停止，请勿重复操作。", ErrorDetail = ex.Message };
+                return new ApplyResult { Message = L.T("Loc_D21239DDC57A"), ErrorDetail = ex.Message };
             }
             var rollback = await TryRollbackAsync(before);
             return new ApplyResult
             {
-                Message = rollback.Succeeded ? "配置失败，已恢复修改前状态。" : "配置失败，自动回滚也失败。",
+                Message = rollback.Succeeded ? L.T("Loc_E6E500160240") : L.T("Loc_8ADA74693E1F"),
                 ErrorDetail = rollback.Succeeded ? ex.Message : ex.Message + Environment.NewLine + rollback.ErrorDetail,
                 RolledBack = rollback.Succeeded,
                 Warnings = validation.Warnings
@@ -445,7 +471,7 @@ public sealed class NetworkService
             foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
             var result = await ProcessRunner.RunAsync(startInfo, TimeSpan.FromSeconds(10), cancellationToken);
             if (result.ExitCode != 0)
-                throw new InvalidOperationException($"Windows netsh 执行失败（退出码 {result.ExitCode}）：{result.Output}");
+                throw new InvalidOperationException(L.F("Loc_143A15167E55", result.ExitCode, result.Output));
         }
     }
 
@@ -476,7 +502,7 @@ public sealed class NetworkService
         try
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            var codePage = CultureInfo.CurrentUICulture.TextInfo.ANSICodePage;
+            var codePage = checked((int)GetACP());
             return codePage > 0 ? Encoding.GetEncoding(codePage) : Encoding.GetEncoding(936);
         }
         catch
@@ -484,6 +510,9 @@ public sealed class NetworkService
             return Encoding.UTF8;
         }
     }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern uint GetACP();
 
     private static List<Ipv4AddressEntry> BuildDesiredAddresses(AdapterSnapshot before, NetworkConfig target, bool exactAddressSet)
     {
@@ -493,7 +522,7 @@ public sealed class NetworkService
         var managed = target.IPv4Addresses.FirstOrDefault(x =>
             string.Equals(x.Address, target.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase))
             ?? target.IPv4Addresses.FirstOrDefault()
-            ?? throw new InvalidOperationException("缺少要管理的静态 IPv4 地址。");
+            ?? throw new InvalidOperationException(L.T("Loc_D7E4065A9B21"));
         if (before.Config.IpMode == IpMode.Dhcp)
             return [managed.Clone()];
 
@@ -534,11 +563,11 @@ public sealed class NetworkService
             // restore target. Re-enabling already active DHCP can fail in netsh.
             var snapshots = await _recoverySnapshotReader(recovery.Token);
             var current = snapshots.FirstOrDefault(x => SameId(x.InterfaceGuid, before.InterfaceGuid))
-                ?? throw new InvalidOperationException("回滚前找不到目标网卡，请检查网卡是否仍连接。");
+                ?? throw new InvalidOperationException(L.T("Loc_E26E36F7E018"));
             await _configurationWriter(current, before.Config, true, recovery.Token);
             var restored = await WaitForSnapshotAsync(before.InterfaceGuid, before.Config, true, recovery.Token, recovering: true);
             if (restored is null || !MatchesTarget(restored, before.Config, true))
-                return (false, "回滚命令已执行，但实际 IPv4/DNS 状态未恢复到修改前配置。");
+                return (false, L.T("Loc_A1D46010ECCA"));
             return (true, null);
         }
         catch (Exception ex)
@@ -640,7 +669,7 @@ public sealed class NetworkService
 
     private static string PrefixToMask(int prefixLength)
     {
-        if (prefixLength is < 0 or > 32) throw new InvalidOperationException("IPv4 前缀长度无效。");
+        if (prefixLength is < 0 or > 32) throw new InvalidOperationException(L.T("Loc_C127D440E16A"));
         var mask = prefixLength == 0 ? 0u : uint.MaxValue << (32 - prefixLength);
         return $"{(mask >> 24) & 255}.{(mask >> 16) & 255}.{(mask >> 8) & 255}.{mask & 255}";
     }
@@ -718,13 +747,13 @@ public sealed class NetworkService
 
     private static string FormatWmiError(uint code, string operation) => code switch
     {
-        64 => $"{operation}失败：当前平台不支持此操作（WMI 64）。",
-        84 => $"{operation}失败：网卡未启用 IPv4（WMI 84）。",
-        91 => $"{operation}失败：权限不足（WMI 91）。",
-        94 => $"{operation}失败：找不到路径或对象（WMI 94）。",
-        97 => $"{operation}失败：接口不可配置（WMI 97）。",
-        100 => $"{operation}失败：网卡未启用 DHCP（WMI 100）。",
-        _ => $"{operation}失败，Windows 返回 WMI 错误码 {code}。"
+        64 => L.F("Loc_558EC6978AB8", operation),
+        84 => L.F("Loc_CD687B9548B9", operation),
+        91 => L.F("Loc_66F9DEFBC438", operation),
+        94 => L.F("Loc_40AC23241860", operation),
+        97 => L.F("Loc_F492316C98BF", operation),
+        100 => L.F("Loc_027272AD9FA9", operation),
+        _ => L.F("Loc_2AFC0800FC40", operation, code)
     };
 
     private sealed record WmiConfigurationData(bool IpEnabled, bool DhcpEnabled,

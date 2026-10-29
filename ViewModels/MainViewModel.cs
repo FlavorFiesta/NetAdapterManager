@@ -34,7 +34,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isTopmost;
     private bool _isPresetDialogOpen;
     private bool _isRefreshingPresetGroups;
-    private string _statusMessage = "正在初始化…";
+    private string _statusMessage = L.T("Loc_9866F869B0BD");
     private string _detailMessage = string.Empty;
     private string _warningMessage = string.Empty;
     private CancellationTokenSource? _toastCancellation;
@@ -44,8 +44,9 @@ public sealed class MainViewModel : ObservableObject
     private bool _isToastVisible;
     private bool _toastSucceeded = true;
     private string _presetSearchText = string.Empty;
-    private string _presetGroupFilter = "全部分组";
+    private string _presetGroupFilter = NetAdapterManager.Models.GroupIds.All;
     private DateTimeOffset? _lastRefresh;
+    private string _presetLoadError = string.Empty;
 
     public ObservableCollection<AdapterViewModel> Adapters { get; } = [];
     public ObservableCollection<Preset> Presets { get; } = [];
@@ -64,9 +65,9 @@ public sealed class MainViewModel : ObservableObject
         var affected = _allPresets.Where(x => selectedIds.Contains(x.Id)).ToList();
         if (affected.Count == 0) return false;
         var group = NormalizeGroupName(destinationGroup);
-        if (!delete && (group == "全部分组" || !GetEditablePresetGroups().Contains(group, StringComparer.OrdinalIgnoreCase)))
+        if (!delete && (group == NetAdapterManager.Models.GroupIds.All || !GetEditablePresetGroups().Contains(group, StringComparer.OrdinalIgnoreCase)))
         {
-            StatusMessage = "请选择有效的目标分组。";
+            StatusMessage = L.T("Loc_C099B2F83340");
             return false;
         }
         SetPresetDialogOpen(true);
@@ -91,16 +92,16 @@ public sealed class MainViewModel : ObservableObject
             RefreshPresetGroups();
             RefreshPresetFilter();
             SelectedPreset = Presets.FirstOrDefault(x => x.Id == selectedId);
-            StatusMessage = delete ? $"已删除 {affected.Count} 个预设。" : $"已将 {affected.Count} 个预设移动到“{group}”。";
+            StatusMessage = delete ? L.F("Loc_9AFFA6F3315D", affected.Count) : L.F("Loc_5C8E61F5D03B", affected.Count, group);
             DetailMessage = string.Empty;
             return true;
         }
         catch (Exception ex)
         {
             AppLogger.Error("批量处理预设失败", ex);
-            StatusMessage = "批量处理失败，原预设已保留。";
+            StatusMessage = L.T("Loc_6D341549BDE6");
             DetailMessage = ex.Message;
-            ShowToast("批量处理失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_D92D34B6925D"), FirstLine(ex.Message), false);
             return false;
         }
         finally
@@ -176,14 +177,19 @@ public sealed class MainViewModel : ObservableObject
     }
     public bool CanOperate => !IsBusy && SelectedAdapter is not null;
     public bool CanConfigure => CanOperate;
-    public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
-    public string DetailMessage { get => _detailMessage; private set => SetProperty(ref _detailMessage, value); }
-    public string WarningMessage { get => _warningMessage; private set => SetProperty(ref _warningMessage, value); }
+    private L.Message? _statusMessageTemplate;
+    public string StatusMessage { get => _statusMessageTemplate?.Render() ?? _statusMessage; private set { _statusMessageTemplate = L.Capture(value); SetProperty(ref _statusMessage, value); } }
+    private L.Message? _detailMessageTemplate;
+    public string DetailMessage { get => _detailMessageTemplate?.Render() ?? _detailMessage; private set { _detailMessageTemplate = L.Capture(value); SetProperty(ref _detailMessage, value); } }
+    private L.Message? _warningMessageTemplate;
+    public string WarningMessage { get => _warningMessageTemplate?.Render() ?? _warningMessage; private set { _warningMessageTemplate = L.Capture(value); SetProperty(ref _warningMessage, value); } }
     public string ConfigurationNoticeText => IsBusy
-        ? "正在应用配置并复核，请稍候，不要重复点击。"
-        : "点击“应用配置”后会写入并自动复核；失败时会自动回滚。";
-    public string ToastTitle { get => _toastTitle; private set => SetProperty(ref _toastTitle, value); }
-    public string ToastDetail { get => _toastDetail; private set => SetProperty(ref _toastDetail, value); }
+        ? L.T("Loc_22159535DDE4")
+        : L.T("Loc_5088ACBDB947");
+    private L.Message? _toastTitleTemplate;
+    public string ToastTitle { get => _toastTitleTemplate?.Render() ?? _toastTitle; private set { _toastTitleTemplate = L.Capture(value); SetProperty(ref _toastTitle, value); } }
+    private L.Message? _toastDetailTemplate;
+    public string ToastDetail { get => _toastDetailTemplate?.Render() ?? _toastDetail; private set { _toastDetailTemplate = L.Capture(value); SetProperty(ref _toastDetail, value); } }
     public bool IsToastVisible { get => _isToastVisible; private set => SetProperty(ref _isToastVisible, value); }
     public bool ToastSucceeded { get => _toastSucceeded; private set => SetProperty(ref _toastSucceeded, value); }
     public string PresetSearchText
@@ -195,15 +201,15 @@ public sealed class MainViewModel : ObservableObject
         }
     }
     public bool CanSavePreset => CanOperate && !_isPresetDialogOpen;
-    public string PresetCountText => string.IsNullOrWhiteSpace(PresetSearchText) && PresetGroupFilter == "全部分组"
-        ? $"共 {_allPresets.Count} 个预设"
-        : $"显示 {Presets.Count} / 共 {_allPresets.Count} 个预设";
+    public string PresetCountText => string.IsNullOrWhiteSpace(PresetSearchText) && PresetGroupFilter == NetAdapterManager.Models.GroupIds.All
+        ? L.F("Loc_CE0AE0BBF7A9", _allPresets.Count)
+        : L.F("Loc_414321860581", Presets.Count, _allPresets.Count);
     public string PresetGroupFilter
     {
         get => _presetGroupFilter;
         set
         {
-            var normalized = string.IsNullOrWhiteSpace(value) ? "全部分组" : value;
+            var normalized = string.IsNullOrWhiteSpace(value) ? NetAdapterManager.Models.GroupIds.All : value;
             if (SetProperty(ref _presetGroupFilter, normalized))
             {
                 if (!_isRefreshingPresetGroups) RefreshPresetFilter();
@@ -214,8 +220,8 @@ public sealed class MainViewModel : ObservableObject
             }
         }
     }
-    public string VersionText => $"版本 {typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.4.11"}";
-    public string LastRefreshText => _lastRefresh is null ? "尚未刷新" : $"最后刷新：{_lastRefresh:yyyy-MM-dd HH:mm:ss}";
+    public string VersionText => L.F("Loc_CE0744E60649", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.5.2");
+    public string LastRefreshText => _lastRefresh is null ? L.T("Loc_712B0B1B0D2A") : L.F("Loc_6CC762C85611", _lastRefresh);
     public bool IsTopmost
     {
         get => _isTopmost;
@@ -226,12 +232,12 @@ public sealed class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(TopmostIconText));
         }
     }
-    public string TopmostToggleText => IsTopmost ? "取消窗口置顶" : "窗口置顶";
+    public string TopmostToggleText => IsTopmost ? L.T("Loc_479C565AB721") : L.T("Loc_A63886DD9F49");
     public string TopmostIconText => IsTopmost ? "\uE77A" : "\uE718";
     public string ExistingAddressesText => SelectedAdapter is null
-        ? "未选择网卡"
+        ? L.T("Loc_2E58832A7E2F")
         : string.Join(Environment.NewLine, SelectedAdapter.Snapshot.Config.IPv4Addresses.Where(x => x is not null).Select(x =>
-            $"{x.Address}/{x.PrefixLength}{(x.IsManaged ? "（本软件管理）" : "（保留）")}"));
+            $"{x.Address}/{x.PrefixLength}{(x.IsManaged ? L.T("Loc_27A2B6F9D1E2") : L.T("Loc_805220E39FB6"))}"));
 
     public RelayCommand RefreshCommand => new(() => _ = RefreshAsync());
     public RelayCommand ApplyCommand => new(ApplyAsync, () => CanConfigure);
@@ -256,6 +262,7 @@ public sealed class MainViewModel : ObservableObject
 
     public MainViewModel(NetworkService? networkService = null, PresetService? presetService = null)
     {
+        _statusMessageTemplate = L.Capture(_statusMessage);
         _networkService = networkService ?? new NetworkService();
         _presetService = presetService ?? new PresetService();
         _presetGroupService = new PresetGroupService(_presetService);
@@ -265,11 +272,11 @@ public sealed class MainViewModel : ObservableObject
     {
         try
         {
+            _presetLoadError = string.Empty;
             _allPresets = await _presetService.LoadAsync() ?? [];
             _customPresetGroups = await _presetGroupService.LoadAsync() ?? [];
             RefreshPresetGroups();
             RefreshPresetFilter();
-            await RefreshAsync();
         }
         catch (Exception ex)
         {
@@ -279,9 +286,11 @@ public sealed class MainViewModel : ObservableObject
             _customPresetGroups = [];
             RefreshPresetGroups();
             RefreshPresetFilter();
-            StatusMessage = "预设数据读取失败，原文件已保留。请修复数据或恢复预设备份。";
+            StatusMessage = L.T("Loc_B9A97B8476A0");
             DetailMessage = ex.Message;
+            _presetLoadError = ex.Message;
         }
+        await RefreshAsync();
     }
 
     private async Task RefreshAsync()
@@ -295,21 +304,23 @@ public sealed class MainViewModel : ObservableObject
             SelectedAdapter = Adapters.FirstOrDefault(a => a.Snapshot.InterfaceGuid == previousGuid) ?? Adapters.FirstOrDefault();
             _lastRefresh = DateTimeOffset.Now;
             OnPropertyChanged(nameof(LastRefreshText));
-            StatusMessage = $"已读取 {snapshots.Count} 个网卡。";
-            DetailMessage = string.Empty;
+            StatusMessage = L.F("Loc_A85CC4FEE060", snapshots.Count);
+            DetailMessage = _presetLoadError;
+            if (!string.IsNullOrEmpty(_presetLoadError))
+                StatusMessage = L.Join("", StatusMessage, L.T("Loc_6C97C280234D"));
         });
     }
 
     private async void ApplyAsync()
     {
         if (SelectedAdapter is null) return;
+        var adapter = SelectedAdapter.Snapshot;
         await RunBusyAsync(async () =>
         {
             var target = BuildEditorConfig();
-            var result = await _networkService.ApplyAsync(SelectedAdapter.Snapshot, target, OperationSource.Manual);
+            var result = await _networkService.ApplyAsync(adapter, target, OperationSource.Manual);
             ShowResult(result);
-            if (!result.Succeeded) return;
-            await RefreshSilentlyAsync(result.FinalSnapshot!.InterfaceGuid);
+            await RefreshAfterOperationAsync(adapter.InterfaceGuid);
         });
     }
 
@@ -318,22 +329,22 @@ public sealed class MainViewModel : ObservableObject
         var adapter = parameter as AdapterViewModel ?? SelectedAdapter;
         if (adapter is null) return;
         var wasEnabled = adapter.Snapshot.Enabled;
-        var action = wasEnabled ? "禁用" : "启用";
+        var action = wasEnabled ? L.T("Loc_7DF5C456C765") : L.T("Loc_F4F0EAD1116B");
         var warning = wasEnabled
-            ? $"确定要禁用网卡“{adapter.Name}”吗？\n\n如果它正在提供网络连接，当前连接会立即中断。"
-            : $"确定要启用网卡“{adapter.Name}”吗？";
-        if (MessageBox.Show(warning, $"确认{action}网卡", MessageBoxButton.YesNo,
+            ? L.F("Loc_4C58F4424982", adapter.Name)
+            : L.F("Loc_A43DB09AF546", adapter.Name);
+        if (MessageBox.Show(warning, L.F("Loc_0EE51E73FEAF", action), MessageBoxButton.YesNo,
                 MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
 
         await RunBusyAsync(async () =>
         {
             var result = await _networkService.SetAdapterEnabledAsync(adapter.Snapshot, !wasEnabled);
-            StatusMessage = result.Succeeded ? (wasEnabled ? "网卡已禁用。" : "网卡已启用。") : "网卡启停失败。";
+            StatusMessage = result.Succeeded ? (wasEnabled ? L.T("Loc_2B54E2F5FC7F") : L.T("Loc_BBA6C8072457")) : L.T("Loc_57C305B2D7C1");
             DetailMessage = result.ErrorDetail ?? string.Empty;
             if (!result.Succeeded)
                 AppLogger.Error($"网卡启停失败：{adapter.Name}；{result.ErrorDetail}");
-            if (result.Succeeded) await RefreshSilentlyAsync(adapter.Snapshot.InterfaceGuid);
+            await RefreshAfterOperationAsync(adapter.Snapshot.InterfaceGuid);
         });
     }
 
@@ -344,16 +355,16 @@ public sealed class MainViewModel : ObservableObject
         try
         {
             var defaultName = $"{SelectedAdapter.Name} - {DateTime.Now:yyyyMMdd-HHmm}";
-            var draft = ShowNewPresetEditor(defaultName, "未分组", BuildEditorConfig(), SelectedAdapter);
+            var draft = ShowNewPresetEditor(defaultName, NetAdapterManager.Models.GroupIds.Ungrouped, BuildEditorConfig(), SelectedAdapter);
             if (draft is null) return;
             await AddPresetAsync(draft);
         }
         catch (Exception ex)
         {
             AppLogger.Error("保存预设失败", ex);
-            StatusMessage = "保存预设失败。";
+            StatusMessage = L.T("Loc_C63B5353CC4C");
             DetailMessage = ex.Message;
-            ShowToast("预设保存失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_CC7BF06F0036"), FirstLine(ex.Message), false);
         }
         finally
         {
@@ -367,10 +378,10 @@ public sealed class MainViewModel : ObservableObject
         var target = preset is null ? null : ResolvePresetAdapter(preset);
         if (preset is null || target is null)
         {
-            StatusMessage = "无法应用预设：找不到预设所属网卡。";
-            DetailMessage = "请刷新网卡，或编辑预设重新选择目标网卡。";
+            StatusMessage = L.T("Loc_8E3D9B6C8224");
+            DetailMessage = L.T("Loc_34DDAB978344");
             AppLogger.Error($"预设应用目标解析失败：预设={preset?.Name ?? "未选择"}，记录网卡={preset?.AdapterName ?? "未记录"}，接口={preset?.AdapterInterfaceGuid ?? "未记录"}");
-            ShowToast("预设应用失败", "找不到预设所属网卡", false);
+            ShowToast(L.T("Loc_589CFA1FD15B"), L.T("Loc_CF814777A239"), false);
             return;
         }
         var targetSnapshot = target.Snapshot;
@@ -379,8 +390,7 @@ public sealed class MainViewModel : ObservableObject
         {
             var result = await _networkService.ApplyAsync(targetSnapshot, preset.Config.Clone(), OperationSource.Preset);
             ShowResult(result);
-            if (!result.Succeeded) return;
-            await RefreshSilentlyAsync(result.FinalSnapshot!.InterfaceGuid);
+            await RefreshAfterOperationAsync(targetSnapshot.InterfaceGuid, preserveDraft: !result.Succeeded);
         });
     }
 
@@ -422,7 +432,7 @@ public sealed class MainViewModel : ObservableObject
             RefreshPresetFilter();
             await SavePresetsAsync();
             SelectedPreset = _allPresets.FirstOrDefault(x => x.Id == updated.Id) ?? updated;
-            StatusMessage = $"预设“{updated.Name}”已更新。";
+            StatusMessage = L.F("Loc_C543A79350FA", updated.Name);
             DetailMessage = string.Empty;
         }
         catch (Exception ex)
@@ -433,9 +443,9 @@ public sealed class MainViewModel : ObservableObject
             RefreshPresetFilter();
             SelectedPreset = originalEntries.ElementAtOrDefault(originalIndex);
             AppLogger.Error("编辑预设失败", ex);
-            StatusMessage = "保存预设修改失败。";
+            StatusMessage = L.T("Loc_4364391EDF8A");
             DetailMessage = ex.Message;
-            ShowToast("预设修改失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_61E68035F1EA"), FirstLine(ex.Message), false);
         }
         finally
         {
@@ -458,7 +468,7 @@ public sealed class MainViewModel : ObservableObject
         try
         {
             await SavePresetsAsync();
-            StatusMessage = "预设已删除。";
+            StatusMessage = L.T("Loc_E86E91912EF0");
             DetailMessage = string.Empty;
         }
         catch (Exception ex)
@@ -468,9 +478,9 @@ public sealed class MainViewModel : ObservableObject
             RefreshPresetFilter();
             SelectedPreset = preset;
             AppLogger.Error("删除预设失败", ex);
-            StatusMessage = "删除预设失败，已恢复原记录。";
+            StatusMessage = L.T("Loc_84FDB03C6159");
             DetailMessage = ex.Message;
-            ShowToast("预设删除失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_E72038175629"), FirstLine(ex.Message), false);
         }
         finally { SetPresetDialogOpen(false); }
     }
@@ -485,13 +495,13 @@ public sealed class MainViewModel : ObservableObject
                 Arguments = "ncpa.cpl",
                 UseShellExecute = true
             });
-            StatusMessage = "已打开系统网络连接。";
+            StatusMessage = L.T("Loc_626C45722D06");
             DetailMessage = string.Empty;
         }
         catch (Exception ex)
         {
             AppLogger.Error("打开系统网络连接失败", ex);
-            StatusMessage = "打开系统网络连接失败。";
+            StatusMessage = L.T("Loc_25D900D90FDE");
             DetailMessage = ex.Message;
         }
     }
@@ -511,9 +521,9 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             AppLogger.Error("打开预设管理失败", ex);
-            StatusMessage = "打开预设管理失败。";
+            StatusMessage = L.T("Loc_EC709D151400");
             DetailMessage = ex.Message;
-            ShowToast("预设管理失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_DE487746F02D"), FirstLine(ex.Message), false);
         }
     }
 
@@ -560,13 +570,13 @@ public sealed class MainViewModel : ObservableObject
     {
         StatusMessage = result.Message;
         DetailMessage = result.ErrorDetail ?? string.Empty;
-        WarningMessage = string.Join(Environment.NewLine, result.Warnings);
+        WarningMessage = L.Join(Environment.NewLine, result.Warnings.ToArray());
         var detail = result.Succeeded ? result.Message : result.ErrorDetail ?? result.Message;
         if (result.Succeeded)
             AppLogger.Info($"网络配置成功：{result.Message}");
         else
             AppLogger.Error($"网络配置失败：{result.Message}；{result.ErrorDetail}");
-        ShowToast(result.Succeeded ? "配置成功" : "配置失败", FirstLine(detail), result.Succeeded);
+        ShowToast(result.Succeeded ? L.T("Loc_C1BDEB148F36") : L.T("Loc_39C0C3D5A3C3"), FirstLine(detail), result.Succeeded);
     }
 
     private async Task RefreshSilentlyAsync(string interfaceGuid)
@@ -578,6 +588,27 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(LastRefreshText));
     }
 
+    private async Task RefreshAfterOperationAsync(string interfaceGuid, bool preserveDraft = true)
+    {
+        var draftGuid = SelectedAdapter?.Snapshot.InterfaceGuid;
+        var draft = (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic);
+        try { await RefreshSilentlyAsync(interfaceGuid); }
+        catch (Exception ex)
+        {
+            // Never leave a stale snapshot actionable or replace the original operation error.
+            Adapters.Clear();
+            _snapshots.Clear();
+            SelectedAdapter = null;
+            OnPropertyChanged(nameof(HasAdapters));
+            DetailMessage = L.Join(Environment.NewLine, DetailMessage, L.Join(" ", L.T("Loc_EA011B9820F1"), ex.Message));
+        }
+        finally
+        {
+            if (preserveDraft && (SelectedAdapter is null || SelectedAdapter.Snapshot.InterfaceGuid == draftGuid))
+                (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic) = draft;
+        }
+    }
+
     internal async Task RunBusyAsync(Func<Task> action)
     {
         if (IsBusy) return;
@@ -587,9 +618,9 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             AppLogger.Error("操作执行失败", ex);
-            StatusMessage = "操作失败。";
+            StatusMessage = L.T("Loc_B3B75BD055C0");
             DetailMessage = ex.Message;
-            ShowToast("操作失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_0C3B4CF7AA25"), FirstLine(ex.Message), false);
         }
         finally { IsBusy = false; completion.TrySetResult(); }
     }
@@ -616,9 +647,9 @@ public sealed class MainViewModel : ObservableObject
     public void ReportUnexpectedError(Exception exception)
     {
         AppLogger.Unhandled("界面线程出现未处理异常", exception);
-        StatusMessage = "软件遇到未处理错误，详细信息已记录到日志。";
-        DetailMessage = $"{FirstLine(exception.Message)} 日志：{AppLogger.LogFilePath}";
-        ShowToast("操作异常", "错误报告已写入日志", false);
+        StatusMessage = L.T("Loc_093BCCBB18F1");
+        DetailMessage = L.F("Loc_F10825042898", FirstLine(exception.Message), AppLogger.LogFilePath);
+        ShowToast(L.T("Loc_5A4205871547"), L.T("Loc_190FFBA24E11"), false);
     }
 
     private async Task HideToastAsync(CancellationTokenSource cancellation)
@@ -651,7 +682,7 @@ public sealed class MainViewModel : ObservableObject
     private static string FirstLine(string? value)
     {
         var text = value?.Trim() ?? string.Empty;
-        if (text.Length == 0) return "请查看底部详细信息。";
+        if (text.Length == 0) return L.T("Loc_1E57D739389D");
         var firstLine = text.Split([Environment.NewLine, "\n", "\r"], StringSplitOptions.RemoveEmptyEntries)[0].Trim();
         return firstLine.Length <= 180 ? firstLine : $"{firstLine[..177]}...";
     }
@@ -725,7 +756,7 @@ public sealed class MainViewModel : ObservableObject
                 ResetPresetFilter();
                 await SavePresetsAsync();
                 SelectedPreset = duplicate;
-                StatusMessage = $"同配置预设已更新为“{duplicate.Name}”，未新增重复记录。";
+                StatusMessage = L.F("Loc_F991765E4315", duplicate.Name);
                 DetailMessage = string.Empty;
             }
             catch
@@ -760,7 +791,7 @@ public sealed class MainViewModel : ObservableObject
             ResetPresetFilter();
             await SavePresetsAsync();
             SelectedPreset = preset;
-            StatusMessage = statusPrefix is null ? $"已保存预设“{preset.Name}”。" : $"{statusPrefix}“{preset.Name}”。";
+            StatusMessage = statusPrefix is null ? L.F("Loc_933A04F8314F", preset.Name) : $"{statusPrefix}“{preset.Name}”。";
             DetailMessage = string.Empty;
         }
         catch
@@ -798,15 +829,15 @@ public sealed class MainViewModel : ObservableObject
 
     private void RefreshPresetGroups()
     {
-        var currentFilter = string.IsNullOrWhiteSpace(_presetGroupFilter) ? "全部分组" : _presetGroupFilter;
-        var groups = new[] { "全部分组", "未分组" }
+        var currentFilter = string.IsNullOrWhiteSpace(_presetGroupFilter) ? NetAdapterManager.Models.GroupIds.All : _presetGroupFilter;
+        var groups = new[] { NetAdapterManager.Models.GroupIds.All, NetAdapterManager.Models.GroupIds.Ungrouped }
             .Concat(_customPresetGroups)
             .Concat(_allPresets.Select(x => NormalizeGroupName(x.GroupName)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         var nextFilter = groups.Contains(currentFilter, StringComparer.OrdinalIgnoreCase)
             ? currentFilter
-            : "全部分组";
+            : NetAdapterManager.Models.GroupIds.All;
         _isRefreshingPresetGroups = true;
         try
         {
@@ -843,7 +874,7 @@ public sealed class MainViewModel : ObservableObject
         var search = PresetSearchText.Trim();
         var group = PresetGroupFilter;
         var filtered = _allPresets.Where(x =>
-                (string.Equals(group, "全部分组", StringComparison.OrdinalIgnoreCase)
+                (string.Equals(group, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(NormalizeGroupName(x.GroupName), group, StringComparison.OrdinalIgnoreCase))
                 && (string.IsNullOrWhiteSpace(search)
                     || x.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
@@ -860,7 +891,7 @@ public sealed class MainViewModel : ObservableObject
     private void ResetPresetFilter()
     {
         _presetSearchText = string.Empty;
-        _presetGroupFilter = "全部分组";
+        _presetGroupFilter = NetAdapterManager.Models.GroupIds.All;
         OnPropertyChanged(nameof(PresetSearchText));
         OnPropertyChanged(nameof(PresetGroupFilter));
         RefreshPresetFilter();
@@ -879,15 +910,15 @@ public sealed class MainViewModel : ObservableObject
             if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.GroupName)) return;
 
             var groupName = NormalizeGroupName(dialog.GroupName);
-            if (string.Equals(groupName, "全部分组", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(groupName, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase))
             {
-                StatusMessage = "“全部分组”是系统筛选项，不能作为预设分组。";
+                StatusMessage = L.T("Loc_BB3CA812D51F");
                 return;
             }
             if (_customPresetGroups.Contains(groupName, StringComparer.OrdinalIgnoreCase)
                 || _allPresets.Any(x => string.Equals(NormalizeGroupName(x.GroupName), groupName, StringComparison.OrdinalIgnoreCase)))
             {
-                StatusMessage = $"分组“{groupName}”已存在。";
+                StatusMessage = L.F("Loc_3EEBA399E8B8", groupName);
                 return;
             }
 
@@ -896,7 +927,7 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             AppLogger.Error("添加预设分组失败", ex);
-            StatusMessage = "添加分组失败。";
+            StatusMessage = L.T("Loc_BC3DC99F0325");
             DetailMessage = ex.Message;
         }
     }
@@ -907,10 +938,10 @@ public sealed class MainViewModel : ObservableObject
         try
         {
             var groupName = NormalizeGroupName(PresetGroupFilter);
-            if (string.Equals(groupName, "全部分组", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(groupName, "未分组", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(groupName, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(groupName, NetAdapterManager.Models.GroupIds.Ungrouped, StringComparison.OrdinalIgnoreCase))
             {
-                StatusMessage = "请选择要删除的自定义分组；“全部分组”和“未分组”不能删除。";
+                StatusMessage = L.T("Loc_A0B1060D02EA");
                 DetailMessage = string.Empty;
                 return;
             }
@@ -919,12 +950,12 @@ public sealed class MainViewModel : ObservableObject
                 .Where(x => string.Equals(NormalizeGroupName(x.GroupName), groupName, StringComparison.OrdinalIgnoreCase))
                 .ToList();
             var prompt = affected.Count == 0
-                ? $"确定删除分组“{groupName}”吗？\n\n该分组没有预设，删除后不会影响其他数据。"
-                : $"确定删除分组“{groupName}”吗？\n\n其中 {affected.Count} 个预设会移动到“未分组”，预设本身不会删除。";
+                ? L.F("Loc_112D386844F2", groupName)
+                : L.F("Loc_92C21E3C7ECC", groupName, affected.Count);
             var owner = Application.Current?.Windows.OfType<Window>()
                 .FirstOrDefault(w => ReferenceEquals(w.DataContext, this))
                 ?? Application.Current?.MainWindow;
-            if (MessageBox.Show(owner, prompt, "删除预设分组", MessageBoxButton.YesNo, MessageBoxImage.Warning)
+            if (MessageBox.Show(owner, prompt, L.T("Loc_A2C0F9EFEB25"), MessageBoxButton.YesNo, MessageBoxImage.Warning)
                 != MessageBoxResult.Yes)
                 return;
 
@@ -933,7 +964,7 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             AppLogger.Error("删除预设分组失败", ex);
-            StatusMessage = "删除分组失败。";
+            StatusMessage = L.T("Loc_7A3494FB90C5");
             DetailMessage = ex.Message;
         }
     }
@@ -956,16 +987,16 @@ public sealed class MainViewModel : ObservableObject
             RefreshPresetGroups();
             ResetPresetFilter();
             SelectedPreset = Presets.FirstOrDefault(x => x.Id == selected);
-            StatusMessage = delete ? $"已删除分组“{groupName}”，关联预设已移到“未分组”。" : $"已添加分组“{groupName}”。";
+            StatusMessage = delete ? L.F("Loc_0194448410D5", groupName) : L.F("Loc_D9E0462A7B76", groupName);
             DetailMessage = string.Empty;
             return true;
         }
         catch (Exception ex)
         {
             AppLogger.Error("保存预设分组失败", ex);
-            StatusMessage = "保存分组失败，原预设和分组已保留。";
+            StatusMessage = L.T("Loc_19656E29A889");
             DetailMessage = ex.Message;
-            ShowToast("保存分组失败", FirstLine(ex.Message), false);
+            ShowToast(L.T("Loc_20570F913040"), FirstLine(ex.Message), false);
             return false;
         }
         finally { _presetStorageGate.Release(); SetPresetDialogOpen(false); }
@@ -974,22 +1005,23 @@ public sealed class MainViewModel : ObservableObject
     private async void RestorePresetBackupAsync()
     {
         if (IsBusy || _isPresetDialogOpen) return;
-        if (MessageBox.Show("将恢复上一次保存前的预设和分组。当前文件会另存保留，是否继续？", "恢复预设备份",
+        if (MessageBox.Show(L.T("Loc_419FDE36875A"), L.T("Loc_C8C662C28870"),
             MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
         await RunBusyAsync(async () =>
         {
             await _presetService.RestoreBackupAsync();
             _allPresets = await _presetService.LoadAsync();
             _customPresetGroups = await _presetGroupService.LoadAsync();
+            _presetLoadError = string.Empty;
             RefreshPresetGroups();
             ResetPresetFilter();
-            StatusMessage = "预设和分组已从备份恢复，恢复前文件已另存。";
+            StatusMessage = L.T("Loc_25E1656CA975");
             DetailMessage = string.Empty;
         });
     }
 
     private IReadOnlyList<string> GetEditablePresetGroups() => PresetGroups
-        .Where(x => !string.Equals(x, "全部分组", StringComparison.OrdinalIgnoreCase))
+        .Where(x => !string.Equals(x, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase))
         .ToList();
 
     private void SetPresetDialogOpen(bool value)
@@ -1003,7 +1035,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     private static string NormalizeGroupName(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? "未分组" : value.Trim();
+        string.IsNullOrWhiteSpace(value) ? NetAdapterManager.Models.GroupIds.Ungrouped : value.Trim();
 
     private static void ReplaceCollection<T>(ObservableCollection<T> target, IEnumerable<T> items)
     {

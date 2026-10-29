@@ -8,7 +8,7 @@ namespace NetAdapterManager.Views;
 public sealed class PresetEditorResult
 {
     public string Name { get; init; } = string.Empty;
-    public string GroupName { get; init; } = "未分组";
+    public string GroupName { get; init; } = NetAdapterManager.Models.GroupIds.Ungrouped;
     public string AdapterName { get; init; } = string.Empty;
     public string AdapterMacAddress { get; init; } = string.Empty;
     public string AdapterInterfaceGuid { get; init; } = string.Empty;
@@ -56,23 +56,24 @@ public partial class PresetEditorWindow : Window
 
     private void LoadGroups(IReadOnlyList<string>? groups, string defaultGroup)
     {
-        var items = new[] { "未分组" }
+        var items = new[] { NetAdapterManager.Models.GroupIds.Ungrouped }
             .Concat(groups ?? [])
             .Where(x => !string.IsNullOrWhiteSpace(x)
-                        && !string.Equals(x, "全部分组", StringComparison.OrdinalIgnoreCase))
+                        && !string.Equals(x, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var selectedGroup = string.IsNullOrWhiteSpace(defaultGroup) ? NetAdapterManager.Models.GroupIds.Ungrouped : defaultGroup.Trim();
+        if (!items.Contains(selectedGroup, StringComparer.OrdinalIgnoreCase) && selectedGroup != GroupIds.All) items.Add(selectedGroup);
         GroupBox.ItemsSource = items;
-        var selectedGroup = string.IsNullOrWhiteSpace(defaultGroup) ? "未分组" : defaultGroup.Trim();
         GroupBox.SelectedItem = items.FirstOrDefault(x =>
             string.Equals(x, selectedGroup, StringComparison.OrdinalIgnoreCase));
-        if (GroupBox.SelectedItem is null) GroupBox.Text = selectedGroup;
+        if (GroupBox.SelectedItem is null) GroupBox.SelectedItem = GroupIds.Ungrouped;
     }
 
     private void SetFallbackAdapter(string? adapterName, string? macAddress, string? interfaceGuid)
     {
-        _fallbackAdapterName = string.IsNullOrWhiteSpace(adapterName) ? "未指定" : adapterName;
+        _fallbackAdapterName = string.IsNullOrWhiteSpace(adapterName) ? L.T("Loc_7409A608060F") : adapterName;
         _fallbackMacAddress = macAddress ?? string.Empty;
         _fallbackInterfaceGuid = interfaceGuid ?? string.Empty;
         AdapterNameText.Text = _fallbackAdapterName;
@@ -124,7 +125,7 @@ public partial class PresetEditorWindow : Window
         var name = NameBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetValidationMessage("请输入预设名称。");
+            SetValidationMessage(L.T("Loc_CAB9417058BF"));
             NameBox.Focus();
             return;
         }
@@ -162,7 +163,7 @@ public partial class PresetEditorWindow : Window
         Result = new PresetEditorResult
         {
             Name = name,
-            GroupName = string.IsNullOrWhiteSpace(GroupBox.Text) ? "未分组" : GroupBox.Text.Trim(),
+            GroupName = GroupBox.SelectedItem as string ?? NetAdapterManager.Models.GroupIds.Ungrouped,
             AdapterName = _selectedAdapter?.Name ?? _fallbackAdapterName,
             AdapterMacAddress = _selectedAdapter?.Snapshot.MacAddress ?? _fallbackMacAddress,
             AdapterInterfaceGuid = _selectedAdapter?.Snapshot.InterfaceGuid ?? _fallbackInterfaceGuid,

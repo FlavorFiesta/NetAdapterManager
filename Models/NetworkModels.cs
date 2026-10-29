@@ -82,8 +82,10 @@ public sealed class AdapterSnapshot
 
 public sealed class Preset : INotifyPropertyChanged
 {
+    public Preset() => System.ComponentModel.PropertyChangedEventManager.AddHandler(L.Instance, LanguageChanged, string.Empty);
+    private void LanguageChanged(object? sender, PropertyChangedEventArgs e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     private string _name = string.Empty;
-    private string _groupName = "未分组";
+    private string _groupName = NetAdapterManager.Models.GroupIds.Ungrouped;
     private string _adapterName = string.Empty;
     private string _adapterMacAddress = string.Empty;
     private string _adapterInterfaceGuid = string.Empty;
@@ -116,10 +118,10 @@ public sealed class Preset : INotifyPropertyChanged
     }
     public string GroupName
     {
-        get => string.IsNullOrWhiteSpace(_groupName) ? "未分组" : _groupName;
+        get => string.IsNullOrWhiteSpace(_groupName) ? NetAdapterManager.Models.GroupIds.Ungrouped : _groupName;
         set
         {
-            var normalized = string.IsNullOrWhiteSpace(value) ? "未分组" : value.Trim();
+            var normalized = string.IsNullOrWhiteSpace(value) ? NetAdapterManager.Models.GroupIds.Ungrouped : value.Trim();
             if (_groupName == normalized) return;
             _groupName = normalized;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GroupName)));
@@ -192,19 +194,19 @@ public sealed class Preset : INotifyPropertyChanged
 
     [JsonIgnore]
     public string IpSummary => Config.IpMode == IpMode.Dhcp
-        ? "IPv4：DHCP 自动获取"
+        ? L.T("Loc_168F008AB7BD")
         : $"IPv4：{string.Join("，", Config.IPv4Addresses.Where(x => x is not null).Select(x =>
             string.IsNullOrWhiteSpace(x.Gateway)
                 ? $"{x.Address}/{x.PrefixLength}"
-                : $"{x.Address}/{x.PrefixLength}，网关 {x.Gateway}"))}";
+                : L.F("Loc_12C8640F2F18", x.Address, x.PrefixLength, x.Gateway)))}";
 
     [JsonIgnore]
     public string DnsSummary => Config.DnsMode == DnsMode.Automatic
-        ? "DNS：自动获取"
+        ? L.T("Loc_36A84A014003")
         : $"DNS：{string.Join("，", Config.DnsServers.Where(x => x is not null))}";
 
     [JsonIgnore]
-    public string AdapterSummary => string.IsNullOrWhiteSpace(AdapterName) ? "网卡：未记录" : $"网卡：{AdapterName}";
+    public string AdapterSummary => string.IsNullOrWhiteSpace(AdapterName) ? L.T("Loc_877E25224243") : L.F("Loc_E6BD4D087F2A", AdapterName);
 
     [JsonIgnore]
     public string MacSummary => string.IsNullOrWhiteSpace(AdapterMacAddress)

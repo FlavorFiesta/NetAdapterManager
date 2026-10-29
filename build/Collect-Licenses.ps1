@@ -6,10 +6,10 @@ Copy-Item -LiteralPath (Join-Path $projectRoot "THIRD-PARTY-NOTICES.md") -Destin
 Copy-Item -LiteralPath (Join-Path $projectRoot "licenses") -Destination $PublishRoot -Recurse
 
 # Collect notices from the exact restored packages and bundled runtime versions.
-$assets = Get-Content (Join-Path $projectRoot "obj\project.assets.json") -Raw | ConvertFrom-Json
+$assets = Get-Content (Join-Path $projectRoot "obj\project.assets.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 $packageFolders = @($assets.packageFolders.PSObject.Properties.Name)
 $packages = @($assets.libraries.PSObject.Properties | Where-Object { $_.Value.type -eq "package" } | ForEach-Object { $_.Value.path })
-$runtime = Get-Content (Join-Path $PublishRoot "NetAdapterManager.runtimeconfig.json") -Raw | ConvertFrom-Json
+$runtime = Get-Content (Join-Path $PublishRoot "NetAdapterManager.runtimeconfig.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($framework in $runtime.runtimeOptions.includedFrameworks) {
     $packages += "$($framework.name.ToLowerInvariant()).runtime.win-x64/$($framework.version)"
 }

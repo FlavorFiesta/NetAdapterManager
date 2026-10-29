@@ -95,6 +95,12 @@ try {
     $selfTestOutput = Invoke-Dotnet @($selfTestDll, "--result", $readOnlyResult)
     Add-Check "Model/service checks" $true "SelfTest completed; result: $readOnlyResult"
 
+    Push-Location $projectRoot
+    try {
+        Invoke-Dotnet @($selfTestDll, "--appearance-smoke") | Out-Null
+        Add-Check "Language and theme UI" $true "Six language/theme combinations, settings persistence, contrast and draft preservation passed."
+    } finally { Pop-Location }
+
     Push-Location $evidenceRoot
     try {
         Invoke-Dotnet @($selfTestDll, "--ui-smoke") | Out-Null

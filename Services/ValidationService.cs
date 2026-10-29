@@ -16,36 +16,36 @@ public static class ValidationService
                 ?? config.IPv4Addresses.FirstOrDefault();
 
             if (managed is null || !TryParseIPv4(managed.Address, out _))
-                result.Errors.Add("静态 IPv4 模式必须填写合法的 IPv4 地址。");
+                result.Errors.Add(L.T("Loc_77F44E3CE3F1"));
             else if (managed.PrefixLength is < 0 or > 32)
-                result.Errors.Add("子网前缀长度必须在 0 到 32 之间。");
+                result.Errors.Add(L.T("Loc_538E766A8272"));
 
             if (managed?.Gateway is { Length: > 0 } gateway && !TryParseIPv4(gateway, out _))
-                result.Errors.Add("默认网关不是合法的 IPv4 地址。");
+                result.Errors.Add(L.T("Loc_15B34F0EA59C"));
 
             if (managed is not null && managed.Gateway is { Length: > 0 } validGateway &&
                 TryParseIPv4(managed.Address, out var address) && TryParseIPv4(validGateway, out var gatewayAddress) &&
                 !IsSameSubnet(address, gatewayAddress, managed.PrefixLength))
             {
-                result.Warnings.Add("默认网关与 IPv4 地址不在同一子网，仍可继续应用。");
+                result.Warnings.Add(L.T("Loc_2F728E22C64B"));
             }
         }
 
         if (config.DnsMode == DnsMode.Static)
         {
             if (config.DnsServers.Count > 2)
-                result.Errors.Add("最多只能配置两个 DNS 地址。");
+                result.Errors.Add(L.T("Loc_1C5815A50C5A"));
 
             foreach (var dns in config.DnsServers.Where(x => !string.IsNullOrWhiteSpace(x)))
             {
                 if (!TryParseIPv4(dns, out _))
-                    result.Errors.Add($"DNS 地址不是合法的 IPv4 地址：{dns}");
+                    result.Errors.Add(L.F("Loc_87B772C3150A", dns));
             }
 
             var distinctDns = config.DnsServers.Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim()).ToList();
             if (distinctDns.Count == 2 && string.Equals(distinctDns[0], distinctDns[1], StringComparison.OrdinalIgnoreCase))
-                result.Errors.Add("备用 DNS 不能与首选 DNS 相同。");
+                result.Errors.Add(L.T("Loc_BB70503F5012"));
         }
 
         return result;

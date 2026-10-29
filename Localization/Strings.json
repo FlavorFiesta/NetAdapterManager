@@ -1,0 +1,1152 @@
+{
+  "Loc_0194448410D5": {
+    "zh-CN": "已删除分组“{0}”，关联预设已移到“未分组”。",
+    "zh-TW": "已刪除分組“{0}”，關聯預設已移到“未分組”。",
+    "en": "Group “{0}” deleted. Its presets are now ungrouped."
+  },
+  "Loc_027272AD9FA9": {
+    "zh-CN": "{0}失败：网卡未启用 DHCP（WMI 100）。",
+    "zh-TW": "{0}失敗：介面卡未啟用 DHCP（WMI 100）。",
+    "en": "{0} failed: DHCP is not enabled (WMI 100)."
+  },
+  "Loc_051836569928": {
+    "zh-CN": "编辑",
+    "zh-TW": "編輯",
+    "en": "Edit"
+  },
+  "Loc_093BCCBB18F1": {
+    "zh-CN": "软件遇到未处理错误，详细信息已记录到日志。",
+    "zh-TW": "軟體遇到未處理錯誤，詳細信息已記錄到記錄檔。",
+    "en": "An unexpected error occurred. Details were written to the log."
+  },
+  "Loc_0C3B4CF7AA25": {
+    "zh-CN": "操作失败",
+    "zh-TW": "操作失敗",
+    "en": "Operation failed"
+  },
+  "Loc_0C918C6FDE83": {
+    "zh-CN": "批量移动到分组",
+    "zh-TW": "批量移動到分組",
+    "en": "Move selected presets to a group"
+  },
+  "Loc_0CF642CF998C": {
+    "zh-CN": "启动失败",
+    "zh-TW": "啟動失敗",
+    "en": "Startup failed"
+  },
+  "Loc_0D01866EE42E": {
+    "zh-CN": "刷新网卡",
+    "zh-TW": "刷新介面卡",
+    "en": "Refresh"
+  },
+  "Loc_0D7FFA6FE9AB": {
+    "zh-CN": "网卡启停超时或取消，系统操作可能仍在进行。状态未知，已禁止继续写入；请在系统网络连接中确认操作结束后再重启程序。",
+    "zh-TW": "介面卡啟停超時或取消，系統操作可能仍在進行。狀態未知，已禁止繼續寫入；請在系統網路連接中確認操作結束后再重啟程序。",
+    "en": "Adapter operation timed out or was canceled. Windows may still be processing it. Further writes are blocked. Confirm that it has finished in Windows Network Connections before restarting this app."
+  },
+  "Loc_0EE51E73FEAF": {
+    "zh-CN": "确认{0}网卡",
+    "zh-TW": "確認{0}介面卡",
+    "en": "Confirm: {0} adapter"
+  },
+  "Loc_112D386844F2": {
+    "zh-CN": "确定删除分组“{0}”吗？\n\n该分组没有预设，删除后不会影响其他数据。",
+    "zh-TW": "確定刪除分組“{0}”嗎？\n\n該分組沒有預設，刪除后不會影響其他數據。",
+    "en": "Delete group “{0}”?\n\nThis group is empty. Other data will not be affected."
+  },
+  "Loc_12C8640F2F18": {
+    "zh-CN": "{0}/{1}，网关 {2}",
+    "zh-TW": "{0}/{1}，網關 {2}",
+    "en": "{0}/{1}, gateway {2}"
+  },
+  "Loc_143A15167E55": {
+    "zh-CN": "Windows netsh 执行失败（退出码 {0}）：{1}",
+    "zh-TW": "Windows netsh 執行失敗（退出碼 {0}）：{1}",
+    "en": "Windows netsh failed (exit code {0}): {1}"
+  },
+  "Loc_15B34F0EA59C": {
+    "zh-CN": "默认网关不是合法的 IPv4 地址。",
+    "zh-TW": "預設網關不是合法的 IPv4 地址。",
+    "en": "The default gateway must be a valid IPv4 address."
+  },
+  "Loc_168F008AB7BD": {
+    "zh-CN": "IPv4：DHCP 自动获取",
+    "zh-TW": "IPv4：DHCP 自動獲取",
+    "en": "IPv4: Automatic (DHCP)"
+  },
+  "Loc_190FFBA24E11": {
+    "zh-CN": "错误报告已写入日志",
+    "zh-TW": "錯誤報告已寫入記錄檔",
+    "en": "An error report was written to the log"
+  },
+  "Loc_19656E29A889": {
+    "zh-CN": "保存分组失败，原预设和分组已保留。",
+    "zh-TW": "保存分組失敗，原預設和分組已保留。",
+    "en": "Could not save the group. Existing presets and groups were preserved."
+  },
+  "Loc_19A5E080978D": {
+    "zh-CN": "无法确认是否已有程序运行，本次启动已停止。请关闭其他实例后重试。",
+    "zh-TW": "無法確認是否已有程序運行，本次啟動已停止。請關閉其他實例后重試。",
+    "en": "Could not check for another running instance. Close other instances and try again."
+  },
+  "Loc_1AE486278078": {
+    "zh-CN": "恢复备份",
+    "zh-TW": "恢復備份",
+    "en": "Restore backup"
+  },
+  "Loc_1B0A00450922": {
+    "zh-CN": "配置已写入，但复核时找不到目标网卡。",
+    "zh-TW": "設定已寫入，但復核時找不到目標介面卡。",
+    "en": "Configuration was written, but the adapter could not be found during verification."
+  },
+  "Loc_1B21B8D1F61F": {
+    "zh-CN": "已勾选 0 项",
+    "zh-TW": "已勾選 0 項",
+    "en": "0 selected"
+  },
+  "Loc_1C5815A50C5A": {
+    "zh-CN": "最多只能配置两个 DNS 地址。",
+    "zh-TW": "最多只能設定兩個 DNS 地址。",
+    "en": "You can configure at most two DNS addresses."
+  },
+  "Loc_1C95AB9B144E": {
+    "zh-CN": "繁體中文",
+    "zh-TW": "繁體中文",
+    "en": "繁體中文"
+  },
+  "Loc_1E57D739389D": {
+    "zh-CN": "请查看底部详细信息。",
+    "zh-TW": "請查看底部詳細信息。",
+    "en": "See the details at the bottom of the window."
+  },
+  "Loc_1F0AC6953E04": {
+    "zh-CN": "已断开",
+    "zh-TW": "已斷開",
+    "en": "Disconnected"
+  },
+  "Loc_20570F913040": {
+    "zh-CN": "保存分组失败",
+    "zh-TW": "保存分組失敗",
+    "en": "Could not save group"
+  },
+  "Loc_20DA51B784A7": {
+    "zh-CN": "添加后会保留在分组下拉框中，即使该分组暂时没有预设。",
+    "zh-TW": "添加后會保留在分組下拉框中，即使該分組暫時沒有預設。",
+    "en": "The group stays in the list even when it has no presets."
+  },
+  "Loc_22159535DDE4": {
+    "zh-CN": "正在应用配置并复核，请稍候，不要重复点击。",
+    "zh-TW": "正在應用設定并復核，請稍候，不要重復點擊。",
+    "en": "Applying and verifying configuration. Please wait."
+  },
+  "Loc_25D900D90FDE": {
+    "zh-CN": "打开系统网络连接失败。",
+    "zh-TW": "打開系統網路連接失敗。",
+    "en": "Could not open Windows Network Connections."
+  },
+  "Loc_25E1656CA975": {
+    "zh-CN": "预设和分组已从备份恢复，恢复前文件已另存。",
+    "zh-TW": "預設和分組已從備份恢復，恢復前檔案已另存。",
+    "en": "Presets and groups restored. The previous file was saved separately."
+  },
+  "Loc_27A2B6F9D1E2": {
+    "zh-CN": "（本软件管理）",
+    "zh-TW": "（本軟體管理）",
+    "en": " (managed by this app)"
+  },
+  "Loc_29C37EA0105B": {
+    "zh-CN": "批量换分组",
+    "zh-TW": "批量換分組",
+    "en": "Move to group"
+  },
+  "Loc_2AFC0800FC40": {
+    "zh-CN": "{0}失败，Windows 返回 WMI 错误码 {1}。",
+    "zh-TW": "{0}失敗，Windows 返回 WMI 錯誤碼 {1}。",
+    "en": "{0} failed. Windows returned WMI error {1}."
+  },
+  "Loc_2B54E2F5FC7F": {
+    "zh-CN": "网卡已禁用。",
+    "zh-TW": "介面卡已禁用。",
+    "en": "Adapter disabled."
+  },
+  "Loc_2CD0F3BE8738": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en": "Cancel"
+  },
+  "Loc_2E58832A7E2F": {
+    "zh-CN": "未选择网卡",
+    "zh-TW": "未選擇介面卡",
+    "en": "No adapter selected"
+  },
+  "Loc_2F728E22C64B": {
+    "zh-CN": "默认网关与 IPv4 地址不在同一子网，仍可继续应用。",
+    "zh-TW": "預設網關與 IPv4 地址不在同一子網，仍可繼續應用。",
+    "en": "The default gateway is outside the IPv4 subnet. You can still apply this configuration."
+  },
+  "Loc_2F9DAA828907": {
+    "zh-CN": "删除",
+    "zh-TW": "刪除",
+    "en": "Delete"
+  },
+  "Loc_30C8E670B34D": {
+    "zh-CN": "写入、复核或恢复完成后会自动关闭窗口。",
+    "zh-TW": "寫入、復核或恢復完成后會自動關閉視窗。",
+    "en": "This window will close when writing, verification or recovery finishes."
+  },
+  "Loc_34DDAB978344": {
+    "zh-CN": "请刷新网卡，或编辑预设重新选择目标网卡。",
+    "zh-TW": "請刷新介面卡，或編輯預設重新選擇目標介面卡。",
+    "en": "Refresh the adapter list, or edit the preset to select its target adapter."
+  },
+  "Loc_35442C038DB9": {
+    "zh-CN": "取消勾选",
+    "zh-TW": "取消勾選",
+    "en": "Clear selection"
+  },
+  "Loc_35654FA0CB49": {
+    "zh-CN": "IPv4 模式",
+    "zh-TW": "IPv4 模式",
+    "en": "IPv4 mode"
+  },
+  "Loc_36A3D36016FA": {
+    "zh-CN": "禁用网卡",
+    "zh-TW": "禁用介面卡",
+    "en": "Disable adapter"
+  },
+  "Loc_36A84A014003": {
+    "zh-CN": "DNS：自动获取",
+    "zh-TW": "DNS：自動獲取",
+    "en": "DNS: Automatic"
+  },
+  "Loc_36C818B1C6B4": {
+    "zh-CN": "搜索预设",
+    "zh-TW": "搜索預設",
+    "en": "Search presets"
+  },
+  "Loc_38FD97A244EA": {
+    "zh-CN": "请输入分组名称。",
+    "zh-TW": "請輸入分組名稱。",
+    "en": "Enter a group name."
+  },
+  "Loc_3985AFB218A7": {
+    "zh-CN": "管理员模式 · IPv4",
+    "zh-TW": "管理員模式 · IPv4",
+    "en": "Administrator · IPv4"
+  },
+  "Loc_399EE6934772": {
+    "zh-CN": "分组",
+    "zh-TW": "分組",
+    "en": "Group"
+  },
+  "Loc_39C0C3D5A3C3": {
+    "zh-CN": "配置失败",
+    "zh-TW": "設定失敗",
+    "en": "Configuration failed"
+  },
+  "Loc_3AB57DD1E321": {
+    "zh-CN": "保存预设",
+    "zh-TW": "保存預設",
+    "en": "Save preset"
+  },
+  "Loc_3D5DC09B19EC": {
+    "zh-CN": "无法识别网卡接口，不能读取 DNS 配置来源。",
+    "zh-TW": "無法識別介面卡接口，不能讀取 DNS 設定來源。",
+    "en": "Cannot identify the adapter interface to read its DNS configuration source."
+  },
+  "Loc_3EA51B185EAA": {
+    "zh-CN": "首选 DNS",
+    "zh-TW": "首選 DNS",
+    "en": "Preferred DNS"
+  },
+  "Loc_3EEBA399E8B8": {
+    "zh-CN": "分组“{0}”已存在。",
+    "zh-TW": "分組“{0}”已存在。",
+    "en": "Group “{0}” already exists."
+  },
+  "Loc_3FD47EDCE45B": {
+    "zh-CN": "关闭",
+    "zh-TW": "關閉",
+    "en": "Close"
+  },
+  "Loc_40AC23241860": {
+    "zh-CN": "{0}失败：找不到路径或对象（WMI 94）。",
+    "zh-TW": "{0}失敗：找不到路徑或對象（WMI 94）。",
+    "en": "{0} failed: path or object not found (WMI 94)."
+  },
+  "Loc_4107785BE450": {
+    "zh-CN": "预设库格式不受支持或不完整，原文件已保留。",
+    "zh-TW": "預設庫格式不受支持或不完整，原檔案已保留。",
+    "en": "The preset library is unsupported or incomplete. The original file was preserved."
+  },
+  "Loc_414321860581": {
+    "zh-CN": "显示 {0} / 共 {1} 个预设",
+    "zh-TW": "顯示 {0} / 共 {1} 個預設",
+    "en": "Showing {0} of {1} presets"
+  },
+  "Loc_419FDE36875A": {
+    "zh-CN": "将恢复上一次保存前的预设和分组。当前文件会另存保留，是否继续？",
+    "zh-TW": "將恢復上一次保存前的預設和分組。當前檔案會另存保留，是否繼續？",
+    "en": "Restore presets and groups from before the last save? The current file will be preserved separately."
+  },
+  "Loc_42D98D4EFBF1": {
+    "zh-CN": "无法添加",
+    "zh-TW": "無法添加",
+    "en": "Cannot add group"
+  },
+  "Loc_4364391EDF8A": {
+    "zh-CN": "保存预设修改失败。",
+    "zh-TW": "保存預設修改失敗。",
+    "en": "Could not save preset changes."
+  },
+  "Loc_479C565AB721": {
+    "zh-CN": "取消窗口置顶",
+    "zh-TW": "取消視窗置頂",
+    "en": "Stop keeping window on top"
+  },
+  "Loc_48F6B9E3225B": {
+    "zh-CN": "选择应用预设或新建预设所使用的网卡",
+    "zh-TW": "選擇應用預設或新建預設所使用的介面卡",
+    "en": "Select the adapter used to apply or create a preset"
+  },
+  "Loc_4B9AC26F8B2F": {
+    "zh-CN": "无法确认当前用户身份。",
+    "zh-TW": "無法確認當前用戶身份。",
+    "en": "Cannot identify the current user."
+  },
+  "Loc_4BFF1AF76C86": {
+    "zh-CN": "已禁止继续写入，请检查系统状态后重启程序。",
+    "zh-TW": "已禁止繼續寫入，請檢查系統狀態后重啟程序。",
+    "en": "Further writes are blocked. Check the system state before restarting this app."
+  },
+  "Loc_4C58F4424982": {
+    "zh-CN": "确定要禁用网卡“{0}”吗？\n\n如果它正在提供网络连接，当前连接会立即中断。",
+    "zh-TW": "確定要禁用介面卡“{0}”嗎？\n\n如果它正在提供網路連接，當前連接會立即中斷。",
+    "en": "Disable adapter “{0}”?\n\nIf it provides your network connection, that connection will stop immediately."
+  },
+  "Loc_4D8C1C5B4283": {
+    "zh-CN": "未知",
+    "zh-TW": "未知",
+    "en": "Unknown"
+  },
+  "Loc_50832184B754": {
+    "zh-CN": "子网掩码 / CIDR",
+    "zh-TW": "子網掩碼 / CIDR",
+    "en": "Subnet mask / CIDR"
+  },
+  "Loc_5088ACBDB947": {
+    "zh-CN": "点击“应用配置”后会写入并自动复核；失败时会自动回滚。",
+    "zh-TW": "點擊“應用設定”后會寫入并自動復核；失敗時會自動回滾。",
+    "en": "Apply writes and verifies the configuration, then attempts a rollback if it fails."
+  },
+  "Loc_51AAE58F282E": {
+    "zh-CN": "默认网关",
+    "zh-TW": "預設網關",
+    "en": "Default gateway"
+  },
+  "Loc_52496E5AEFF4": {
+    "zh-CN": "未分配",
+    "zh-TW": "未分配",
+    "en": "Not assigned"
+  },
+  "Loc_538E766A8272": {
+    "zh-CN": "子网前缀长度必须在 0 到 32 之间。",
+    "zh-TW": "子網前綴長度必須在 0 到 32 之間。",
+    "en": "The subnet prefix length must be between 0 and 32."
+  },
+  "Loc_558EC6978AB8": {
+    "zh-CN": "{0}失败：当前平台不支持此操作（WMI 64）。",
+    "zh-TW": "{0}失敗：當前平臺不支持此操作（WMI 64）。",
+    "en": "{0} failed: operation unsupported on this platform (WMI 64)."
+  },
+  "Loc_564914985A95": {
+    "zh-CN": "请先选择要移动到的分组。",
+    "zh-TW": "請先選擇要移動到的分組。",
+    "en": "Select a destination group first."
+  },
+  "Loc_572B62D5A86B": {
+    "zh-CN": "确定删除勾选的 {0} 个预设？（包含筛选隐藏的已勾选项）",
+    "zh-TW": "確定刪除勾選的 {0} 個預設？（包含篩選隱藏的已勾選項）",
+    "en": "Delete {0} selected presets, including selected items hidden by the filter?"
+  },
+  "Loc_57C305B2D7C1": {
+    "zh-CN": "网卡启停失败。",
+    "zh-TW": "介面卡啟停失敗。",
+    "en": "Could not change the adapter state."
+  },
+  "Loc_589CFA1FD15B": {
+    "zh-CN": "预设应用失败",
+    "zh-TW": "預設應用失敗",
+    "en": "Could not apply preset"
+  },
+  "Loc_58EF0332A611": {
+    "zh-CN": "配置已应用并复核一致。",
+    "zh-TW": "設定已應用并復核一致。",
+    "en": "Configuration applied and verified."
+  },
+  "Loc_59D57026AA67": {
+    "zh-CN": "当前尚无 IPv4 地址，仍可直接写入系统网络连接配置",
+    "zh-TW": "當前尚無 IPv4 地址，仍可直接寫入系統網路連接設定",
+    "en": "No IPv4 address yet. You can still configure this adapter."
+  },
+  "Loc_5A4205871547": {
+    "zh-CN": "操作异常",
+    "zh-TW": "操作異常",
+    "en": "Unexpected error"
+  },
+  "Loc_5B4C4C1CC0A2": {
+    "zh-CN": "网卡当前已禁用，仍可写入系统网络连接配置；启用后即可使用",
+    "zh-TW": "介面卡當前已禁用，仍可寫入系統網路連接設定；啟用后即可使用",
+    "en": "This adapter is disabled. You can configure it now and use it after enabling it."
+  },
+  "Loc_5BE0323E8ADC": {
+    "zh-CN": "已连接",
+    "zh-TW": "已連接",
+    "en": "Connected"
+  },
+  "Loc_5C26AEA1497D": {
+    "zh-CN": "IPv4 配置",
+    "zh-TW": "IPv4 設定",
+    "en": "IPv4 configuration"
+  },
+  "Loc_5C8E61F5D03B": {
+    "zh-CN": "已将 {0} 个预设移动到“{1}”。",
+    "zh-TW": "已將 {0} 個預設移動到“{1}”。",
+    "en": "Moved {0} presets to “{1}”."
+  },
+  "Loc_5E38EF80FE5A": {
+    "zh-CN": "打开系统控制面板中的网络连接",
+    "zh-TW": "打開系統控制面板中的網路連接",
+    "en": "Open Network Connections in Windows Control Panel"
+  },
+  "Loc_5FE110AA6D1D": {
+    "zh-CN": "预设名称",
+    "zh-TW": "預設名稱",
+    "en": "Preset name"
+  },
+  "Loc_604827F11691": {
+    "zh-CN": "无法确认系统命令已完全退出；已停止后续写入，请检查系统网络状态。",
+    "zh-TW": "無法確認系統命令已完全退出；已停止后續寫入，請檢查系統網路狀態。",
+    "en": "Cannot confirm that the system command has exited. Further writes are blocked. Check the system network state."
+  },
+  "Loc_61E68035F1EA": {
+    "zh-CN": "预设修改失败",
+    "zh-TW": "預設修改失敗",
+    "en": "Could not update preset"
+  },
+  "Loc_620D67C03E6D": {
+    "zh-CN": "DHCP 自动获取",
+    "zh-TW": "DHCP 自動獲取",
+    "en": "Automatic (DHCP)"
+  },
+  "Loc_626C45722D06": {
+    "zh-CN": "已打开系统网络连接。",
+    "zh-TW": "已打開系統網路連接。",
+    "en": "Opened Windows Network Connections."
+  },
+  "Loc_63C73C4730F4": {
+    "zh-CN": "应用",
+    "zh-TW": "應用",
+    "en": "Apply"
+  },
+  "Loc_657D9CBF45EC": {
+    "zh-CN": "清除筛选",
+    "zh-TW": "清除篩選",
+    "en": "Clear filters"
+  },
+  "Loc_65E25A5E51DE": {
+    "zh-CN": "网络适配器管理器已在运行，请使用已打开的窗口。",
+    "zh-TW": "網路介面卡管理器已在運行，請使用已打開的視窗。",
+    "en": "NetAdapterManager is already running. Use the existing window."
+  },
+  "Loc_66F9DEFBC438": {
+    "zh-CN": "{0}失败：权限不足（WMI 91）。",
+    "zh-TW": "{0}失敗：權限不足（WMI 91）。",
+    "en": "{0} failed: access denied (WMI 91)."
+  },
+  "Loc_670F0A1D31C0": {
+    "zh-CN": "应用配置",
+    "zh-TW": "應用設定",
+    "en": "Apply configuration"
+  },
+  "Loc_69050783CAFB": {
+    "zh-CN": "静态 IPv4",
+    "zh-TW": "靜態 IPv4",
+    "en": "Static IPv4"
+  },
+  "Loc_6BCDDAB012D0": {
+    "zh-CN": "全部预设",
+    "zh-TW": "全部預設",
+    "en": "All presets"
+  },
+  "Loc_6C97C280234D": {
+    "zh-CN": " 预设数据读取失败，原文件已保留。请修复数据或恢复预设备份。",
+    "zh-TW": " 預設數據讀取失敗，原檔案已保留。請修復數據或恢復預設備份。",
+    "en": " Preset data could not be read. The original file was preserved. Repair it or restore a backup."
+  },
+  "Loc_6CC762C85611": {
+    "zh-CN": "最后刷新：{0:yyyy-MM-dd HH:mm:ss}",
+    "zh-TW": "最后刷新：{0:yyyy-MM-dd HH:mm:ss}",
+    "en": "Refreshed: {0:yyyy-MM-dd HH:mm:ss}"
+  },
+  "Loc_6D341549BDE6": {
+    "zh-CN": "批量处理失败，原预设已保留。",
+    "zh-TW": "批量處理失敗，原預設已保留。",
+    "en": "Bulk operation failed. Existing presets were preserved."
+  },
+  "Loc_6D779B4E21E3": {
+    "zh-CN": "无法启动系统命令。",
+    "zh-TW": "無法啟動系統命令。",
+    "en": "Could not start the system command."
+  },
+  "Loc_6EAADD746DC7": {
+    "zh-CN": "已勾选 {0} 项",
+    "zh-TW": "已勾選 {0} 項",
+    "en": "{0} selected"
+  },
+  "Loc_7046ECFB8361": {
+    "zh-CN": "静态 DNS",
+    "zh-TW": "靜態 DNS",
+    "en": "Static DNS"
+  },
+  "Loc_70B25D866A2E": {
+    "zh-CN": "全选当前列表",
+    "zh-TW": "全選當前列表",
+    "en": "Select visible"
+  },
+  "Loc_712B0B1B0D2A": {
+    "zh-CN": "尚未刷新",
+    "zh-TW": "尚未刷新",
+    "en": "Not refreshed yet"
+  },
+  "Loc_71D67829CAF4": {
+    "zh-CN": "预设管理",
+    "zh-TW": "預設管理",
+    "en": "Preset manager"
+  },
+  "Loc_7409A608060F": {
+    "zh-CN": "未指定",
+    "zh-TW": "未指定",
+    "en": "Not specified"
+  },
+  "Loc_75C56947B478": {
+    "zh-CN": "数据读取失败后禁止覆盖：{0}。请重新读取或恢复备份。",
+    "zh-TW": "數據讀取失敗后禁止覆蓋：{0}。請重新讀取或恢復備份。",
+    "en": "Writes are blocked after a read failure: {0}. Read the file again or restore a backup."
+  },
+  "Loc_7605C1D82EED": {
+    "zh-CN": "删除分组",
+    "zh-TW": "刪除分組",
+    "en": "Delete group"
+  },
+  "Loc_77F44E3CE3F1": {
+    "zh-CN": "静态 IPv4 模式必须填写合法的 IPv4 地址。",
+    "zh-TW": "靜態 IPv4 模式必須填寫合法的 IPv4 地址。",
+    "en": "Static IPv4 mode requires a valid IPv4 address."
+  },
+  "Loc_7A3494FB90C5": {
+    "zh-CN": "删除分组失败。",
+    "zh-TW": "刪除分組失敗。",
+    "en": "Could not delete group."
+  },
+  "Loc_7A8A11EAD507": {
+    "zh-CN": "添加",
+    "zh-TW": "添加",
+    "en": "Add"
+  },
+  "Loc_7AC3CB4533C7": {
+    "zh-CN": "读取网卡状态超时，请稍后刷新。",
+    "zh-TW": "讀取介面卡狀態超時，請稍后刷新。",
+    "en": "Reading adapter state timed out. Refresh to try again."
+  },
+  "Loc_7DF5C456C765": {
+    "zh-CN": "禁用",
+    "zh-TW": "禁用",
+    "en": "Disable"
+  },
+  "Loc_805220E39FB6": {
+    "zh-CN": "（保留）",
+    "zh-TW": "（保留）",
+    "en": " (preserved)"
+  },
+  "Loc_82216E310560": {
+    "zh-CN": "目标网卡已不存在，请刷新网卡列表。",
+    "zh-TW": "目標介面卡已不存在，請刷新介面卡列表。",
+    "en": "The target adapter no longer exists. Refresh the adapter list."
+  },
+  "Loc_84FDB03C6159": {
+    "zh-CN": "删除预设失败，已恢复原记录。",
+    "zh-TW": "刪除預設失敗，已恢復原記錄。",
+    "en": "Could not delete preset. The original entry was restored."
+  },
+  "Loc_86F2087DA227": {
+    "zh-CN": "只能删除自定义预设分组。",
+    "zh-TW": "只能刪除自定義預設分組。",
+    "en": "Only custom preset groups can be deleted."
+  },
+  "Loc_877E25224243": {
+    "zh-CN": "网卡：未记录",
+    "zh-TW": "介面卡：未記錄",
+    "en": "Adapter: Not recorded"
+  },
+  "Loc_87B772C3150A": {
+    "zh-CN": "DNS 地址不是合法的 IPv4 地址：{0}",
+    "zh-TW": "DNS 地址不是合法的 IPv4 地址：{0}",
+    "en": "Invalid IPv4 DNS address: {0}"
+  },
+  "Loc_8968C86B7D02": {
+    "zh-CN": "上一个命令的退出状态不确定，已禁止继续写入。请检查系统状态后重启程序。",
+    "zh-TW": "上一個命令的退出狀態不確定，已禁止繼續寫入。請檢查系統狀態后重啟程序。",
+    "en": "The previous command's exit state is unknown. Further writes are blocked. Check the system state before restarting this app."
+  },
+  "Loc_8ADA74693E1F": {
+    "zh-CN": "配置失败，自动回滚也失败。",
+    "zh-TW": "設定失敗，自動回滾也失敗。",
+    "en": "Configuration failed, and automatic rollback also failed."
+  },
+  "Loc_8E3D9B6C8224": {
+    "zh-CN": "无法应用预设：找不到预设所属网卡。",
+    "zh-TW": "無法應用預設：找不到預設所屬介面卡。",
+    "en": "Cannot apply preset: its adapter could not be found."
+  },
+  "Loc_8F590BC3455A": {
+    "zh-CN": "系统命令超过 {0:0.#} 秒，已终止并等待退出。",
+    "zh-TW": "系統命令超過 {0:0.#} 秒，已終止并等待退出。",
+    "en": "The system command exceeded {0:0.#} seconds. It was terminated and its exit confirmed."
+  },
+  "Loc_8F89A32A7569": {
+    "zh-CN": "无法读取数据：{0}。原文件已保留，禁止覆盖；请修复文件或恢复备份。",
+    "zh-TW": "無法讀取數據：{0}。原檔案已保留，禁止覆蓋；請修復檔案或恢復備份。",
+    "en": "Cannot read data: {0}. The original file was preserved and writes are blocked. Repair it or restore a backup."
+  },
+  "Loc_9005AF73B7B6": {
+    "zh-CN": "可复用的 IPv4 / DNS 模板",
+    "zh-TW": "可復用的 IPv4 / DNS 模板",
+    "en": "Reusable IPv4 / DNS configurations"
+  },
+  "Loc_92C21E3C7ECC": {
+    "zh-CN": "确定删除分组“{0}”吗？\n\n其中 {1} 个预设会移动到“未分组”，预设本身不会删除。",
+    "zh-TW": "確定刪除分組“{0}”嗎？\n\n其中 {1} 個預設會移動到“未分組”，預設本身不會刪除。",
+    "en": "Delete group “{0}”?\n\nIts {1} presets will become ungrouped. The presets will not be deleted."
+  },
+  "Loc_933A04F8314F": {
+    "zh-CN": "已保存预设“{0}”。",
+    "zh-TW": "已保存預設“{0}”。",
+    "en": "Saved preset “{0}”."
+  },
+  "Loc_9535528D5A38": {
+    "zh-CN": "找不到目标网卡的 Windows 管理对象。",
+    "zh-TW": "找不到目標介面卡的 Windows 管理對象。",
+    "en": "Cannot find the Windows management object for this adapter."
+  },
+  "Loc_976373AD11AE": {
+    "zh-CN": "“全部分组”是系统筛选项，请使用其他名称。",
+    "zh-TW": "“全部分組”是系統篩選項，請使用其他名稱。",
+    "en": "“All groups” is a system filter. Choose a different name."
+  },
+  "Loc_9866F869B0BD": {
+    "zh-CN": "正在初始化…",
+    "zh-TW": "正在初始化…",
+    "en": "Initializing…"
+  },
+  "Loc_989AA413A7FB": {
+    "zh-CN": "DNS 可选；需要时可切换为静态 DNS",
+    "zh-TW": "DNS 可選；需要時可切換為靜態 DNS",
+    "en": "DNS is optional. Choose static DNS when needed."
+  },
+  "Loc_9937E365AAF3": {
+    "zh-CN": "简体中文",
+    "zh-TW": "简体中文",
+    "en": "简体中文"
+  },
+  "Loc_9AFFA6F3315D": {
+    "zh-CN": "已删除 {0} 个预设。",
+    "zh-TW": "已刪除 {0} 個預設。",
+    "en": "Deleted {0} presets."
+  },
+  "Loc_9D82DD6C9D3D": {
+    "zh-CN": "虚拟",
+    "zh-TW": "虛擬",
+    "en": "Virtual"
+  },
+  "Loc_9E665F6CCD4B": {
+    "zh-CN": "未插入",
+    "zh-TW": "未插入",
+    "en": "Not present"
+  },
+  "Loc_9FE56367749D": {
+    "zh-CN": "搜索预设名称、分组、网卡、IP 或 DNS",
+    "zh-TW": "搜索預設名稱、分組、介面卡、IP 或 DNS",
+    "en": "Search by name, group, adapter, IP or DNS"
+  },
+  "Loc_A0B1060D02EA": {
+    "zh-CN": "请选择要删除的自定义分组；“全部分组”和“未分组”不能删除。",
+    "zh-TW": "請選擇要刪除的自定義分組；“全部分組”和“未分組”不能刪除。",
+    "en": "Select a custom group to delete. System groups cannot be deleted."
+  },
+  "Loc_A1D46010ECCA": {
+    "zh-CN": "回滚命令已执行，但实际 IPv4/DNS 状态未恢复到修改前配置。",
+    "zh-TW": "回滾命令已執行，但實際 IPv4/DNS 狀態未恢復到修改前設定。",
+    "en": "Rollback ran, but the actual IPv4/DNS state did not return to its previous configuration."
+  },
+  "Loc_A2C0F9EFEB25": {
+    "zh-CN": "删除预设分组",
+    "zh-TW": "刪除預設分組",
+    "en": "Delete preset group"
+  },
+  "Loc_A43DB09AF546": {
+    "zh-CN": "确定要启用网卡“{0}”吗？",
+    "zh-TW": "確定要啟用介面卡“{0}”嗎？",
+    "en": "Enable adapter “{0}”?"
+  },
+  "Loc_A454F17872A1": {
+    "zh-CN": "物理",
+    "zh-TW": "物理",
+    "en": "Physical"
+  },
+  "Loc_A61BC16CA0F6": {
+    "zh-CN": "新建预设",
+    "zh-TW": "新建預設",
+    "en": "New preset"
+  },
+  "Loc_A63886DD9F49": {
+    "zh-CN": "窗口置顶",
+    "zh-TW": "視窗置頂",
+    "en": "Keep window on top"
+  },
+  "Loc_A7785B7E395E": {
+    "zh-CN": "当前网卡",
+    "zh-TW": "當前介面卡",
+    "en": "Current adapter"
+  },
+  "Loc_A85CC4FEE060": {
+    "zh-CN": "已读取 {0} 个网卡。",
+    "zh-TW": "已讀取 {0} 個介面卡。",
+    "en": "Read {0} adapters."
+  },
+  "Loc_AC23FC3625BD": {
+    "zh-CN": "添加预设分组",
+    "zh-TW": "添加預設分組",
+    "en": "Add preset group"
+  },
+  "Loc_AD4C5E18121D": {
+    "zh-CN": "数据文件不能为 null。",
+    "zh-TW": "數據檔案不能為 null。",
+    "en": "The data file must not contain null."
+  },
+  "Loc_AE84400C1446": {
+    "zh-CN": "勾选用于批量操作",
+    "zh-TW": "勾選用于批量操作",
+    "en": "Select for bulk operations"
+  },
+  "Loc_B1B4F3BDDA83": {
+    "zh-CN": "按分组筛选预设",
+    "zh-TW": "按分組篩選預設",
+    "en": "Filter presets by group"
+  },
+  "Loc_B3B75BD055C0": {
+    "zh-CN": "操作失败。",
+    "zh-TW": "操作失敗。",
+    "en": "Operation failed."
+  },
+  "Loc_B3E18C1F370F": {
+    "zh-CN": "按预设名称或分组搜索",
+    "zh-TW": "按預設名稱或分組搜索",
+    "en": "Search by preset name or group"
+  },
+  "Loc_B576104ABD7B": {
+    "zh-CN": "最终复核不一致，实际网卡状态未达到目标配置。",
+    "zh-TW": "最終復核不一致，實際介面卡狀態未達到目標設定。",
+    "en": "Verification failed: the actual adapter state does not match the target configuration."
+  },
+  "Loc_B63B4C3DF7EE": {
+    "zh-CN": "未管理地址在静态模式下会保留；DHCP 模式会清理手动地址。",
+    "zh-TW": "未管理地址在靜態模式下會保留；DHCP 模式會清理手動地址。",
+    "en": "Static mode preserves unmanaged addresses. DHCP removes manual addresses."
+  },
+  "Loc_B9A97B8476A0": {
+    "zh-CN": "预设数据读取失败，原文件已保留。请修复数据或恢复预设备份。",
+    "zh-TW": "預設數據讀取失敗，原檔案已保留。請修復數據或恢復預設備份。",
+    "en": "Preset data could not be read. The original file was preserved. Repair it or restore a backup."
+  },
+  "Loc_BB3CA812D51F": {
+    "zh-CN": "“全部分组”是系统筛选项，不能作为预设分组。",
+    "zh-TW": "“全部分組”是系統篩選項，不能作為預設分組。",
+    "en": "“All groups” is a system filter and cannot be used as a preset group."
+  },
+  "Loc_BB70503F5012": {
+    "zh-CN": "备用 DNS 不能与首选 DNS 相同。",
+    "zh-TW": "備用 DNS 不能與首選 DNS 相同。",
+    "en": "Alternate DNS must differ from preferred DNS."
+  },
+  "Loc_BBA6C8072457": {
+    "zh-CN": "网卡已启用。",
+    "zh-TW": "介面卡已啟用。",
+    "en": "Adapter enabled."
+  },
+  "Loc_BC3DC99F0325": {
+    "zh-CN": "添加分组失败。",
+    "zh-TW": "添加分組失敗。",
+    "en": "Could not add group."
+  },
+  "Loc_BC5A87A757A5": {
+    "zh-CN": "已禁用",
+    "zh-TW": "已禁用",
+    "en": "Disabled"
+  },
+  "Loc_BF067030E680": {
+    "zh-CN": "读取修改前网卡状态失败。",
+    "zh-TW": "讀取修改前介面卡狀態失敗。",
+    "en": "Could not read the adapter state before applying changes."
+  },
+  "Loc_C099B2F83340": {
+    "zh-CN": "请选择有效的目标分组。",
+    "zh-TW": "請選擇有效的目標分組。",
+    "en": "Select a valid destination group."
+  },
+  "Loc_C127D440E16A": {
+    "zh-CN": "IPv4 前缀长度无效。",
+    "zh-TW": "IPv4 前綴長度無效。",
+    "en": "Invalid IPv4 prefix length."
+  },
+  "Loc_C1471C92B129": {
+    "zh-CN": "按预设分组筛选",
+    "zh-TW": "按預設分組篩選",
+    "en": "Filter by preset group"
+  },
+  "Loc_C1BDEB148F36": {
+    "zh-CN": "配置成功",
+    "zh-TW": "設定成功",
+    "en": "Configuration succeeded"
+  },
+  "Loc_C3FA53918CC9": {
+    "zh-CN": "添加分组",
+    "zh-TW": "添加分組",
+    "en": "Add group"
+  },
+  "Loc_C543A79350FA": {
+    "zh-CN": "预设“{0}”已更新。",
+    "zh-TW": "預設“{0}”已更新。",
+    "en": "Preset “{0}” updated."
+  },
+  "Loc_C63B5353CC4C": {
+    "zh-CN": "保存预设失败。",
+    "zh-TW": "保存預設失敗。",
+    "en": "Could not save preset."
+  },
+  "Loc_C6473D2926B7": {
+    "zh-CN": "网卡启停",
+    "zh-TW": "介面卡啟停",
+    "en": "Change adapter state"
+  },
+  "Loc_C8C662C28870": {
+    "zh-CN": "恢复预设备份",
+    "zh-TW": "恢復預設備份",
+    "en": "Restore preset backup"
+  },
+  "Loc_CAB9417058BF": {
+    "zh-CN": "请输入预设名称。",
+    "zh-TW": "請輸入預設名稱。",
+    "en": "Enter a preset name."
+  },
+  "Loc_CAF3624C5177": {
+    "zh-CN": "隐藏虚拟",
+    "zh-TW": "隱藏虛擬",
+    "en": "Hide virtual"
+  },
+  "Loc_CB3734A5E3A1": {
+    "zh-CN": "正在完成操作",
+    "zh-TW": "正在完成操作",
+    "en": "Finishing operation"
+  },
+  "Loc_CB6E877F881E": {
+    "zh-CN": "选择已有分组；新分组请先使用“添加分组”创建",
+    "zh-TW": "選擇已有分組；新分組請先使用“添加分組”創建",
+    "en": "Choose a group. Use “Add group” to create one first."
+  },
+  "Loc_CC7BF06F0036": {
+    "zh-CN": "预设保存失败",
+    "zh-TW": "預設保存失敗",
+    "en": "Could not save preset"
+  },
+  "Loc_CD687B9548B9": {
+    "zh-CN": "{0}失败：网卡未启用 IPv4（WMI 84）。",
+    "zh-TW": "{0}失敗：介面卡未啟用 IPv4（WMI 84）。",
+    "en": "{0} failed: IPv4 is not enabled (WMI 84)."
+  },
+  "Loc_CE0744E60649": {
+    "zh-CN": "版本 {0}",
+    "zh-TW": "版本 {0}",
+    "en": "Version {0}"
+  },
+  "Loc_CE0AE0BBF7A9": {
+    "zh-CN": "共 {0} 个预设",
+    "zh-TW": "共 {0} 個預設",
+    "en": "{0} presets"
+  },
+  "Loc_CF814777A239": {
+    "zh-CN": "找不到预设所属网卡",
+    "zh-TW": "找不到預設所屬介面卡",
+    "en": "Preset adapter not found"
+  },
+  "Loc_D04AE84E1D93": {
+    "zh-CN": "程序已运行",
+    "zh-TW": "程序已運行",
+    "en": "Already running"
+  },
+  "Loc_D1672F5617FE": {
+    "zh-CN": "当前目标",
+    "zh-TW": "當前目標",
+    "en": "Target adapter"
+  },
+  "Loc_D21239DDC57A": {
+    "zh-CN": "无法确认网络命令已停止，请勿重复操作。",
+    "zh-TW": "無法確認網路命令已停止，請勿重復操作。",
+    "en": "Cannot confirm that the network command has stopped. Do not repeat the operation."
+  },
+  "Loc_D2909F1647E7": {
+    "zh-CN": "其他",
+    "zh-TW": "其他",
+    "en": "Other"
+  },
+  "Loc_D2AA9AC606D7": {
+    "zh-CN": "保存为预设",
+    "zh-TW": "保存為預設",
+    "en": "Save as preset"
+  },
+  "Loc_D3E3C8F130A7": {
+    "zh-CN": "备用 DNS",
+    "zh-TW": "備用 DNS",
+    "en": "Alternate DNS"
+  },
+  "Loc_D77D9D1B3903": {
+    "zh-CN": "无法读取目标网卡的 DNS 配置来源，请刷新后重试。",
+    "zh-TW": "無法讀取目標介面卡的 DNS 設定來源，請刷新后重試。",
+    "en": "Cannot read the adapter's DNS configuration source. Refresh and try again."
+  },
+  "Loc_D7E266BDC806": {
+    "zh-CN": "分组名称",
+    "zh-TW": "分組名稱",
+    "en": "Group name"
+  },
+  "Loc_D7E4065A9B21": {
+    "zh-CN": "缺少要管理的静态 IPv4 地址。",
+    "zh-TW": "缺少要管理的靜態 IPv4 地址。",
+    "en": "The managed static IPv4 address is missing."
+  },
+  "Loc_D92D34B6925D": {
+    "zh-CN": "批量处理失败",
+    "zh-TW": "批量處理失敗",
+    "en": "Bulk operation failed"
+  },
+  "Loc_D9E0462A7B76": {
+    "zh-CN": "已添加分组“{0}”。",
+    "zh-TW": "已添加分組“{0}”。",
+    "en": "Added group “{0}”."
+  },
+  "Loc_DCCAF4BB4CF6": {
+    "zh-CN": "启用网卡",
+    "zh-TW": "啟用介面卡",
+    "en": "Enable adapter"
+  },
+  "Loc_DDAE7A0FC554": {
+    "zh-CN": "批量删除",
+    "zh-TW": "批量刪除",
+    "en": "Delete selected"
+  },
+  "Loc_DE487746F02D": {
+    "zh-CN": "预设管理失败",
+    "zh-TW": "預設管理失敗",
+    "en": "Preset manager failed"
+  },
+  "Loc_DFB802238B38": {
+    "zh-CN": "已启用",
+    "zh-TW": "已啟用",
+    "en": "Enabled"
+  },
+  "Loc_E0FDFD2148A1": {
+    "zh-CN": "打开窗口查看全部预设",
+    "zh-TW": "打開視窗查看全部預設",
+    "en": "Open the full preset manager"
+  },
+  "Loc_E26E36F7E018": {
+    "zh-CN": "回滚前找不到目标网卡，请检查网卡是否仍连接。",
+    "zh-TW": "回滾前找不到目標介面卡，請檢查介面卡是否仍連接。",
+    "en": "Adapter not found before rollback. Check that it is still connected."
+  },
+  "Loc_E6BD4D087F2A": {
+    "zh-CN": "网卡：{0}",
+    "zh-TW": "介面卡：{0}",
+    "en": "Adapter: {0}"
+  },
+  "Loc_E6E500160240": {
+    "zh-CN": "配置失败，已恢复修改前状态。",
+    "zh-TW": "設定失敗，已恢復修改前狀態。",
+    "en": "Configuration failed. The previous state was restored."
+  },
+  "Loc_E72038175629": {
+    "zh-CN": "预设删除失败",
+    "zh-TW": "預設刪除失敗",
+    "en": "Could not delete preset"
+  },
+  "Loc_E78333A422B7": {
+    "zh-CN": "输入校验失败。",
+    "zh-TW": "輸入校驗失敗。",
+    "en": "Input validation failed."
+  },
+  "Loc_E86E91912EF0": {
+    "zh-CN": "预设已删除。",
+    "zh-TW": "預設已刪除。",
+    "en": "Preset deleted."
+  },
+  "Loc_E9E33A982D20": {
+    "zh-CN": "分组筛选 / 搜索预设",
+    "zh-TW": "分組篩選 / 搜索預設",
+    "en": "Filter / search presets"
+  },
+  "Loc_EA011B9820F1": {
+    "zh-CN": "状态未知，请刷新网卡。",
+    "zh-TW": "狀態未知，請刷新介面卡。",
+    "en": "State unknown. Refresh the adapter list."
+  },
+  "Loc_EC57B32F8731": {
+    "zh-CN": "网络适配器管理器",
+    "zh-TW": "網路介面卡管理器",
+    "en": "NetAdapterManager"
+  },
+  "Loc_EC709D151400": {
+    "zh-CN": "打开预设管理失败。",
+    "zh-TW": "打開預設管理失敗。",
+    "en": "Could not open the preset manager."
+  },
+  "Loc_EDDFCE79A619": {
+    "zh-CN": "主 IPv4 地址",
+    "zh-TW": "主 IPv4 地址",
+    "en": "Managed IPv4 address"
+  },
+  "Loc_EE203172B7E7": {
+    "zh-CN": "自动获取 DNS",
+    "zh-TW": "自動獲取 DNS",
+    "en": "Automatic DNS"
+  },
+  "Loc_F058FE3DA703": {
+    "zh-CN": "打开系统网络连接",
+    "zh-TW": "打開系統網路連接",
+    "en": "Network connections"
+  },
+  "Loc_F10825042898": {
+    "zh-CN": "{0} 日志：{1}",
+    "zh-TW": "{0} 記錄檔：{1}",
+    "en": "{0} Log: {1}"
+  },
+  "Loc_F1DE1E2621DE": {
+    "zh-CN": "预设",
+    "zh-TW": "預設",
+    "en": "Presets"
+  },
+  "Loc_F253293B1C7A": {
+    "zh-CN": "DNS 配置",
+    "zh-TW": "DNS 設定",
+    "en": "DNS configuration"
+  },
+  "Loc_F492316C98BF": {
+    "zh-CN": "{0}失败：接口不可配置（WMI 97）。",
+    "zh-TW": "{0}失敗：接口不可設定（WMI 97）。",
+    "en": "{0} failed: interface cannot be configured (WMI 97)."
+  },
+  "Loc_F4F0EAD1116B": {
+    "zh-CN": "启用",
+    "zh-TW": "啟用",
+    "en": "Enable"
+  },
+  "Loc_F76847128075": {
+    "zh-CN": "恢复上一次保存前的预设和分组",
+    "zh-TW": "恢復上一次保存前的預設和分組",
+    "en": "Restore presets and groups from before the last save"
+  },
+  "Loc_F991765E4315": {
+    "zh-CN": "同配置预设已更新为“{0}”，未新增重复记录。",
+    "zh-TW": "同設定預設已更新為“{0}”，未新增重復記錄。",
+    "en": "Updated matching preset to “{0}”. No duplicate was added."
+  },
+  "Loc_FA2FF3C379A7": {
+    "zh-CN": "查看全部",
+    "zh-TW": "查看全部",
+    "en": "View all"
+  },
+  "Settings.Title": {
+    "zh-CN": "设置",
+    "zh-TW": "設定",
+    "en": "Settings"
+  },
+  "Settings.Language": {
+    "zh-CN": "语言",
+    "zh-TW": "語言",
+    "en": "Language"
+  },
+  "Settings.Theme": {
+    "zh-CN": "外观 / 主题",
+    "zh-TW": "外觀 / 主題",
+    "en": "Appearance / theme"
+  },
+  "Settings.System": {
+    "zh-CN": "跟随系统",
+    "zh-TW": "跟隨系統",
+    "en": "Follow system"
+  },
+  "Settings.Light": {
+    "zh-CN": "浅色",
+    "zh-TW": "淺色",
+    "en": "Light"
+  },
+  "Settings.Dark": {
+    "zh-CN": "深色",
+    "zh-TW": "深色",
+    "en": "Dark"
+  },
+  "Settings.Hint": {
+    "zh-CN": "更改即时生效并自动保存。网络操作期间暂不可切换语言。",
+    "zh-TW": "變更立即生效並自動儲存。網路操作期間暫時無法切換語言。",
+    "en": "Changes apply immediately and are saved automatically. Language changes are disabled during network operations."
+  },
+  "Settings.Close": {
+    "zh-CN": "关闭",
+    "zh-TW": "關閉",
+    "en": "Close"
+  },
+  "Settings.LoadError": {
+    "zh-CN": "设置读取失败，已使用默认值。保存新选择时会保留原文件。",
+    "zh-TW": "設定讀取失敗，已使用預設值。儲存新選擇時會保留原檔案。",
+    "en": "Settings could not be read. Defaults are in use. Saving a new choice will preserve the original file."
+  },
+  "Settings.SaveError": {
+    "zh-CN": "无法保存设置，已保留原选择。",
+    "zh-TW": "無法儲存設定，已保留原選擇。",
+    "en": "Could not save settings. Your previous selection was preserved."
+  },
+  "Group.All": {
+    "zh-CN": "全部分组",
+    "zh-TW": "全部群組",
+    "en": "All groups"
+  },
+  "Group.Ungrouped": {
+    "zh-CN": "未分组",
+    "zh-TW": "未分組",
+    "en": "Ungrouped"
+  },
+  "Group.Summary": {
+    "zh-CN": "分组：{0}",
+    "zh-TW": "群組：{0}",
+    "en": "Group: {0}"
+  },
+  "Adapter.Count": {
+    "zh-CN": "{0} 个网卡",
+    "zh-TW": "{0} 個介面卡",
+    "en": "{0} adapters"
+  },
+  "Editor.Draft": {
+    "zh-CN": "输入区保留待编辑内容；网卡列表显示最近读取的系统状态。",
+    "zh-TW": "輸入區保留待編輯內容；介面卡清單顯示最近讀取的系統狀態。",
+    "en": "The editor keeps your draft. The adapter list shows the latest state read from Windows."
+  }
+}

@@ -18,13 +18,13 @@ public partial class PresetGroupWindow : Window
         var name = GroupNameBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            MessageBox.Show("请输入分组名称。", "无法添加", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(L.T("Loc_38FD97A244EA"), L.T("Loc_42D98D4EFBF1"), MessageBoxButton.OK, MessageBoxImage.Information);
             GroupNameBox.Focus();
             return;
         }
-        if (string.Equals(name, "全部分组", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(name, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase))
         {
-            MessageBox.Show("“全部分组”是系统筛选项，请使用其他名称。", "无法添加", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(L.T("Loc_976373AD11AE"), L.T("Loc_42D98D4EFBF1"), MessageBoxButton.OK, MessageBoxImage.Information);
             GroupNameBox.Focus();
             return;
         }

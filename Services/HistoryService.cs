@@ -73,15 +73,21 @@ public sealed class PresetService
                 Groups = await new JsonStore<List<string>>(_legacyGroups).LoadAsync([], token)
             };
         var library = await _store.LoadAsync(new PresetLibrary(), token);
-        if (library.Version != 1 || library.Presets is null || library.Groups is null)
-            throw new IOException("预设库格式不受支持或不完整，原文件已保留。");
+        ValidateLibrary(library);
         return library;
+    }
+
+    private static void ValidateLibrary(PresetLibrary library)
+    {
+        if (library.Version != 1 || library.Presets is null || library.Groups is null
+            || library.Presets.Any(x => x is null) || library.Groups.Any(x => x is null))
+            throw new IOException(L.T("Loc_4107785BE450"));
     }
 
     public async Task RestoreBackupAsync(CancellationToken token = default)
     {
         await _gate.WaitAsync(token);
-        try { await _store.RestoreBackupAsync(token); }
+        try { await _store.RestoreBackupAsync(ValidateLibrary, token); }
         finally { _gate.Release(); }
     }
 
@@ -162,15 +168,15 @@ public sealed class PresetGroupService
     {
         var normalized = groupName?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(normalized)
-            || string.Equals(normalized, "全部分组", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(normalized, "未分组", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("只能删除自定义预设分组。", nameof(groupName));
+            || string.Equals(normalized, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalized, NetAdapterManager.Models.GroupIds.Ungrouped, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException(L.T("Loc_86F2087DA227"), nameof(groupName));
 
         var affected = 0;
         foreach (var preset in presets)
         {
             if (!string.Equals(preset.GroupName?.Trim(), normalized, StringComparison.OrdinalIgnoreCase)) continue;
-            preset.GroupName = "未分组";
+            preset.GroupName = NetAdapterManager.Models.GroupIds.Ungrouped;
             affected++;
         }
         for (var index = customGroups.Count - 1; index >= 0; index--)
@@ -184,7 +190,7 @@ public sealed class PresetGroupService
     private static List<string> Normalize(IEnumerable<string> groups) => groups
         .Where(x => !string.IsNullOrWhiteSpace(x))
         .Select(x => x.Trim())
-        .Where(x => !string.Equals(x, "全部分组", StringComparison.OrdinalIgnoreCase))
+        .Where(x => !string.Equals(x, NetAdapterManager.Models.GroupIds.All, StringComparison.OrdinalIgnoreCase))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
 }

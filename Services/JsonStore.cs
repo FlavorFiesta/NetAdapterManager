@@ -49,7 +49,7 @@ public sealed class JsonStore<T>
         {
             _loadFailed = true;
             AppLogger.Error($"读取数据失败，原文件保留：{_path}", ex);
-            throw new IOException($"无法读取数据：{_path}。原文件已保留，禁止覆盖；请修复文件或恢复备份。", ex);
+            throw new IOException(L.F("Loc_8F89A32A7569", _path), ex);
         }
         finally { gate.Release(); }
     }
@@ -58,7 +58,7 @@ public sealed class JsonStore<T>
     {
         await using var stream = File.OpenRead(path);
         return await JsonSerializer.DeserializeAsync<T>(stream, _options, token)
-            ?? throw new JsonException("数据文件不能为 null。");
+            ?? throw new JsonException(L.T("Loc_AD4C5E18121D"));
     }
 
     private bool IsMigratableFile() => Path.GetFileName(_path) is "presets.json" or "preset-groups.json" or "managed-addresses.json";
@@ -70,7 +70,7 @@ public sealed class JsonStore<T>
         var tempPath = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            if (_loadFailed) throw new IOException($"数据读取失败后禁止覆盖：{_path}。请重新读取或恢复备份。");
+            if (_loadFailed) throw new IOException(L.F("Loc_75C56947B478", _path));
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
             // Validate even for a fresh store instance: corruption must never be replaced by a fallback.
             if (Path.Exists(_path)) await ReadAsync(_path, cancellationToken);
@@ -91,15 +91,20 @@ public sealed class JsonStore<T>
         }
     }
 
-    public async Task RestoreBackupAsync(CancellationToken cancellationToken = default)
+    public Task RestoreBackupAsync(CancellationToken cancellationToken = default) =>
+        RestoreBackupAsync(null, cancellationToken);
+
+    public async Task RestoreBackupAsync(Action<T>? validate, CancellationToken cancellationToken = default)
     {
         var gate = StorageLocks.For(_path);
         await gate.WaitAsync(cancellationToken);
         var tempPath = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            await ReadAsync(_path + ".bak", cancellationToken);
             File.Copy(_path + ".bak", tempPath);
+            // Validate the exact bytes that will be committed, not a second read of the backup.
+            var candidate = await ReadAsync(tempPath, cancellationToken);
+            validate?.Invoke(candidate);
             cancellationToken.ThrowIfCancellationRequested();
             if (File.Exists(_path))
                 File.Replace(tempPath, _path, _path + ".corrupt-" + Guid.NewGuid().ToString("N"));

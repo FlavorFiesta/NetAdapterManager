@@ -10,6 +10,7 @@
 | .NET / Windows Desktop Runtime | 自包含 Windows x64 发布，[dotnet/runtime](https://github.com/dotnet/runtime)、[dotnet/wpf](https://github.com/dotnet/wpf) | 构建时按实际版本复制到 `licenses/packages/` |
 | Inno Setup | 安装器引擎，[官网](https://jrsoftware.org/isinfo.php) | `licenses/inno-setup/LICENSE.txt` |
 | Inno Setup 简体中文翻译 | 安装向导，[上游](https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation) | 文件头保留作者信息，MIT 文本位于 `licenses/inno-chinese-translation/LICENSE` |
+| Inno Setup 繁体中文翻译 | 基于上述 MIT 简体中文副本转换并调整地区术语的项目衍生版本 | 保留原作者信息与同一 MIT 许可证，修改说明位于 `Installer/Languages/ChineseTraditional.isl` 文件头 |
 
 NuGet 许可和第三方声明来自恢复后的官方包，原文保留。打包脚本从
 `project.assets.json` 与发布目录 `runtimeconfig.json` 读取实际依赖和运行时版本，

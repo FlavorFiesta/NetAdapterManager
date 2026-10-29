@@ -21,12 +21,15 @@ if (args.Contains("--isolated"))
     void Red(string name, string detail) { failures++; Console.WriteLine($"[RED] {name}: {detail}"); }
     await NetworkRegressionTests.RunAsync(Green, Red);
     await ReliabilityRegressionTests.RunAsync(Green, Red);
+    await Version150Tests.RunAsync(Green, Red);
     Console.WriteLine($"Isolated regression: {passes} passed, {failures} failed; no real network writes.");
     return failures == 0 ? 0 : 1;
 }
 
 if (args.Any(x => string.Equals(x, "--ui-smoke", StringComparison.OrdinalIgnoreCase)))
     return RunUiSmokeTest();
+
+if (args.Contains("--appearance-smoke")) return AppearanceSmokeTests.Run();
 
 if (args.Any(x => string.Equals(x, "--network-regression", StringComparison.OrdinalIgnoreCase)))
     return await NetworkRegressionTests.RunStandaloneAsync();
@@ -44,6 +47,7 @@ try
 {
     await NetworkRegressionTests.RunAsync(Pass, Fail);
     await ReliabilityRegressionTests.RunAsync(Pass, Fail);
+    await Version150Tests.RunAsync(Pass, Fail);
     var valid = ValidationService.ValidateManualConfig(new NetworkConfig
     {
         IpMode = IpMode.Static,
@@ -591,8 +595,9 @@ static int RunUiSmokeTest()
     {
         try
         {
-            var app = new NetAdapterManager.App();
+            var app = new NetAdapterManager.App(suppressStartup: true);
             app.InitializeComponent();
+            NetAdapterManager.Services.Localization.SetLanguage("zh-CN");
             // Public screenshots use only synthetic data and never load user presets.
             var window = new MainWindow(CreateDemoViewModel(), initializeOnLoad: false);
             if (window.Icon is null) throw new InvalidOperationException("窗口图标资源未加载。");

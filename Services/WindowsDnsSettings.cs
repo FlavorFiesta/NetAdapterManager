@@ -10,7 +10,7 @@ internal static class WindowsDnsSettings
     internal static DnsMode ReadMode(string interfaceGuid)
     {
         if (!Guid.TryParse(interfaceGuid, out var id))
-            throw new InvalidOperationException("无法识别网卡接口，不能读取 DNS 配置来源。");
+            throw new InvalidOperationException(L.T("Loc_3D5DC09B19EC"));
 
         // NameServer contains the configured static override, not the effective
         // DHCP server list. GetInterfaceDnsSettings requires Windows 10 2004+.
@@ -36,7 +36,7 @@ internal static class WindowsDnsSettings
         using var key = Registry.LocalMachine.OpenSubKey(
             @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\" + id.ToString("B"));
         if (key is null)
-            throw new Win32Exception("无法读取目标网卡的 DNS 配置来源，请刷新后重试。");
+            throw new Win32Exception(L.T("Loc_D77D9D1B3903"));
         return ResolveMode(key.GetValue("NameServer") as string);
     }
 

@@ -6,6 +6,7 @@ namespace NetAdapterManager.Views;
 
 public partial class MainWindow : Window
 {
+    private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_viewModel) { Owner = this }.ShowDialog();
     private void PresetList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (e.ChangedButton != System.Windows.Input.MouseButton.Left || sender is not System.Windows.Controls.ListBox list) return;
@@ -28,7 +29,7 @@ public partial class MainWindow : Window
         if (_closingRequested) return;
         _closingRequested = true;
         IsEnabled = false;
-        _viewModel.ShowToast("正在完成操作", "写入、复核或恢复完成后会自动关闭窗口。", false);
+        _viewModel.ShowToast(L.T("Loc_CB3734A5E3A1"), L.T("Loc_30C8E670B34D"), false);
         await _viewModel.ActiveOperation;
         _readyToClose = true;
         Close();
@@ -55,7 +56,7 @@ public partial class MainWindow : Window
         {
             // 启动阶段的异常也必须留在界面状态栏，不能变成 WPF async void 闪退。
             AppLogger.Error("主窗口初始化失败", ex);
-            _viewModel.ShowToast("启动失败", ex.Message, false);
+            _viewModel.ShowToast(L.T("Loc_0CF642CF998C"), ex.Message, false);
         }
     }
 }

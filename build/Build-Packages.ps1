@@ -45,7 +45,7 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $publishRoot "NetAdapterManager.exe"))) { throw "Missing executable." }
     & (Join-Path $PSScriptRoot "Collect-Licenses.ps1") -PublishRoot $publishRoot
     $runtimeData = @(Get-ChildItem -LiteralPath $publishRoot -File -Recurse | Where-Object {
-        $_.Name -match '^(presets|preset-groups|preset-library|managed-addresses|history)\.json($|\.)' -or $_.Extension -eq ".log"
+        $_.Name -match '^(presets|preset-groups|preset-library|managed-addresses|history|settings)\.json($|\.)' -or $_.Name -eq 'install-language.txt' -or $_.Extension -eq ".log"
     })
     if ($runtimeData.Count -gt 0) { throw "Publish output contains runtime user data." }
     $portableName = "NetAdapterManager-v$version-portable-win-x64.zip"
