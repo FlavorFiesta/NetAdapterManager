@@ -3,7 +3,7 @@
 简体中文 | [English](README.en.md)
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前源码版本：**1.5.2**，采用 [MIT 许可证](LICENSE)。
+当前源码版本：**1.5.2**
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
 
