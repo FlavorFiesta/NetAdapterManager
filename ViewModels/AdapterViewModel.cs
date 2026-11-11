@@ -1,4 +1,4 @@
-using NetAdapterManager.Models;
+﻿using NetAdapterManager.Models;
 
 namespace NetAdapterManager.ViewModels;
 
@@ -13,8 +13,13 @@ public sealed class AdapterViewModel : ObservableObject
         AdapterType.Vpn => "VPN",
         _ => L.T("Loc_D2909F1647E7")
     };
-    public string EnabledText => Snapshot.Enabled ? L.T("Loc_DFB802238B38") : L.T("Loc_BC5A87A757A5");
-    public string ConfigurationStatusText => Snapshot.Ipv4InterfacePresent
+    public string EnabledText => !Snapshot.Enabled ? L.T("Loc_BC5A87A757A5")
+        : Snapshot.ConnectionStatus == "Up" ? L.T("Adapter.EnabledConnected")
+        : Snapshot.ConnectionStatus == "Disconnected" ? L.T("Adapter.EnabledDisconnected")
+        : L.T("Loc_DFB802238B38") + " · " + ConnectionStatus;
+    public string ConfigurationStatusText => Snapshot.UsesSavedIPv4Configuration
+        ? L.T("Network.ShowingSaved")
+        : Snapshot.Ipv4InterfacePresent
         ? string.Empty
         : Snapshot.Enabled
             ? L.T("Loc_59D57026AA67")

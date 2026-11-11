@@ -12,6 +12,7 @@ public partial class PresetOverviewWindow : Window
     public PresetOverviewWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
         DataContext = viewModel;
         viewModel.ClearBatchSelection();
         viewModel.Presets.CollectionChanged += Presets_CollectionChanged;

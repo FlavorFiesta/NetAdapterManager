@@ -10,6 +10,7 @@ public partial class PresetGroupWindow : Window
     public PresetGroupWindow()
     {
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
         Loaded += (_, _) => GroupNameBox.Focus();
     }
 

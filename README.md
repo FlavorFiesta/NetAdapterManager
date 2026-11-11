@@ -3,9 +3,11 @@
 简体中文 | [English](README.en.md)
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前源码版本：**1.5.2**
+当前源码版本：**1.6.2**
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
+
+本次累计更新见 [v1.6.2 发布说明](docs/RELEASE-1.6.2.md)。客户反馈的禁用网卡 IP 读取和 DNS 复核问题修复见 [v1.5.3 说明](docs/RELEASE-1.5.3.md)。后续功能见 [v1.6.0 更新计划](docs/PLAN-1.6.0.md)。
 
 ## 功能
 
@@ -107,7 +109,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
 正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.5.2\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
+默认输出到 `artifacts\1.5.3\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
 重建只覆盖这两个指定产物，保留目录中的其他文件。
 `-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
 版本从主项目读取并传给安装脚本。
@@ -123,3 +125,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 
 版本变化见 [CHANGELOG](CHANGELOG.md)，第三方材料见 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)。
 内部项目记录与原始验收日志仅在本地保留，不作为公开源码提交。
+
+[v1.6.0 本地功能与验收边界](docs/RELEASE-1.6.0.md)：变更预览、网卡草稿、预设导入/导出与手动绑定。
+
+[v1.6.1 本地功能与验收边界](docs/RELEASE-1.6.1.md)：操作记录、诊断预览导出及手动检查更新。

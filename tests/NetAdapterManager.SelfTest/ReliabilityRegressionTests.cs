@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using NetAdapterManager.Models;
@@ -192,7 +192,7 @@ internal static class ReliabilityRegressionTests
                     else { Require(writerStopped && !token.IsCancellationRequested, "恢复必须等待旧写入结束且使用独立令牌。"); state.Config = target.Clone(); }
                 }, (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             using var cancel = new CancellationTokenSource();
-            var task = service.ApplyAsync(state, NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Automatic, []), OperationSource.Manual, cancel.Token);
+            var task = service.ApplyAsync(state, NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Static, []), OperationSource.Manual, cancel.Token);
             await entered.Task;
             cancel.Cancel();
             var result = await task;
@@ -207,7 +207,7 @@ internal static class ReliabilityRegressionTests
                 (_, target, _, _) => { state = target.Clone(); written = true; return Task.CompletedTask; },
                 (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask,
                 _ => Task.FromResult<IReadOnlyList<AdapterSnapshot>>([new() { InterfaceGuid = "test", Config = state.Clone() }]));
-            var result = await service.ApplyAsync(new() { InterfaceGuid = "test" }, NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Automatic, []), OperationSource.Manual);
+            var result = await service.ApplyAsync(new() { InterfaceGuid = "test" }, NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Static, []), OperationSource.Manual);
             Require(!result.Succeeded && result.RolledBack && state.IpMode == IpMode.Dhcp, "恢复读取不能依赖本地管理地址文件。");
         });
         await Check("命令退出不确定时禁止后续写入", async () =>
@@ -218,7 +218,7 @@ internal static class ReliabilityRegressionTests
                 (_, _, _, _) => { writes++; throw new ProcessTerminationException("uncertain", new IOException()); },
                 (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var adapter = new AdapterSnapshot { InterfaceGuid = "test" };
-            var target = NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Automatic, []);
+            var target = NetworkConfig.ForPreset("192.0.2.5", 24, null, DnsMode.Static, []);
             var first = await service.ApplyAsync(adapter, target, OperationSource.Manual);
             var second = await service.ApplyAsync(adapter, target, OperationSource.Manual);
             Require(!first.Succeeded && !first.RolledBack && !second.Succeeded && writes == 1, "不能与未知状态的旧命令并行回滚或重复写入。");

@@ -7,20 +7,7 @@
         <DataTemplate x:Key="GroupItemTemplate">
             <TextBlock Text="{vm:LocalizedValue}" TextTrimming="CharacterEllipsis" />
         </DataTemplate>
-        <Pen x:Key="AppIconPen" Brush="#FFFFFF" Thickness="2.2" />
-        <DrawingImage x:Key="AppIcon">
-            <DrawingImage.Drawing>
-                <DrawingGroup>
-                    <GeometryDrawing Brush="#0B1B38"
-                                     Geometry="M5,0 H27 A5,5 0 0 1 32,5 V27 A5,5 0 0 1 27,32 H5 A5,5 0 0 1 0,27 V5 A5,5 0 0 1 5,0 Z" />
-                    <GeometryDrawing Brush="#4F86F7" Geometry="M8,9 H24 V16 H8 Z" />
-                    <GeometryDrawing Pen="{StaticResource AppIconPen}" Geometry="M6,8 H26 A2,2 0 0 1 28,10 V17 A2,2 0 0 1 26,19 H6 A2,2 0 0 1 4,17 V10 A2,2 0 0 1 6,8 Z" />
-                    <GeometryDrawing Pen="{StaticResource AppIconPen}" Geometry="M10,8 V5 M14,8 V5 M18,8 V5 M22,8 V5" />
-                    <GeometryDrawing Pen="{StaticResource AppIconPen}" Geometry="M12,19 V24 H20 V19 M16,24 V29" />
-                    <GeometryDrawing Brush="#FFFFFF" Geometry="M9,10 H11 V15 H9 Z M13,10 H15 V15 H13 Z M17,10 H19 V15 H17 Z M21,10 H23 V15 H21 Z" />
-                </DrawingGroup>
-            </DrawingImage.Drawing>
-        </DrawingImage>
+        <BitmapImage x:Key="AppIcon" UriSource="pack://application:,,,/NetAdapterManager;component/Assets/AppIcon.ico" />
         <SolidColorBrush x:Key="WindowBackground" Color="#0F1117" />
         <SolidColorBrush x:Key="CardBackground" Color="#171A22" />
         <SolidColorBrush x:Key="CardBorder" Color="#303747" />
@@ -55,6 +42,19 @@
 
         <vm:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
 
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+            <Setter Property="RowBackground" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource CardBorder}"/>
+            <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource CardBorder}"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource HeaderBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
         <Style TargetType="Window">
             <Setter Property="Background" Value="{DynamicResource WindowBackground}" />
             <Setter Property="FontFamily" Value="Segoe UI" />
@@ -84,6 +84,10 @@
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ButtonChrome" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="ButtonChrome" Property="BorderBrush" Value="{DynamicResource TextColor}"/>
+                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ButtonChrome" Property="Opacity" Value="0.86" />
                             </Trigger>

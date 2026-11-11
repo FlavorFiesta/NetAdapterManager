@@ -1,4 +1,4 @@
-{
+﻿{
   "Loc_0194448410D5": {
     "zh-CN": "已删除分组“{0}”，关联预设已移到“未分组”。",
     "zh-TW": "已刪除分組“{0}”，關聯預設已移到“未分組”。",
@@ -760,9 +760,9 @@
     "en": "Verification failed: the actual adapter state does not match the target configuration."
   },
   "Loc_B63B4C3DF7EE": {
-    "zh-CN": "未管理地址在静态模式下会保留；DHCP 模式会清理手动地址。",
-    "zh-TW": "未管理地址在靜態模式下會保留；DHCP 模式會清理手動地址。",
-    "en": "Static mode preserves unmanaged addresses. DHCP removes manual addresses."
+    "zh-CN": "修改主 IPv4 会替换原主地址，保留其他附加地址；DHCP 模式会清理手动地址。",
+    "zh-TW": "修改主要 IPv4 會取代原主要位址，保留其他附加位址；DHCP 模式會清理手動位址。",
+    "en": "Editing the primary IPv4 replaces it and preserves other additional addresses. DHCP removes manual addresses."
   },
   "Loc_B9A97B8476A0": {
     "zh-CN": "预设数据读取失败，原文件已保留。请修复数据或恢复预设备份。",
@@ -1148,5 +1148,466 @@
     "zh-CN": "输入区保留待编辑内容；网卡列表显示最近读取的系统状态。",
     "zh-TW": "輸入區保留待編輯內容；介面卡清單顯示最近讀取的系統狀態。",
     "en": "The editor keeps your draft. The adapter list shows the latest state read from Windows."
+  },
+  "Network.InvalidSavedMask": {
+    "zh-CN": "系统已保存的 IPv4 掩码无效，无法安全读取此配置。",
+    "zh-TW": "系統已儲存的 IPv4 遮罩無效，無法安全讀取此設定。",
+    "en": "The saved IPv4 subnet mask is invalid; this configuration cannot be read safely."
+  },
+  "Network.ShowingSaved": {
+    "zh-CN": "显示系统已保存的配置；网卡尚未连接或已禁用。",
+    "zh-TW": "顯示系統已儲存的設定；介面卡尚未連線或已停用。",
+    "en": "Showing saved Windows settings; the adapter is disconnected or disabled."
+  },
+  "Network.SavedVerified": {
+    "zh-CN": "配置已保存并复核一致；网卡连接后生效。",
+    "zh-TW": "設定已儲存並驗證一致；介面卡連線後生效。",
+    "en": "Saved configuration verified. It takes effect when the adapter connects."
+  },
+  "Network.VerificationMismatch": {
+    "zh-CN": "最终复核不一致。\n期望：{0}\n实际：{1}",
+    "zh-TW": "最終驗證不一致。\n預期：{0}\n實際：{1}",
+    "en": "Final verification did not match.\nExpected: {0}\nActual: {1}"
+  },
+  "Network.EffectiveDnsDiffers": {
+    "zh-CN": "Windows 已保存所选 DNS，但当前解析器列表不同。请检查 VPN、代理或网络策略。",
+    "zh-TW": "Windows 已儲存所選 DNS，但目前解析器清單不同。請檢查 VPN、代理或網路原則。",
+    "en": "Windows saved the selected DNS settings, but the current resolver list differs. Check VPN, proxy or network policy settings."
+  },
+  "Preview.Title": {
+    "zh-CN": "配置变更预览",
+    "zh-TW": "設定變更預覽",
+    "en": "Review configuration changes"
+  },
+  "Preview.Automatic": {
+    "zh-CN": "自动获取",
+    "zh-TW": "自動取得",
+    "en": "Automatic"
+  },
+  "Preview.Mode": {
+    "zh-CN": "IP 模式",
+    "zh-TW": "IP 模式",
+    "en": "IP mode"
+  },
+  "Preview.Gateway": {
+    "zh-CN": "网关",
+    "zh-TW": "閘道",
+    "en": "Gateway"
+  },
+  "Preview.Confirm": {
+    "zh-CN": "确认应用",
+    "zh-TW": "確認套用",
+    "en": "Confirm and apply"
+  },
+  "Preview.Notice": {
+    "zh-CN": "加粗项为变化。附加 IP 已包含在目标中。确认后重新检查网卡身份和配置；若发生变化，请刷新并重新预览。",
+    "zh-TW": "粗體項目為變更。附加 IP 已包含在目標中。確認後重新檢查介面卡身分及設定；若有變更，請重新整理並再次預覽。",
+    "en": "Changed values are bold. Additional IPs are included in the target. Adapter identity and state are checked again after confirmation. If changed, refresh and review again."
+  },
+  "Preview.Stale": {
+    "zh-CN": "网卡身份或配置已变化，未写入。请刷新后重新预览。",
+    "zh-TW": "介面卡身分或設定已變更，未寫入。請重新整理並再次預覽。",
+    "en": "Adapter identity or configuration changed. Nothing was written. Refresh and review again."
+  },
+  "Preview.Field": {
+    "zh-CN": "项目",
+    "zh-TW": "項目",
+    "en": "Field"
+  },
+  "Preview.Current": {
+    "zh-CN": "当前实际配置",
+    "zh-TW": "目前實際設定",
+    "en": "Current configuration"
+  },
+  "Preview.Target": {
+    "zh-CN": "应用后的目标",
+    "zh-TW": "套用後的目標",
+    "en": "Target configuration"
+  },
+  "Draft.Modified": {
+    "zh-CN": "有未应用的草稿；切换网卡时按网卡保留（关闭程序后不保留）。",
+    "zh-TW": "有未套用的草稿；切換介面卡時依介面卡保留（關閉程式後不保留）。",
+    "en": "Unapplied draft. Kept for this adapter when switching, until the app closes."
+  },
+  "Draft.Current": {
+    "zh-CN": "编辑区与上次读取一致；应用前请查看预览。",
+    "zh-TW": "編輯區與上次讀取一致；套用前請檢視預覽。",
+    "en": "Editor matches the last read. Review the preview before applying."
+  },
+  "Draft.Restore": {
+    "zh-CN": "还原当前配置",
+    "zh-TW": "還原目前設定",
+    "en": "Restore current"
+  },
+  "Transfer.Import": {
+    "zh-CN": "导入预设",
+    "zh-TW": "匯入預設",
+    "en": "Import presets"
+  },
+  "Transfer.Export": {
+    "zh-CN": "导出预设",
+    "zh-TW": "匯出預設",
+    "en": "Export presets"
+  },
+  "Transfer.ExportOne": {
+    "zh-CN": "导出当前项",
+    "zh-TW": "匯出目前項目",
+    "en": "Export current"
+  },
+  "Transfer.ExportBatch": {
+    "zh-CN": "导出勾选项",
+    "zh-TW": "匯出勾選項目",
+    "en": "Export checked"
+  },
+  "Transfer.ExportAll": {
+    "zh-CN": "导出全部",
+    "zh-TW": "匯出全部",
+    "en": "Export all"
+  },
+  "Transfer.Cancel": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en": "Cancel"
+  },
+  "Transfer.Policy": {
+    "zh-CN": "重复项处理",
+    "zh-TW": "重複項目處理",
+    "en": "Conflict policy"
+  },
+  "Transfer.Skip": {
+    "zh-CN": "重复项：保留现有，跳过导入项",
+    "zh-TW": "重複項目：保留現有，略過匯入項目",
+    "en": "Duplicates: keep existing, skip incoming"
+  },
+  "Transfer.Replace": {
+    "zh-CN": "重复项：用导入项替换",
+    "zh-TW": "重複項目：以匯入項目取代",
+    "en": "Duplicates: replace with incoming"
+  },
+  "Transfer.Duplicate": {
+    "zh-CN": "重复项（ID、同组同名或相同网卡配置）",
+    "zh-TW": "重複項目（ID、同組同名或相同介面卡設定）",
+    "en": "Duplicate (ID, name/group, or adapter configuration)"
+  },
+  "Transfer.Notice": {
+    "zh-CN": "导入仅保存预设，不修改网络。下面列出全部导入项和重复项；文件内重复项也按所选策略处理。其他电脑的网卡请在导入后手动绑定。",
+    "zh-TW": "匯入只儲存預設，不修改網路。下方列出所有匯入項目及重複項目；檔案內重複項目亦依所選策略處理。其他電腦的介面卡請於匯入後手動繫結。",
+    "en": "Import only saves presets. It does not change networking. Review all incoming entries and duplicates below. The policy also applies to duplicates within the file. Bind adapters from other computers manually after importing."
+  },
+  "Transfer.Invalid": {
+    "zh-CN": "预设文件无效或超过限制（v1、4 MiB、2000 项）。原库未修改。",
+    "zh-TW": "預設檔案無效或超過限制（v1、4 MiB、2000 項）。原庫未修改。",
+    "en": "Invalid preset file or limit exceeded (v1, 4 MiB, 2000 entries). Existing library unchanged."
+  },
+  "Transfer.Imported": {
+    "zh-CN": "预设已导入；尚未应用网络配置。",
+    "zh-TW": "預設已匯入；尚未套用網路設定。",
+    "en": "Presets imported. Network configuration has not been applied."
+  },
+  "Transfer.Exported": {
+    "zh-CN": "预设已导出。文件包含网卡名称、MAC、IP 等配置，请妥善保管。",
+    "zh-TW": "預設已匯出。檔案包含介面卡名稱、MAC、IP 等設定，請妥善保管。",
+    "en": "Presets exported. The file contains adapter names, MACs and IP configuration."
+  },
+  "Transfer.Failed": {
+    "zh-CN": "预设操作失败",
+    "zh-TW": "預設操作失敗",
+    "en": "Preset operation failed"
+  },
+  "Transfer.Select": {
+    "zh-CN": "请先选择或勾选预设。",
+    "zh-TW": "請先選取或勾選預設。",
+    "en": "Select or check presets first."
+  },
+  "Transfer.DataDirectory": {
+    "zh-CN": "请选择程序数据目录之外的导出位置。",
+    "zh-TW": "請選擇程式資料目錄以外的匯出位置。",
+    "en": "Choose an export location outside the application data directory."
+  },
+  "Transfer.Bind": {
+    "zh-CN": "绑定网卡",
+    "zh-TW": "繫結介面卡",
+    "en": "Bind adapter"
+  },
+  "Transfer.BindingNotice": {
+    "zh-CN": "明确选择此预设要使用的本机网卡。仅更改预设绑定，不应用网络配置；以后应用仍需预览确认。",
+    "zh-TW": "明確選擇此預設要使用的本機介面卡。只變更預設繫結，不套用網路設定；日後套用仍需預覽確認。",
+    "en": "Explicitly select the local adapter for this preset. This changes only the saved binding. Applying network settings still requires review."
+  },
+  "Transfer.Bound": {
+    "zh-CN": "预设绑定已保存，未修改网络。",
+    "zh-TW": "預設繫結已儲存，未修改網路。",
+    "en": "Preset binding saved. Network unchanged."
+  },
+  "Transfer.BindingConflict": {
+    "zh-CN": "此网卡已有相同配置的预设；请先处理重复项，原绑定未变。",
+    "zh-TW": "此介面卡已有相同設定的預設；請先處理重複項目，原繫結未變。",
+    "en": "This adapter already has a preset with the same configuration. Resolve the duplicate first. Binding unchanged."
+  },
+  "Preview.Empty": {
+    "zh-CN": "无",
+    "zh-TW": "無",
+    "en": "None"
+  },
+  "Preview.Static": {
+    "zh-CN": "静态",
+    "zh-TW": "靜態",
+    "en": "Static"
+  },
+  "History.Title": {
+    "zh-CN": "记录与诊断",
+    "zh-TW": "記錄與診斷",
+    "en": "History & diagnostics"
+  },
+  "History.Notice": {
+    "zh-CN": "最多保留最近 200 项操作，记录文件最多 2 MiB（另有一个备份）。下方原始详情可能包含敏感配置。",
+    "zh-TW": "最多保留最近 200 項操作，記錄檔案最多 2 MiB（另有一個備份）。下方原始詳細資料可能包含敏感設定。",
+    "en": "Keeps up to 200 recent operations, at most 2 MiB plus one backup. Raw details below may contain sensitive configuration."
+  },
+  "History.Details": {
+    "zh-CN": "原始操作详情",
+    "zh-TW": "原始操作詳細資料",
+    "en": "Raw operation details"
+  },
+  "History.HideIdentity": {
+    "zh-CN": "隐藏名称和 GUID",
+    "zh-TW": "隱藏名稱及 GUID",
+    "en": "Hide names and GUIDs"
+  },
+  "History.HideMac": {
+    "zh-CN": "隐藏 MAC",
+    "zh-TW": "隱藏 MAC",
+    "en": "Hide MACs"
+  },
+  "History.HideIp": {
+    "zh-CN": "隐藏 IP / DNS",
+    "zh-TW": "隱藏 IP / DNS",
+    "en": "Hide IPs / DNS"
+  },
+  "History.RedactionNotice": {
+    "zh-CN": "导出不包含应用原始日志。任一隐藏项启用时，额外省略可能含敏感值的自由文本（错误、消息、警告）。复制错误按钮复制未经隐藏的原始错误。",
+    "zh-TW": "匯出不包含應用程式原始日誌。啟用任一隱藏項目時，額外省略可能含敏感值的自由文字（錯誤、訊息、警告）。複製錯誤按鈕複製未隱藏的原始錯誤。",
+    "en": "Exports exclude raw application logs. With any privacy option enabled, free text (errors, messages, warnings) is also omitted because it may contain identifiers. Copy error copies the unredacted error."
+  },
+  "History.Preview": {
+    "zh-CN": "导出预览（将保存下方内容）",
+    "zh-TW": "匯出預覽（將儲存下方內容）",
+    "en": "Export preview (exact content to save)"
+  },
+  "History.CopyError": {
+    "zh-CN": "复制原始错误",
+    "zh-TW": "複製原始錯誤",
+    "en": "Copy raw error"
+  },
+  "History.Export": {
+    "zh-CN": "导出诊断",
+    "zh-TW": "匯出診斷",
+    "en": "Export diagnostics"
+  },
+  "History.Copied": {
+    "zh-CN": "原始错误已复制。",
+    "zh-TW": "原始錯誤已複製。",
+    "en": "Raw error copied."
+  },
+  "History.CopyFailed": {
+    "zh-CN": "无法访问剪贴板。",
+    "zh-TW": "無法存取剪貼簿。",
+    "en": "Clipboard unavailable."
+  },
+  "History.Exported": {
+    "zh-CN": "已保存预览中的诊断内容。",
+    "zh-TW": "已儲存預覽中的診斷內容。",
+    "en": "The previewed diagnostic content was saved."
+  },
+  "History.Invalid": {
+    "zh-CN": "操作记录损坏或超过大小限制，原文件已保留。",
+    "zh-TW": "操作記錄損壞或超過大小限制，原檔案已保留。",
+    "en": "Operation history is invalid or oversized. Original file preserved."
+  },
+  "History.SaveFailed": {
+    "zh-CN": "操作结果已返回，但无法保存操作记录；网络结果未被更改。",
+    "zh-TW": "操作結果已傳回，但無法儲存操作記錄；網路結果未變更。",
+    "en": "The operation completed, but its history could not be saved. Network result is unchanged."
+  },
+  "History.LoadFailed": {
+    "zh-CN": "无法读取操作记录",
+    "zh-TW": "無法讀取操作記錄",
+    "en": "Unable to read operation history"
+  },
+  "History.Apply": {
+    "zh-CN": "应用配置",
+    "zh-TW": "套用設定",
+    "en": "Apply configuration"
+  },
+  "History.Enable": {
+    "zh-CN": "启用网卡",
+    "zh-TW": "啟用介面卡",
+    "en": "Enable adapter"
+  },
+  "History.Disable": {
+    "zh-CN": "禁用网卡",
+    "zh-TW": "停用介面卡",
+    "en": "Disable adapter"
+  },
+  "History.Success": {
+    "zh-CN": "操作成功",
+    "zh-TW": "操作成功",
+    "en": "Succeeded"
+  },
+  "History.Restored": {
+    "zh-CN": "失败，已复核回滚",
+    "zh-TW": "失敗，已複核還原",
+    "en": "Failed; rollback verified"
+  },
+  "History.Unconfirmed": {
+    "zh-CN": "未确认成功（查看详情）",
+    "zh-TW": "未確認成功（查看詳細資料）",
+    "en": "Success not confirmed (see details)"
+  },
+  "Updates.Check": {
+    "zh-CN": "检查更新",
+    "zh-TW": "檢查更新",
+    "en": "Check for updates"
+  },
+  "Updates.Download": {
+    "zh-CN": "打开 GitHub 下载页",
+    "zh-TW": "開啟 GitHub 下載頁",
+    "en": "Open GitHub release"
+  },
+  "Updates.Versions": {
+    "zh-CN": "当前版本：{0}　最新正式版：{1}",
+    "zh-TW": "目前版本：{0}　最新正式版：{1}",
+    "en": "Current version: {0}   Latest stable: {1}"
+  },
+  "Updates.Unknown": {
+    "zh-CN": "未知",
+    "zh-TW": "未知",
+    "en": "Unknown"
+  },
+  "Updates.Summary": {
+    "zh-CN": "更新摘要",
+    "zh-TW": "更新摘要",
+    "en": "Release summary"
+  },
+  "Updates.NotChecked": {
+    "zh-CN": "点击时检查 GitHub，连接失败时尝试已配置的备用源；不会自动下载或运行程序。",
+    "zh-TW": "按下時檢查 GitHub，連線失敗時嘗試已設定的備用來源；不會自動下載或執行程式。",
+    "en": "Checks GitHub on click, then a configured fallback if unavailable. Does not download or run software."
+  },
+  "Updates.Checking": {
+    "zh-CN": "正在检查…",
+    "zh-TW": "正在檢查…",
+    "en": "Checking…"
+  },
+  "Updates.Available": {
+    "zh-CN": "有新的正式版本。",
+    "zh-TW": "有新的正式版本。",
+    "en": "A newer stable version is available."
+  },
+  "Updates.Current": {
+    "zh-CN": "当前已是最新正式版。",
+    "zh-TW": "目前已是最新正式版。",
+    "en": "You have the latest stable release."
+  },
+  "Updates.LocalAhead": {
+    "zh-CN": "本地版本高于 GitHub 正式版。",
+    "zh-TW": "本機版本高於 GitHub 正式版。",
+    "en": "Local version is ahead of the published stable release."
+  },
+  "Updates.RateLimited": {
+    "zh-CN": "GitHub 请求受限，请稍后重试。",
+    "zh-TW": "GitHub 要求受限，請稍後重試。",
+    "en": "GitHub request limit reached. Try again later."
+  },
+  "Updates.NoRelease": {
+    "zh-CN": "未找到可用的正式版本（不采用预发布版）。",
+    "zh-TW": "找不到可用的正式版本（不採用預發行版）。",
+    "en": "No stable release found. Prereleases are excluded."
+  },
+  "Updates.Unavailable": {
+    "zh-CN": "更新服务暂不可用。",
+    "zh-TW": "更新服務暫時無法使用。",
+    "en": "Update service unavailable."
+  },
+  "Updates.Invalid": {
+    "zh-CN": "更新响应无效，未启用下载链接。",
+    "zh-TW": "更新回應無效，未啟用下載連結。",
+    "en": "Invalid update response. Release link disabled."
+  },
+  "Updates.Offline": {
+    "zh-CN": "无法连接更新服务，请检查网络或系统代理。详情已记录到日志。",
+    "zh-TW": "無法連線更新服務，請檢查網路或系統 Proxy。詳細資料已記錄至日誌。",
+    "en": "Could not connect to the update service. Check your network or system proxy. Details are in the log."
+  },
+  "Updates.CertificateError": {
+    "zh-CN": "HTTPS 安全连接或证书验证失败。请检查系统时间、Windows 根证书和代理的 HTTPS 设置。详情已记录到日志。",
+    "zh-TW": "HTTPS 安全連線或憑證驗證失敗。請檢查系統時間、Windows 根憑證和 Proxy 的 HTTPS 設定。詳細資料已記錄至日誌。",
+    "en": "HTTPS connection or certificate validation failed. Check the system clock, Windows root certificates and HTTPS proxy settings. Details are in the log."
+  },
+  "Updates.DnsError": {
+    "zh-CN": "无法解析更新服务器域名，请检查网络和 DNS 设置。",
+    "zh-TW": "無法解析更新伺服器網域名稱，請檢查網路和 DNS 設定。",
+    "en": "Could not resolve the update server. Check your network and DNS settings."
+  },
+  "Updates.ProxyError": {
+    "zh-CN": "代理连接或认证失败，请检查系统代理是否正常运行。",
+    "zh-TW": "Proxy 連線或驗證失敗，請檢查系統 Proxy 是否正常運作。",
+    "en": "Proxy connection or authentication failed. Check your system proxy."
+  },
+  "Updates.FeedLabel": {
+    "zh-CN": "备用更新源（可选 HTTPS 地址）",
+    "zh-TW": "備用更新來源（選填 HTTPS 網址）",
+    "en": "Fallback update feed (optional HTTPS URL)"
+  },
+  "Updates.SaveFeed": {
+    "zh-CN": "保存", "zh-TW": "儲存", "en": "Save"
+  },
+  "Updates.FeedHint": {
+    "zh-CN": "仅填写项目维护者提供的更新地址；留空可关闭备用源。下载仍使用项目的 GitHub 发布页。",
+    "zh-TW": "僅填寫專案維護者提供的更新網址；留空可關閉備用來源。下載仍使用專案的 GitHub 發行頁面。",
+    "en": "Use a feed provided by the project maintainer; leave blank to disable. Downloads still use the project's GitHub releases."
+  },
+  "Updates.InvalidFeed": {
+    "zh-CN": "请填写有效的公网 HTTPS 地址，不含用户名、密码、查询参数或片段。",
+    "zh-TW": "請填寫有效的公開 HTTPS 網址，不含使用者名稱、密碼、查詢參數或片段。",
+    "en": "Enter a public HTTPS URL without credentials, query parameters or a fragment."
+  },
+  "Updates.FeedSaved": {
+    "zh-CN": "备用更新源设置已保存。", "zh-TW": "備用更新來源設定已儲存。", "en": "Fallback feed settings saved."
+  },
+  "Updates.UsedFallback": {
+    "zh-CN": "本次通过备用源获取版本信息。", "zh-TW": "本次透過備用來源取得版本資訊。", "en": "Version information retrieved from the fallback feed."
+  },
+  "Updates.Timeout": {
+    "zh-CN": "检查超时，请稍后重试。",
+    "zh-TW": "檢查逾時，請稍後重試。",
+    "en": "Update check timed out. Try again later."
+  },
+  "Updates.Cancelled": {
+    "zh-CN": "检查已取消。",
+    "zh-TW": "檢查已取消。",
+    "en": "Update check cancelled."
+  },
+  "Updates.OpenFailed": {
+    "zh-CN": "无法打开浏览器，请稍后重试。",
+    "zh-TW": "無法開啟瀏覽器，請稍後重試。",
+    "en": "Could not open the browser. Try again later."
+  }
+,
+
+  "Validation.StaticRequiresStaticDns": {
+    "zh-CN": "静态 IPv4 不能使用自动 DNS。请选择静态 DNS；不需要 DNS 时可留空。",
+    "zh-TW": "靜態 IPv4 不能使用自動 DNS。請選擇靜態 DNS；不需要 DNS 時可留空。",
+    "en": "Static IPv4 requires static DNS. Leave the DNS fields empty if DNS is not needed."
+  },
+  "Adapter.EnabledConnected": {
+    "zh-CN": "已启用 · 已连接",
+    "zh-TW": "已啟用 · 已連線",
+    "en": "Enabled · Connected"
+  },
+  "Adapter.EnabledDisconnected": {
+    "zh-CN": "已启用 · 未连接",
+    "zh-TW": "已啟用 · 未連線",
+    "en": "Enabled · Disconnected"
   }
 }

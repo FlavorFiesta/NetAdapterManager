@@ -7,7 +7,11 @@ namespace NetAdapterManager.Services;
 
 internal static class WindowsDnsSettings
 {
-    internal static DnsMode ReadMode(string interfaceGuid)
+    internal sealed record Configuration(DnsMode Mode, List<string> Servers);
+
+    internal static DnsMode ReadMode(string interfaceGuid) => Read(interfaceGuid).Mode;
+
+    internal static Configuration Read(string interfaceGuid)
     {
         if (!Guid.TryParse(interfaceGuid, out var id))
             throw new InvalidOperationException(L.T("Loc_3D5DC09B19EC"));
@@ -22,7 +26,7 @@ internal static class WindowsDnsSettings
             {
                 try
                 {
-                    return ResolveMode(Marshal.PtrToStringUni(settings.NameServer),
+                    return ResolveConfiguration(Marshal.PtrToStringUni(settings.NameServer),
                         Marshal.PtrToStringUni(settings.ProfileNameServer));
                 }
                 finally { FreeInterfaceDnsSettings(ref settings); }
@@ -37,12 +41,24 @@ internal static class WindowsDnsSettings
             @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\" + id.ToString("B"));
         if (key is null)
             throw new Win32Exception(L.T("Loc_D77D9D1B3903"));
-        return ResolveMode(key.GetValue("NameServer") as string);
+        return ResolveConfiguration(key.GetValue("NameServer") as string);
     }
 
     internal static DnsMode ResolveMode(string? nameServer, string? profileNameServer = null) =>
         string.IsNullOrWhiteSpace(nameServer) && string.IsNullOrWhiteSpace(profileNameServer)
             ? DnsMode.Automatic : DnsMode.Static;
+
+    internal static Configuration ResolveConfiguration(string? nameServer, string? profileNameServer = null)
+    {
+        var mode = ResolveMode(nameServer, profileNameServer);
+        var configured = string.IsNullOrWhiteSpace(nameServer) ? profileNameServer : nameServer;
+        var servers = (configured ?? "").Split([' ', ',', ';', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(s => ValidationService.TryParseIPv4(s, out _)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return new Configuration(mode, servers);
+    }
+
+    internal static List<string> ResolveServers(Configuration configured, IEnumerable<string> effective) =>
+        configured.Mode == DnsMode.Static ? configured.Servers.ToList() : effective.ToList();
 
     // https://learn.microsoft.com/windows/win32/api/netioapi/ns-netioapi-dns_interface_settings
     // Default native packing is required (ULONG64 and pointer fields align to 8 on x64).

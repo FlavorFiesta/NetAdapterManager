@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using NetAdapterManager.Models;
 using NetAdapterManager.Services;
 using NetAdapterManager.ViewModels;
@@ -30,6 +30,9 @@ public partial class PresetEditorWindow : Window
         string? interfaceGuid = null)
     {
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
+        StaticRadio.Checked += (_, _) => ConstrainDns();
+        DhcpRadio.Checked += (_, _) => ConstrainDns();
         LoadGroups(groups, defaultGroup);
         SetFallbackAdapter(adapterName, macAddress, interfaceGuid);
         NameBox.Text = defaultName;
@@ -40,6 +43,9 @@ public partial class PresetEditorWindow : Window
         IReadOnlyList<AdapterViewModel> adapters, AdapterViewModel selectedAdapter, IReadOnlyList<string>? groups = null)
     {
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
+        StaticRadio.Checked += (_, _) => ConstrainDns();
+        DhcpRadio.Checked += (_, _) => ConstrainDns();
         LoadGroups(groups, defaultGroup);
         _autoName = defaultName;
         NameBox.Text = defaultName;
@@ -52,6 +58,12 @@ public partial class PresetEditorWindow : Window
         _selectedAdapter = selectedAdapter;
         UpdateAdapterDisplay(selectedAdapter);
         _initializingAdapter = false;
+    }
+
+    private void ConstrainDns()
+    {
+        DnsAutomaticRadio.IsEnabled = DhcpRadio.IsChecked == true;
+        if (!DnsAutomaticRadio.IsEnabled) DnsStaticRadio.IsChecked = true;
     }
 
     private void LoadGroups(IReadOnlyList<string>? groups, string defaultGroup)
@@ -115,6 +127,7 @@ public partial class PresetEditorWindow : Window
 
         DnsAutomaticRadio.IsChecked = config.DnsMode == DnsMode.Automatic;
         DnsStaticRadio.IsChecked = config.DnsMode == DnsMode.Static;
+        ConstrainDns();
         PreferredDnsBox.Text = config.DnsServers.ElementAtOrDefault(0) ?? string.Empty;
         AlternateDnsBox.Text = config.DnsServers.ElementAtOrDefault(1) ?? string.Empty;
     }

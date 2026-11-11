@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using NetAdapterManager.Models;
 
 namespace NetAdapterManager.Services;
@@ -8,6 +8,8 @@ public static class ValidationService
     public static ValidationResult ValidateManualConfig(NetworkConfig config)
     {
         var result = new ValidationResult();
+        if (config.IpMode == IpMode.Static && config.DnsMode == DnsMode.Automatic)
+            result.Errors.Add(L.T("Validation.StaticRequiresStaticDns"));
 
         if (config.IpMode == IpMode.Static)
         {

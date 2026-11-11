@@ -42,6 +42,7 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         _initializeOnLoad = initializeOnLoad;
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
         DataContext = _viewModel;
     }
 

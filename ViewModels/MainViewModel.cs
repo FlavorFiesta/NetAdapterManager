@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
@@ -8,7 +8,7 @@ using NetAdapterManager.Views;
 
 namespace NetAdapterManager.ViewModels;
 
-public sealed class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject
 {
     private readonly NetworkService _networkService;
     private readonly PresetService _presetService;
@@ -117,8 +117,16 @@ public sealed class MainViewModel : ObservableObject
         get => _selectedAdapter;
         set
         {
-            if (!SetProperty(ref _selectedAdapter, value)) return;
-            if (value is not null) LoadAdapterEditor(value.Snapshot);
+            if (ReferenceEquals(_selectedAdapter, value)) return;
+            CacheCurrentDraft();
+            SetProperty(ref _selectedAdapter, value);
+            if (value is not null)
+            {
+                LoadAdapterEditor(value.Snapshot);
+                _editorBaseline = CaptureEditor();
+                if (_drafts.TryGetValue(value.Snapshot.InterfaceGuid, out var draft)) RestoreEditor(draft);
+            }
+            NotifyDraft();
             OnPropertyChanged(nameof(CanOperate));
             OnPropertyChanged(nameof(CanConfigure));
             OnPropertyChanged(nameof(CanApplyPreset));
@@ -137,11 +145,11 @@ public sealed class MainViewModel : ObservableObject
         }
     }
     public bool HideVirtual { get => _hideVirtual; set { if (SetProperty(ref _hideVirtual, value)) ApplyAdapterFilter(); } }
-    public string IPv4Address { get => _ipv4Address; set => SetProperty(ref _ipv4Address, value); }
-    public string PrefixInput { get => _prefixInput; set => SetProperty(ref _prefixInput, value); }
-    public string Gateway { get => _gateway; set => SetProperty(ref _gateway, value); }
-    public string PreferredDns { get => _preferredDns; set => SetProperty(ref _preferredDns, value); }
-    public string AlternateDns { get => _alternateDns; set => SetProperty(ref _alternateDns, value); }
+    public string IPv4Address { get => _ipv4Address; set { if (SetProperty(ref _ipv4Address, value)) NotifyDraft(); } }
+    public string PrefixInput { get => _prefixInput; set { if (SetProperty(ref _prefixInput, value)) NotifyDraft(); } }
+    public string Gateway { get => _gateway; set { if (SetProperty(ref _gateway, value)) NotifyDraft(); } }
+    public string PreferredDns { get => _preferredDns; set { if (SetProperty(ref _preferredDns, value)) NotifyDraft(); } }
+    public string AlternateDns { get => _alternateDns; set { if (SetProperty(ref _alternateDns, value)) NotifyDraft(); } }
     public bool IsDhcp
     {
         get => _isDhcp;
@@ -149,6 +157,8 @@ public sealed class MainViewModel : ObservableObject
         {
             if (!SetProperty(ref _isDhcp, value)) return;
             OnPropertyChanged(nameof(IsStatic));
+            if (!value) IsDnsAutomatic = false;
+            NotifyDraft();
         }
     }
     public bool IsStatic { get => !IsDhcp; set { if (value) IsDhcp = false; } }
@@ -157,8 +167,8 @@ public sealed class MainViewModel : ObservableObject
         get => _isDnsAutomatic;
         set
         {
-            var normalized = value;
-            if (SetProperty(ref _isDnsAutomatic, normalized)) OnPropertyChanged(nameof(IsDnsStatic));
+            var normalized = value && IsDhcp;
+            if (SetProperty(ref _isDnsAutomatic, normalized)) { OnPropertyChanged(nameof(IsDnsStatic)); NotifyDraft(); }
         }
     }
     public bool IsDnsStatic { get => !IsDnsAutomatic; set { if (value) IsDnsAutomatic = false; } }
@@ -175,7 +185,7 @@ public sealed class MainViewModel : ObservableObject
             CommandManager.InvalidateRequerySuggested();
         }
     }
-    public bool CanOperate => !IsBusy && SelectedAdapter is not null;
+    public bool CanOperate => !IsBusy && !_isPresetDialogOpen && SelectedAdapter is not null;
     public bool CanConfigure => CanOperate;
     private L.Message? _statusMessageTemplate;
     public string StatusMessage { get => _statusMessageTemplate?.Render() ?? _statusMessage; private set { _statusMessageTemplate = L.Capture(value); SetProperty(ref _statusMessage, value); } }
@@ -220,7 +230,7 @@ public sealed class MainViewModel : ObservableObject
             }
         }
     }
-    public string VersionText => L.F("Loc_CE0744E60649", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.5.2");
+    public string VersionText => L.F("Loc_CE0744E60649", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.5.3");
     public string LastRefreshText => _lastRefresh is null ? L.T("Loc_712B0B1B0D2A") : L.F("Loc_6CC762C85611", _lastRefresh);
     public bool IsTopmost
     {
@@ -239,33 +249,34 @@ public sealed class MainViewModel : ObservableObject
         : string.Join(Environment.NewLine, SelectedAdapter.Snapshot.Config.IPv4Addresses.Where(x => x is not null).Select(x =>
             $"{x.Address}/{x.PrefixLength}{(x.IsManaged ? L.T("Loc_27A2B6F9D1E2") : L.T("Loc_805220E39FB6"))}"));
 
-    public RelayCommand RefreshCommand => new(() => _ = RefreshAsync());
+    public RelayCommand RefreshCommand => new(() => _ = RefreshAsync(), () => !HasPendingOperation);
     public RelayCommand ApplyCommand => new(ApplyAsync, () => CanConfigure);
     public RelayCommand ToggleAdapterCommand => new(ToggleAdapterAsync,
-        parameter => !IsBusy && (parameter is AdapterViewModel || SelectedAdapter is not null));
+        parameter => !HasPendingOperation && (parameter is AdapterViewModel || SelectedAdapter is not null));
     public RelayCommand ToggleTopmostCommand => new(() => IsTopmost = !IsTopmost);
     public RelayCommand SavePresetCommand => new(SavePresetAsync, () => CanSavePreset);
-    public RelayCommand EditPresetCommand => new(EditPresetAsync, () => SelectedPreset is not null);
+    public RelayCommand EditPresetCommand => new(EditPresetAsync, () => !HasPendingOperation && SelectedPreset is not null);
     public RelayCommand ApplyPresetCommand => new(
         ApplyPresetAsync,
-        parameter => !IsBusy
+        parameter => !HasPendingOperation
             && (parameter as Preset ?? SelectedPreset) is { } preset
             && ResolvePresetAdapter(preset) is not null);
-    public RelayCommand DeletePresetCommand => new(DeletePresetAsync, () => SelectedPreset is not null);
+    public RelayCommand DeletePresetCommand => new(DeletePresetAsync, () => !HasPendingOperation && SelectedPreset is not null);
     public RelayCommand AddPresetGroupCommand => new(AddPresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
     public RelayCommand DeletePresetGroupCommand => new(DeletePresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
     public RelayCommand RestorePresetBackupCommand => new(RestorePresetBackupAsync, () => !IsBusy && !_isPresetDialogOpen);
     public RelayCommand OpenNetworkConnectionsCommand => new(OpenNetworkConnections);
     public RelayCommand ViewAllPresetsCommand => new(ShowAllPresets);
     public RelayCommand ClearPresetFilterCommand => new(ResetPresetFilter);
-    public bool CanApplyPreset => !IsBusy && SelectedPreset is not null && ResolvePresetAdapter(SelectedPreset) is not null;
+    public bool CanApplyPreset => !HasPendingOperation && SelectedPreset is not null && ResolvePresetAdapter(SelectedPreset) is not null;
 
-    public MainViewModel(NetworkService? networkService = null, PresetService? presetService = null)
+    public MainViewModel(NetworkService? networkService = null, PresetService? presetService = null, OperationJournal? journal = null)
     {
         _statusMessageTemplate = L.Capture(_statusMessage);
         _networkService = networkService ?? new NetworkService();
         _presetService = presetService ?? new PresetService();
         _presetGroupService = new PresetGroupService(_presetService);
+        Journal = journal ?? new OperationJournal();
     }
 
     public async Task InitializeAsync()
@@ -295,7 +306,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async Task RefreshAsync()
     {
-        if (IsBusy) return;
+        if (HasPendingOperation) return;
         await RunBusyAsync(async () =>
         {
             var previousGuid = SelectedAdapter?.Snapshot.InterfaceGuid;
@@ -313,14 +324,12 @@ public sealed class MainViewModel : ObservableObject
 
     private async void ApplyAsync()
     {
-        if (SelectedAdapter is null) return;
+        if (SelectedAdapter is null || HasPendingOperation) return;
         var adapter = SelectedAdapter.Snapshot;
         await RunBusyAsync(async () =>
         {
             var target = BuildEditorConfig();
-            var result = await _networkService.ApplyAsync(adapter, target, OperationSource.Manual);
-            ShowResult(result);
-            await RefreshAfterOperationAsync(adapter.InterfaceGuid);
+            await ReviewAndApplyAsync(adapter.InterfaceGuid, target);
         });
     }
 
@@ -345,6 +354,16 @@ public sealed class MainViewModel : ObservableObject
             if (!result.Succeeded)
                 AppLogger.Error($"网卡启停失败：{adapter.Name}；{result.ErrorDetail}");
             await RefreshAfterOperationAsync(adapter.Snapshot.InterfaceGuid);
+            var actual = _snapshots.FirstOrDefault(s => s.InterfaceGuid == adapter.Snapshot.InterfaceGuid);
+            await RecordOperationAsync(new OperationRecord
+            {
+                Kind = wasEnabled ? "Disable" : "Enable", AdapterName = adapter.Name,
+                InterfaceGuid = adapter.Snapshot.InterfaceGuid, MacAddress = adapter.Snapshot.MacAddress,
+                Before = adapter.Snapshot.Config.Clone(), Actual = actual?.Config.Clone(),
+                TargetEnabled = !wasEnabled, ActualEnabled = actual?.Enabled,
+                Succeeded = result.Succeeded, Verified = actual is null ? null : actual.Enabled == !wasEnabled,
+                Message = StatusMessage, ErrorDetail = result.ErrorDetail ?? ""
+            });
         });
     }
 
@@ -374,6 +393,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async void ApplyPresetAsync(object? parameter)
     {
+        if (HasPendingOperation) return;
         var preset = parameter as Preset ?? SelectedPreset;
         var target = preset is null ? null : ResolvePresetAdapter(preset);
         if (preset is null || target is null)
@@ -388,16 +408,14 @@ public sealed class MainViewModel : ObservableObject
         AppLogger.Info($"开始应用预设“{preset.Name}”，目标网卡={target.Name}，接口={targetSnapshot.InterfaceGuid}");
         await RunBusyAsync(async () =>
         {
-            var result = await _networkService.ApplyAsync(targetSnapshot, preset.Config.Clone(), OperationSource.Preset);
-            ShowResult(result);
-            await RefreshAfterOperationAsync(targetSnapshot.InterfaceGuid, preserveDraft: !result.Succeeded);
+            await ReviewAndApplyAsync(targetSnapshot.InterfaceGuid, preset.Config.Clone());
         });
     }
 
     private async void EditPresetAsync()
     {
         var preset = SelectedPreset;
-        if (preset is null || _isPresetDialogOpen) return;
+        if (preset is null || HasPendingOperation) return;
         SetPresetDialogOpen(true);
         var originalEntries = _allPresets.ToList();
         var originalIndex = _allPresets.IndexOf(preset);
@@ -606,6 +624,7 @@ public sealed class MainViewModel : ObservableObject
         {
             if (preserveDraft && (SelectedAdapter is null || SelectedAdapter.Snapshot.InterfaceGuid == draftGuid))
                 (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic) = draft;
+            NotifyDraft();
         }
     }
 
@@ -1031,6 +1050,9 @@ public sealed class MainViewModel : ObservableObject
         if (value) _presetOperation = new(TaskCreationOptions.RunContinuationsAsynchronously);
         else _presetOperation?.TrySetResult();
         OnPropertyChanged(nameof(CanSavePreset));
+        OnPropertyChanged(nameof(CanOperate));
+        OnPropertyChanged(nameof(CanConfigure));
+        OnPropertyChanged(nameof(CanApplyPreset));
         CommandManager.InvalidateRequerySuggested();
     }
 

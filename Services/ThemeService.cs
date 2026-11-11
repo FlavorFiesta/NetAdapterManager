@@ -55,16 +55,19 @@ public static class ThemeService
     }
 
     public static void Apply(string preference)
+        => ApplyForEnvironment(preference, SystemParameters.HighContrast);
+
+    internal static void ApplyForEnvironment(string preference, bool highContrast)
     {
         _preference = preference;
         var app = Application.Current;
         if (app is null) return;
         _dark ??= Light.Keys.ToDictionary(key => key, key => ((SolidColorBrush)app.Resources[key]).Color);
         var dark = preference == "dark" || (preference == "system" && SystemUsesDark());
-        EffectiveTheme = SystemParameters.HighContrast ? "high-contrast" : dark ? "dark" : "light";
+        EffectiveTheme = highContrast ? "high-contrast" : dark ? "dark" : "light";
         foreach (var key in Light.Keys)
         {
-            var color = SystemParameters.HighContrast ? ContrastColor(key)
+            var color = highContrast ? ContrastColor(key)
                 : dark ? _dark[key] : (Color)ColorConverter.ConvertFromString(Light[key]);
             var brush = new SolidColorBrush(color);
             brush.Freeze();

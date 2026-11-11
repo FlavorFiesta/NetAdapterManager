@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -25,7 +25,9 @@ internal static class AppearanceSmokeTests
                 var snapshot = new AdapterSnapshot { Name = "Ethernet (demo)", InterfaceGuid = "demo-guid", Enabled = true,
                     Ipv4InterfacePresent = true, ConnectionStatus = "Up", Type = AdapterType.Physical,
                     Config = NetworkConfig.ForPreset("192.0.2.10", 24, "192.0.2.1", DnsMode.Static, ["192.0.2.53"]) };
-                var vm = new MainViewModel();
+                var network = new NetworkService(_ => Task.FromResult<IReadOnlyList<AdapterSnapshot>>([snapshot]),
+                    (_, _, _) => throw new Exception("Unexpected network write"), (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
+                var vm = new MainViewModel(network);
                 vm.Adapters.Add(new AdapterViewModel(snapshot)); vm.SelectedAdapter = vm.Adapters[0];
                 vm.PresetGroups.Add(GroupIds.All); vm.PresetGroups.Add(GroupIds.Ungrouped); vm.PresetGroups.Add("Office");
                 var preset = new Preset { Name = "Office preset", GroupName = GroupIds.Ungrouped, Config = snapshot.Config.Clone() };
@@ -33,10 +35,21 @@ internal static class AppearanceSmokeTests
                 vm.Presets.Add(preset);
                 vm.IPv4Address = "192.0.2.99";
                 var main = new MainWindow(vm, false); main.Show();
+                vm.RefreshCommand.Execute(null); Flush(main);
+                Require(vm.IPv4Address == "192.0.2.99" && vm.HasDraft, "A bound adapter refresh lost its draft.");
                 var editor = new PresetEditorWindow("Draft preset", GroupIds.Ungrouped, snapshot.Config, "Ethernet (demo)", "00:11:22:33:44:55", [GroupIds.Ungrouped, "Office"]);
                 editor.Show();
-                var settings = new SettingsWindow(vm); settings.Show();
+                using var updateClient = Version161Tests.ReleaseClient();
+                var settings = new SettingsWindow(vm, PreferencesService.Default, new UpdateService(updateClient)); settings.Show();
+                ((Button)settings.FindName("CheckUpdateButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(settings);
+                Require(((Button)settings.FindName("DownloadButton")).IsEnabled, "Simulated stable update did not enable release link.");
+                var diagnostics = new DiagnosticsWindow([new OperationRecord { AdapterName = "PRIVATE-DEMO", InterfaceGuid = "private-guid", MacAddress = "AA-BB-CC-DD-EE-FF",
+                    Message = "192.0.2.123", ErrorDetail = "Demo failure 192.0.2.123", Before = snapshot.Config.Clone(), Target = snapshot.Config.Clone(), RolledBack = true, Verified = true }]); diagnostics.Show();
+                Require(!((TextBox)diagnostics.FindName("PreviewBox")).Text.Contains("PRIVATE-DEMO") && !((TextBox)diagnostics.FindName("PreviewBox")).Text.Contains("192.0.2."), "Default diagnostic preview leaked demo identifiers.");
                 var group = new PresetGroupWindow(); group.Show();
+                var preview = new ConfigurationPreviewWindow(snapshot, NetworkConfig.ForPreset("192.0.2.99", 24, null, DnsMode.Static, [])); preview.Show();
+                var import = new PresetImportWindow([new("Office preset", true), new("New preset", false)]); import.Show();
+                var binding = new AdapterBindingWindow(preset, vm.Adapters); binding.Show();
                 var output = Path.Combine(Environment.CurrentDirectory, "test-results", "appearance-" + typeof(MainWindow).Assembly.GetName().Version!.ToString(3)); Directory.CreateDirectory(output);
                 foreach (var language in new[] { "en", "zh-CN", "zh-TW" })
                 foreach (var theme in new[] { "light", "dark" })
@@ -44,11 +57,23 @@ internal static class AppearanceSmokeTests
                     Localizer.SetLanguage(language); ThemeService.Apply(theme);
                     main.Width = 1000; main.Height = 800;
                     Flush(main); Flush(editor); Flush(settings); Flush(group);
+                    Flush(preview); Flush(import); Flush(binding);
+                    Flush(diagnostics);
+                    Require(((TextBlock)settings.FindName("UpdateStatus")).Text == Localizer.T("Updates.Available"), "Update status did not translate.");
+                    Require(((ScrollViewer)main.Content).ScrollableWidth < 2, "Normal main window unexpectedly overflows horizontally.");
+                    Require(((ScrollViewer)preview.Content).ScrollableWidth < 2 && ((ScrollViewer)import.Content).ScrollableWidth < 2,
+                        "Normal dialog unexpectedly overflows horizontally.");
+                    var changes = (DataGrid)preview.FindName("ChangesGrid");
+                    Require(changes.Columns[1].ActualWidth > 200 && changes.Columns[2].ActualWidth > 200,
+                        "Preview value columns are too narrow.");
+                    Require(Equals(changes.Columns[1].Header, Localizer.T("Preview.Current")), "Preview header did not translate.");
+                    Require(((SolidColorBrush)preview.Background).Color == ((SolidColorBrush)app.Resources["WindowBackground"]).Color,
+                        "Preview background does not follow theme.");
                     Require(Localizer.Language == language, "The requested language was overridden during rendering.");
                     Require(vm.IPv4Address == "192.0.2.99" && ((TextBox)editor.FindName("NameBox")).Text == "Draft preset", "Switching reset a draft.");
                     Require((string)((ComboBox)editor.FindName("GroupBox")).SelectedItem == GroupIds.Ungrouped, "Switching changed a group identity.");
                     Require(main.Title == Localizer.T("Loc_EC57B32F8731"), "Window title did not update.");
-                    Require(vm.SelectedAdapter.EnabledText == Localizer.T("Loc_DFB802238B38"), "Adapter text did not update.");
+                    Require(vm.SelectedAdapter.EnabledText.StartsWith(Localizer.T("Loc_DFB802238B38"), StringComparison.Ordinal), "Adapter text did not update.");
                     Require(Descendants(main).OfType<Button>().Any(b => Equals(b.Content, Localizer.T("Settings.Title"))), "Settings button missing.");
                     Require(ThemeService.EffectiveTheme == theme, "Wrong theme.");
                     foreach (var button in Descendants(main).OfType<Button>().Where(x => x.IsVisible && x.Content is string))
@@ -64,8 +89,26 @@ internal static class AppearanceSmokeTests
                     Save(main, Path.Combine(output, $"main-{language}-{theme}.png"));
                     Save(editor, Path.Combine(output, $"editor-{language}-{theme}.png"));
                     Save(settings, Path.Combine(output, $"settings-{language}-{theme}.png"));
+                    Save(preview, Path.Combine(output, $"preview-{language}-{theme}.png"));
+                    Save(import, Path.Combine(output, $"import-{language}-{theme}.png"));
+                    Save(binding, Path.Combine(output, $"binding-{language}-{theme}.png"));
+                    Save(diagnostics, Path.Combine(output, $"diagnostics-{language}-{theme}.png"));
                 }
-                editor.Close(); settings.Close(); group.Close();
+                var savedAdapter = new AdapterViewModel(new AdapterSnapshot { Name = "Offline adapter (demo)",
+                    InterfaceGuid = "offline-demo-guid", Enabled = false, UsesSavedIPv4Configuration = true,
+                    Config = snapshot.Config.Clone() });
+                vm.Adapters.Add(savedAdapter); vm.SelectedAdapter = savedAdapter;
+                foreach (var language in new[] { "en", "zh-CN", "zh-TW" })
+                foreach (var theme in new[] { "light", "dark" })
+                {
+                    Localizer.SetLanguage(language); ThemeService.Apply(theme); Flush(main);
+                    var status = (TextBlock)main.FindName("AdapterConfigurationStatus");
+                    Require(status.Text == Localizer.T("Network.ShowingSaved") && status.ActualHeight > 0,
+                        "Saved configuration source label did not render or translate.");
+                    Require(vm.IPv4Address == "192.0.2.10", "Offline saved IP missing from editor.");
+                    Save(main, Path.Combine(output, $"saved-{language}-{theme}.png"));
+                }
+                editor.Close(); settings.Close(); group.Close(); preview.Close(); import.Close(); binding.Close(); diagnostics.Close();
                 var preferencePath = Path.Combine(output, "isolated-settings-" + Guid.NewGuid().ToString("N") + ".json");
                 var preferenceService = new PreferencesService(preferencePath);
                 preferenceService.Load();
@@ -90,8 +133,25 @@ internal static class AppearanceSmokeTests
                 Require(!((ComboBox)busySettings.FindName("LanguageBox")).IsEnabled && ((ComboBox)busySettings.FindName("ThemeBox")).IsEnabled,
                     "Busy operation should block only language changes.");
                 completion.SetResult(); Flush(busySettings); busySettings.Close();
+                Localizer.SetLanguage("en");
+                main.Width = 800; main.Height = 600;
+                foreach (var scale in new[] { 1.25, 1.5, 2.0 })
+                {
+                    ((FrameworkElement)main.Content).LayoutTransform = new ScaleTransform(scale, scale);
+                    Flush(main);
+                    Require(Descendants(main).OfType<ScrollViewer>().Any(s => s.ScrollableWidth > 0), "Small scaled viewport needs horizontal scrolling.");
+                    Save(main, Path.Combine(output, $"layout-scale-{scale:F2}.png"));
+                }
+                ((FrameworkElement)main.Content).LayoutTransform = Transform.Identity;
+                main.Width = 640; main.Height = 420; Flush(main);
+                Require(main.InputBindings.Count >= 3, "Keyboard shortcuts missing.");
+                Save(main, Path.Combine(output, "minimum-en.png"));
+                ThemeService.ApplyForEnvironment("dark", true); Flush(main);
+                Require(ThemeService.EffectiveTheme == "high-contrast" && ((SolidColorBrush)app.Resources["TextColor"]).Color == SystemColors.WindowTextColor, "High contrast palette not applied.");
+                Save(main, Path.Combine(output, "high-contrast-palette-en.png"));
+                ThemeService.Apply("dark"); Require(ThemeService.EffectiveTheme == "dark", "Theme preference not restored.");
                 main.Close(); app.Shutdown();
-                Console.WriteLine("Appearance smoke: 6 language/theme combinations, 19 screenshots, draft/identity preservation, busy settings and contrast checks passed. No network writes.");
+                Console.WriteLine("Appearance smoke: 6 language/theme combinations; 54 screenshots including diagnostics privacy, simulated update UI, preview/import/binding, saved state, simulated 125/150/200% layout scaling, minimum size and injected high-contrast palette. Real DPI/monitor transitions and English Windows not exercised. No real HTTP or network writes.");
             }
             catch (Exception ex) { error = ex; }
         });

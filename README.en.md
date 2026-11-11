@@ -3,9 +3,11 @@
 [简体中文](README.md) | English
 
 An IPv4, DNS and network preset manager for Windows 10/11 x64, built with WPF and .NET 8.
-Current source version: **1.5.2**. Licensed under the [MIT license](LICENSE).
+Current source version: **1.6.2**. Licensed under the [MIT license](LICENSE).
 
 ![Main window with synthetic demonstration data](docs/images/main-window-en.png)
+
+See the [v1.6.2 release notes](docs/RELEASE-1.6.2.md) for this release. See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
 
 ## Features
 
@@ -82,7 +84,7 @@ python -m pip install -r .\build\requirements.txt
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
-Outputs are self-contained, untrimmed, multi-file `win-x64` packages in `artifacts\1.5.2\`. The script replaces only the named ZIP and installer, collects dependency licenses and rejects runtime user data in the publishing directory. `-OutputRootOverride` must point inside `artifacts`, without symlinks or junctions. Version numbers come from the main project. The `.iss` script is the production installer; the C# project under Installer is a legacy prototype.
+Outputs are self-contained, untrimmed, multi-file `win-x64` packages in `artifacts\1.5.3\`. The script replaces only the named ZIP and installer, collects dependency licenses and rejects runtime user data in the publishing directory. `-OutputRootOverride` must point inside `artifacts`, without symlinks or junctions. Version numbers come from the main project. The `.iss` script is the production installer; the C# project under Installer is a legacy prototype.
 
 Publish both packages and matching SHA-256 checksums. Do not package an application directory that has been used with personal data.
 
@@ -91,3 +93,7 @@ Publish both packages and matching SHA-256 checksums. Do not package an applicat
 Issues and pull requests are welcome. Include your Windows version, reproduction steps and expected/actual behavior; redact logs and screenshots. Run the build and default self-tests before submitting code. Real adapter write tests are not required for ordinary contributions.
 
 See [third-party notices](THIRD-PARTY-NOTICES.md) for bundled materials. Internal working notes and raw acceptance logs remain local.
+
+[v1.6.0 local candidate and acceptance limits](docs/RELEASE-1.6.0.md): configuration review, adapter drafts, preset import/export and explicit binding.
+
+[v1.6.1 local candidate and acceptance limits](docs/RELEASE-1.6.1.md): operation history, diagnostic preview/export and manual update checking.

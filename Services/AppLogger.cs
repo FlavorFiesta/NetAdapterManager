@@ -35,8 +35,11 @@ public static class AppLogger
             lock (Gate)
             {
                 Directory.CreateDirectory(LogDirectory);
-                RotateIfNeeded();
-                File.AppendAllText(LogFilePath, builder.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                var text = BoundEntry(builder.ToString());
+                var bytes = Encoding.UTF8.GetByteCount(text);
+                RotateIfNeeded(bytes);
+                if (File.Exists(LogFilePath) && new FileInfo(LogFilePath).Length + bytes > MaxLogBytes) return;
+                File.AppendAllText(LogFilePath, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             }
         }
         catch
@@ -45,11 +48,13 @@ public static class AppLogger
         }
     }
 
-    private static void RotateIfNeeded()
+    internal static string BoundEntry(string text) => text.Length <= 16384 ? text : text[..16384] + "\n[truncated]\n";
+
+    private static void RotateIfNeeded(int incomingBytes)
     {
         try
         {
-            if (!File.Exists(LogFilePath) || new FileInfo(LogFilePath).Length < MaxLogBytes) return;
+            if (!File.Exists(LogFilePath) || new FileInfo(LogFilePath).Length + incomingBytes <= MaxLogBytes) return;
             var oldPath = LogFilePath + ".old";
             File.Delete(oldPath);
             File.Move(LogFilePath, oldPath);

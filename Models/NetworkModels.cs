@@ -76,6 +76,8 @@ public sealed class AdapterSnapshot
     public AdapterType Type { get; set; }
     public bool Enabled { get; set; }
     public bool Ipv4InterfacePresent { get; set; }
+    public bool UsesSavedIPv4Configuration { get; set; }
+    public List<string>? EffectiveDnsServers { get; set; }
     public string ConnectionStatus { get; set; } = string.Empty;
     public NetworkConfig Config { get; set; } = new();
 }

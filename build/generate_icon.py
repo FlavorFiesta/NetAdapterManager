@@ -17,25 +17,23 @@ def box(values):
 
 
 def line(points, fill, width):
-    draw.line([(int(x * SCALE), int(y * SCALE)) for x, y in points], fill=fill, width=width * SCALE, joint="curve")
+    scaled = [(int(x * SCALE), int(y * SCALE)) for x, y in points]
+    draw.line(scaled, fill=fill, width=width * SCALE, joint="curve")
+    radius = width * SCALE / 2
+    for x, y in scaled:
+        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=fill)
 
 
-navy = "#0B1B38"
-blue = "#4F86F7"
+gray = "#71717A"
 white = "#FFFFFF"
 
-draw.rounded_rectangle(box((4, 4, 252, 252)), radius=42 * SCALE, fill=navy)
+draw.rounded_rectangle(box((8, 8, 248, 248)), radius=52 * SCALE, fill=gray)
 
-# Ethernet socket body.
-draw.rounded_rectangle(box((42, 62, 214, 168)), radius=16 * SCALE, outline=white, width=10 * SCALE)
-draw.rectangle(box((63, 78, 193, 139)), fill=blue)
-for x in (74, 103, 132, 161):
-    draw.rectangle(box((x, 78, x + 15, 112)), fill=white)
-
-# Plug and cable.
-line([(95, 168), (95, 205), (161, 205), (161, 168)], white, 10)
-line([(128, 205), (128, 239)], white, 10)
-line([(113, 205), (143, 205)], blue, 8)
+# Network nodes: approved proposal 03, gray/white variant B.
+line([(128, 85), (128, 128)], white, 12)
+line([(78, 171), (78, 132), (178, 132), (178, 171)], white, 12)
+for x, y in ((128, 78), (78, 177), (178, 177)):
+    draw.rounded_rectangle(box((x - 20, y - 20, x + 20, y + 20)), radius=11 * SCALE, fill=white)
 
 image = image.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)

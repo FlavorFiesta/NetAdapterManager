@@ -8,6 +8,7 @@ public sealed record AppPreferences
 {
     public string Language { get; init; } = "system";
     public string Theme { get; init; } = "system";
+    public string UpdateFallbackUrl { get; init; } = UpdateService.DefaultFallbackUrl;
 }
 
 public sealed class PreferencesService(string? filePath = null)
@@ -20,7 +21,8 @@ public sealed class PreferencesService(string? filePath = null)
     internal static AppPreferences Normalize(AppPreferences value) => new()
     {
         Language = value.Language is "system" or "zh-CN" or "zh-TW" or "en" ? value.Language : "system",
-        Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system"
+        Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system",
+        UpdateFallbackUrl = UpdateService.ValidFeedUrl(value.UpdateFallbackUrl?.Trim()) ? value.UpdateFallbackUrl!.Trim() : ""
     };
 
     public void Load()

@@ -63,6 +63,12 @@
                         <Button x:Name="OverviewAddGroupButton" Content="{DynamicResource Loc_C3FA53918CC9}" Command="{Binding AddPresetGroupCommand}" Style="{StaticResource QuietButton}" />
                         <Button x:Name="OverviewDeleteGroupButton" Content="{DynamicResource Loc_7605C1D82EED}" Command="{Binding DeletePresetGroupCommand}" Style="{StaticResource DangerButton}" />
                     </WrapPanel>
+                    <WrapPanel>
+                        <Button Content="{DynamicResource Transfer.Import}" Command="{Binding ImportPresetsCommand}" Style="{StaticResource QuietButton}"/>
+                        <Button Content="{DynamicResource Transfer.ExportBatch}" Command="{Binding ExportPresetsCommand}" CommandParameter="batch" Style="{StaticResource QuietButton}"/>
+                        <Button Content="{DynamicResource Transfer.ExportAll}" Command="{Binding ExportPresetsCommand}" CommandParameter="all" Style="{StaticResource QuietButton}"/>
+                        <Button Content="{DynamicResource Transfer.Bind}" Command="{Binding BindPresetCommand}" Style="{StaticResource QuietButton}"/>
+                    </WrapPanel>
                     <WrapPanel Margin="0,8,0,0" VerticalAlignment="Center">
                         <Button Content="{DynamicResource Loc_70B25D866A2E}" Click="SelectAll_Click" Style="{StaticResource QuietButton}" />
                         <Button Content="{DynamicResource Loc_35442C038DB9}" Click="ClearSelection_Click" Style="{StaticResource QuietButton}" />
