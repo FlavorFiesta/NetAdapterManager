@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
@@ -130,6 +130,7 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(CanOperate));
             OnPropertyChanged(nameof(CanConfigure));
             OnPropertyChanged(nameof(CanApplyPreset));
+            NotifyTemplateTarget();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -141,6 +142,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (!SetProperty(ref _selectedPreset, value)) return;
             OnPropertyChanged(nameof(CanApplyPreset));
+            NotifyTemplateTarget();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -181,12 +183,13 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(CanOperate));
             OnPropertyChanged(nameof(CanConfigure));
             OnPropertyChanged(nameof(CanApplyPreset));
+            NotifyTemplateTarget();
             OnPropertyChanged(nameof(ConfigurationNoticeText));
             CommandManager.InvalidateRequerySuggested();
         }
     }
     public bool CanOperate => !IsBusy && !_isPresetDialogOpen && SelectedAdapter is not null;
-    public bool CanConfigure => CanOperate;
+    public bool CanConfigure => CanOperate && IsAdministrator;
     private L.Message? _statusMessageTemplate;
     public string StatusMessage { get => _statusMessageTemplate?.Render() ?? _statusMessage; private set { _statusMessageTemplate = L.Capture(value); SetProperty(ref _statusMessage, value); } }
     private L.Message? _detailMessageTemplate;
@@ -252,7 +255,7 @@ public sealed partial class MainViewModel : ObservableObject
     public RelayCommand RefreshCommand => new(() => _ = RefreshAsync(), () => !HasPendingOperation);
     public RelayCommand ApplyCommand => new(ApplyAsync, () => CanConfigure);
     public RelayCommand ToggleAdapterCommand => new(ToggleAdapterAsync,
-        parameter => !HasPendingOperation && (parameter is AdapterViewModel || SelectedAdapter is not null));
+        parameter => IsAdministrator && !HasPendingOperation && (parameter is AdapterViewModel || SelectedAdapter is not null));
     public RelayCommand ToggleTopmostCommand => new(() => IsTopmost = !IsTopmost);
     public RelayCommand SavePresetCommand => new(SavePresetAsync, () => CanSavePreset);
     public RelayCommand EditPresetCommand => new(EditPresetAsync, () => !HasPendingOperation && SelectedPreset is not null);
@@ -260,7 +263,7 @@ public sealed partial class MainViewModel : ObservableObject
         ApplyPresetAsync,
         parameter => !HasPendingOperation
             && (parameter as Preset ?? SelectedPreset) is { } preset
-            && ResolvePresetAdapter(preset) is not null);
+            && IsAdministrator && SelectedAdapter is not null);
     public RelayCommand DeletePresetCommand => new(DeletePresetAsync, () => !HasPendingOperation && SelectedPreset is not null);
     public RelayCommand AddPresetGroupCommand => new(AddPresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
     public RelayCommand DeletePresetGroupCommand => new(DeletePresetGroupAsync, () => !IsBusy && !_isPresetDialogOpen);
@@ -268,7 +271,7 @@ public sealed partial class MainViewModel : ObservableObject
     public RelayCommand OpenNetworkConnectionsCommand => new(OpenNetworkConnections);
     public RelayCommand ViewAllPresetsCommand => new(ShowAllPresets);
     public RelayCommand ClearPresetFilterCommand => new(ResetPresetFilter);
-    public bool CanApplyPreset => !HasPendingOperation && SelectedPreset is not null && ResolvePresetAdapter(SelectedPreset) is not null;
+    public bool CanApplyPreset => !HasPendingOperation && IsAdministrator && SelectedPreset is not null && SelectedAdapter is not null;
 
     public MainViewModel(NetworkService? networkService = null, PresetService? presetService = null, OperationJournal? journal = null)
     {
@@ -324,7 +327,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async void ApplyAsync()
     {
-        if (SelectedAdapter is null || HasPendingOperation) return;
+        if (!CanConfigure || SelectedAdapter is null) return;
         var adapter = SelectedAdapter.Snapshot;
         await RunBusyAsync(async () =>
         {
@@ -393,9 +396,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async void ApplyPresetAsync(object? parameter)
     {
-        if (HasPendingOperation) return;
+        if (HasPendingOperation || !IsAdministrator) return;
         var preset = parameter as Preset ?? SelectedPreset;
-        var target = preset is null ? null : ResolvePresetAdapter(preset);
+        var target = preset is null ? null : SelectedAdapter;
         if (preset is null || target is null)
         {
             StatusMessage = L.T("Loc_8E3D9B6C8224");
@@ -476,6 +479,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (_isPresetDialogOpen || IsBusy) return;
         var preset = SelectedPreset;
         if (preset is null) return;
+        if (!RiskConfirmationWindow.Confirm(DialogOwner, L.F("Ops.DeleteTemplate", preset.Name), L.T("Loc_2F9DAA828907"))) return;
         var index = _allPresets.IndexOf(preset);
         if (index < 0) return;
         SetPresetDialogOpen(true);
@@ -551,6 +555,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IpMode = IsDhcp ? IpMode.Dhcp : IpMode.Static,
             DnsMode = IsDnsAutomatic ? DnsMode.Automatic : DnsMode.Static,
+            DhcpStaticAddresses = IsDhcp ? ParseAdditionalAddresses(AdditionalAddressesText) : [],
             DnsServers = IsDnsAutomatic
                 ? []
                 : [.. new[] { PreferredDns, AlternateDns }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())]
@@ -573,6 +578,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void LoadConfigEditor(NetworkConfig config, Ipv4AddressEntry? preferredAddress = null)
     {
+        AdditionalAddressesText = string.Join("\n", (config.DhcpStaticAddresses ?? []).Select(a => $"{a.Address}/{a.PrefixLength}"));
         IsDhcp = config.IpMode == IpMode.Dhcp;
         IsDnsAutomatic = config.DnsMode == DnsMode.Automatic;
         var managed = preferredAddress ?? config.IPv4Addresses.Where(a => a is not null).FirstOrDefault(a => a.IsManaged)
@@ -609,7 +615,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task RefreshAfterOperationAsync(string interfaceGuid, bool preserveDraft = true)
     {
         var draftGuid = SelectedAdapter?.Snapshot.InterfaceGuid;
-        var draft = (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic);
+        var draft = (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic, AdditionalAddressesText);
         try { await RefreshSilentlyAsync(interfaceGuid); }
         catch (Exception ex)
         {
@@ -623,7 +629,7 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             if (preserveDraft && (SelectedAdapter is null || SelectedAdapter.Snapshot.InterfaceGuid == draftGuid))
-                (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic) = draft;
+                (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic, AdditionalAddressesText) = draft;
             NotifyDraft();
         }
     }
@@ -717,6 +723,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(HasAdapters));
         if (selectedGuid is not null) SelectedAdapter = Adapters.FirstOrDefault(x => x.Snapshot.InterfaceGuid == selectedGuid);
         OnPropertyChanged(nameof(CanApplyPreset));
+            NotifyTemplateTarget();
         CommandManager.InvalidateRequerySuggested();
     }
 
@@ -904,6 +911,7 @@ public sealed partial class MainViewModel : ObservableObject
                     || x.DnsSummary.Contains(search, StringComparison.OrdinalIgnoreCase)))
             .ToList();
         ReplaceCollection(Presets, filtered);
+        NotifyTemplateTarget();
         OnPropertyChanged(nameof(PresetCountText));
     }
 
@@ -1053,6 +1061,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(CanOperate));
         OnPropertyChanged(nameof(CanConfigure));
         OnPropertyChanged(nameof(CanApplyPreset));
+            NotifyTemplateTarget();
         CommandManager.InvalidateRequerySuggested();
     }
 

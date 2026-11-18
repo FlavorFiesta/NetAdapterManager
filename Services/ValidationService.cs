@@ -8,6 +8,10 @@ public static class ValidationService
     public static ValidationResult ValidateManualConfig(NetworkConfig config)
     {
         var result = new ValidationResult();
+        var extra = config.DhcpStaticAddresses ?? [];
+        if (extra.Count > 16 || extra.Any(a => a is null || !TryParseIPv4(a.Address, out _) || a.PrefixLength is < 0 or > 32 || !string.IsNullOrWhiteSpace(a.Gateway))
+            || extra.Select(a => a.Address).Distinct().Count() != extra.Count)
+            result.Errors.Add(L.T("Ops.InvalidAdditional"));
         if (config.IpMode == IpMode.Static && config.DnsMode == DnsMode.Automatic)
             result.Errors.Add(L.T("Validation.StaticRequiresStaticDns"));
 

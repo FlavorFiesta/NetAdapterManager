@@ -8,6 +8,9 @@ public sealed record AppPreferences
 {
     public string Language { get; init; } = "system";
     public string Theme { get; init; } = "system";
+    public bool FollowSystemDpi { get; init; } = true;
+    public double UiScale { get; init; } = 1;
+    public double FontScale { get; init; } = 1;
     public string UpdateFallbackUrl { get; init; } = UpdateService.DefaultFallbackUrl;
 }
 
@@ -22,6 +25,9 @@ public sealed class PreferencesService(string? filePath = null)
     {
         Language = value.Language is "system" or "zh-CN" or "zh-TW" or "en" ? value.Language : "system",
         Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system",
+        FollowSystemDpi = value.FollowSystemDpi,
+        UiScale = double.IsFinite(value.UiScale) ? Math.Clamp(value.UiScale, .75, 1.75) : 1,
+        FontScale = double.IsFinite(value.FontScale) ? Math.Clamp(value.FontScale, .85, 1.5) : 1,
         UpdateFallbackUrl = UpdateService.ValidFeedUrl(value.UpdateFallbackUrl?.Trim()) ? value.UpdateFallbackUrl!.Trim() : ""
     };
 
@@ -72,6 +78,7 @@ public sealed class PreferencesService(string? filePath = null)
     {
         Localization.SetLanguage(Current.Language == "system" ? SystemLanguage() : Current.Language);
         ThemeService.Apply(Current.Theme);
+        UiDisplayService.Apply(Current);
     }
 
     private static string SystemLanguage()

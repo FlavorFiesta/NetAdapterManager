@@ -11,6 +11,7 @@ internal static class WindowCompatibility
 {
     internal static void Attach(Window window)
     {
+        UiDisplayService.Attach(window);
         var minimumWidth = window.MinWidth;
         var minimumHeight = window.MinHeight;
         if (window.Content is FrameworkElement content && content is not ScrollViewer)

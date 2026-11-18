@@ -7,22 +7,24 @@ namespace NetAdapterManager.ViewModels;
 
 public sealed partial class MainViewModel
 {
-    private sealed record EditorDraft(string Ip, string Prefix, string Gateway, string Dns1, string Dns2, bool Dhcp, bool AutoDns);
+    private sealed record EditorDraft(string Ip, string Prefix, string Gateway, string Dns1, string Dns2, bool Dhcp, bool AutoDns, string Additional);
     private readonly Dictionary<string, EditorDraft> _drafts = new(StringComparer.OrdinalIgnoreCase);
     private EditorDraft? _editorBaseline;
     internal Func<AdapterSnapshot, NetworkConfig, bool>? ReviewConfiguration { get; set; }
-    private EditorDraft CaptureEditor() => new(IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic);
+    private EditorDraft CaptureEditor() => new(IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic, AdditionalAddressesText);
     private void RestoreEditor(EditorDraft d) =>
-        (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic) = (d.Ip, d.Prefix, d.Gateway, d.Dns1, d.Dns2, d.Dhcp, d.AutoDns);
-    public bool HasDraft => SelectedAdapter is not null && _editorBaseline is not null && CaptureEditor() != _editorBaseline;
-    public string DraftStatusText => L.T(HasDraft ? "Draft.Modified" : "Draft.Current");
+        (IPv4Address, PrefixInput, Gateway, PreferredDns, AlternateDns, IsDhcp, IsDnsAutomatic, AdditionalAddressesText) = (d.Ip, d.Prefix, d.Gateway, d.Dns1, d.Dns2, d.Dhcp, d.AutoDns, d.Additional);
+    public bool HasDraft => SelectedAdapter is not null && _editorBaseline is not null && (CaptureEditor() != _editorBaseline || DnsModeAdjusted);
+    public bool DnsModeAdjusted => SelectedAdapter?.Snapshot.Config is { IpMode: IpMode.Static, DnsMode: DnsMode.Automatic } && IsStatic && IsDnsStatic;
+    public string DraftStatusText => L.T(DnsModeAdjusted ? "Draft.DnsAdjusted" : HasDraft ? "Draft.Modified" : "Draft.Current");
     public string ActualConfigurationText => SelectedAdapter is null ? "" : L.T("Preview.Current") + ":\n" +
         L.T(SelectedAdapter.Snapshot.Config.IpMode == IpMode.Dhcp ? "Preview.Automatic" : "Preview.Static") + "\n" +
         string.Join("\n", SelectedAdapter.Snapshot.Config.IPv4Addresses.Select(a => $"{a.Address}/{a.PrefixLength} | {L.T("Preview.Gateway")}: {(string.IsNullOrWhiteSpace(a.Gateway) ? L.T("Preview.Empty") : a.Gateway)}")) +
-        $"\nDNS: {(SelectedAdapter.Snapshot.Config.DnsMode == DnsMode.Automatic ? L.T("Preview.Automatic") : string.Join(", ", SelectedAdapter.Snapshot.Config.DnsServers))}";
+        $"\nDNS: {(SelectedAdapter.Snapshot.Config.DnsMode == DnsMode.Automatic ? L.T("Preview.Automatic") : (SelectedAdapter.Snapshot.Config.DnsServers.Count == 0 ? L.T("Preview.Empty") : string.Join(", ", SelectedAdapter.Snapshot.Config.DnsServers)))}";
     private void NotifyDraft()
     {
         OnPropertyChanged(nameof(HasDraft));
+        OnPropertyChanged(nameof(DnsModeAdjusted));
         OnPropertyChanged(nameof(DraftStatusText));
         OnPropertyChanged(nameof(ActualConfigurationText));
     }

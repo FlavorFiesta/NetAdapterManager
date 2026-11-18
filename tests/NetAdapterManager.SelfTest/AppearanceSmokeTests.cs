@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -22,7 +22,7 @@ internal static class AppearanceSmokeTests
                 var app = new NetAdapterManager.App(suppressStartup: true); app.InitializeComponent();
                 SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
                 Localizer.SetLanguage("zh-CN");
-                var snapshot = new AdapterSnapshot { Name = "Ethernet (demo)", InterfaceGuid = "demo-guid", Enabled = true,
+                var snapshot = new AdapterSnapshot { Name = "Ethernet (demo)", InterfaceGuid = "demo-guid", MacAddress = "00:11:22:33:44:55", Enabled = true,
                     Ipv4InterfacePresent = true, ConnectionStatus = "Up", Type = AdapterType.Physical,
                     Config = NetworkConfig.ForPreset("192.0.2.10", 24, "192.0.2.1", DnsMode.Static, ["192.0.2.53"]) };
                 var network = new NetworkService(_ => Task.FromResult<IReadOnlyList<AdapterSnapshot>>([snapshot]),
@@ -35,6 +35,10 @@ internal static class AppearanceSmokeTests
                 vm.Presets.Add(preset);
                 vm.IPv4Address = "192.0.2.99";
                 var main = new MainWindow(vm, false); main.Show();
+                Require(main.Icon is BitmapSource { PixelWidth: 256, PixelHeight: 256 }, "Window icon must use the full-resolution image.");
+                var help = (FrameworkElement)main.FindName("ConfigurationHelp");
+                Require(help.ToolTip is not null, "DNS help must be available on hover.");
+                var overview = new PresetOverviewWindow(vm); overview.Show();
                 vm.RefreshCommand.Execute(null); Flush(main);
                 Require(vm.IPv4Address == "192.0.2.99" && vm.HasDraft, "A bound adapter refresh lost its draft.");
                 var editor = new PresetEditorWindow("Draft preset", GroupIds.Ungrouped, snapshot.Config, "Ethernet (demo)", "00:11:22:33:44:55", [GroupIds.Ungrouped, "Office"]);
@@ -59,6 +63,53 @@ internal static class AppearanceSmokeTests
                     Flush(main); Flush(editor); Flush(settings); Flush(group);
                     Flush(preview); Flush(import); Flush(binding);
                     Flush(diagnostics);
+                    Flush(overview);
+                    var actualSummary = (TextBlock)main.FindName("AdapterConfigurationSummary");
+                    Require(actualSummary.Text == vm.SelectedAdapter!.ConfigurationSummary
+                        && actualSummary.Text.Contains("192.0.2.10/24") && actualSummary.Text.Contains("192.0.2.1")
+                        && actualSummary.Text.Contains("192.0.2.53") && !actualSummary.Text.Contains("192.0.2.99"),
+                        "Adapter summary must show actual addresses, gateway and DNS, never the draft.");
+                    Require(!Descendants(main).OfType<Expander>().Any(x => Equals(x.Header, vm.ActualConfigurationTitle)),
+                        "Actual configuration must not occupy a second panel.");
+                    var helpButton = (Button)main.FindName("ConfigurationHelp");
+                    Require(helpButton.ActualWidth >= 28 && helpButton.ActualHeight >= 28
+                        && ToolTipService.GetShowOnDisabled(helpButton), "DNS help needs a usable hover target even when disabled.");
+                    helpButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                    var helpTip = (ToolTip)helpButton.ToolTip;
+                    Require(helpTip.IsOpen && ((TextBlock)helpTip.Content).Text == vm.ConfigurationNoticeText,
+                        "DNS tooltip must open and render the current translated help text.");
+                    helpTip.IsOpen = false;
+                    VerifyPresetButtons(editor);
+                    var nameBox = (TextBox)editor.FindName("NameBox");
+                    var groupBox = (ComboBox)editor.FindName("GroupBox");
+                    Require(Math.Abs(nameBox.ActualHeight - groupBox.ActualHeight) < 1,
+                        "Preset name and group controls must have equal height.");
+                    Require(Math.Abs(nameBox.TranslatePoint(new Point(), editor).Y - groupBox.TranslatePoint(new Point(), editor).Y) < 1,
+                        "Preset name and group controls must align vertically.");
+                    var preferredDns = (TextBox)editor.FindName("PreferredDnsBox");
+                    var alternateDns = (TextBox)editor.FindName("AlternateDnsBox");
+                    var savedPreferred = preferredDns.Text; var savedAlternate = alternateDns.Text;
+                    preferredDns.Text = ""; alternateDns.Text = ""; Flush(editor);
+                    var dnsHint = (TextBlock)editor.FindName("EmptyDnsHint");
+                    Require(dnsHint.Visibility == Visibility.Visible && dnsHint.Text == Localizer.T("Ops.EmptyDnsHint"),
+                        "Empty static DNS must explain that applying clears DNS.");
+                    var editorScroll = (ScrollViewer)editor.FindName("PresetEditorScroll");
+                    editorScroll.ScrollToEnd(); Flush(editor);
+                    Save(editor, Path.Combine(output, $"editor-empty-dns-{language}-{theme}.png"));
+                    alternateDns.Text = "192.0.2.54"; Flush(editor);
+                    Require(dnsHint.Visibility == Visibility.Collapsed, "DNS clear hint must hide when an address is supplied.");
+                    preferredDns.Text = savedPreferred; alternateDns.Text = savedAlternate; Flush(editor);
+                    editorScroll.ScrollToHome(); Flush(editor);
+                    var emptyDnsPreset = new Preset { Config = NetworkConfig.ForPreset("192.0.2.10", 24, null, DnsMode.Static, []) };
+                    Require(emptyDnsPreset.DnsSummary == Localizer.T("Ops.NoDns")
+                        && !emptyDnsPreset.DnsSummary.Contains('（') && !emptyDnsPreset.DnsSummary.Contains('('),
+                        "Empty DNS card summary must stay concise without the action suffix.");
+                    vm.SelectedPreset = preset; Flush(main);
+                    var presetList = Descendants(main).OfType<ListBox>().Single(x => ReferenceEquals(x.ItemsSource, vm.Presets));
+                    var presetItem = (ListBoxItem)presetList.ItemContainerGenerator.ContainerFromItem(preset);
+                    var presetChrome = (Border)presetItem.Template.FindName("PresetChrome", presetItem);
+                    Require(((SolidColorBrush)presetChrome.Background).Color == ((SolidColorBrush)app.Resources["CardBackground"]).Color,
+                        "Selected preset should use a border without a solid selection fill.");
                     Require(((TextBlock)settings.FindName("UpdateStatus")).Text == Localizer.T("Updates.Available"), "Update status did not translate.");
                     Require(((ScrollViewer)main.Content).ScrollableWidth < 2, "Normal main window unexpectedly overflows horizontally.");
                     Require(((ScrollViewer)preview.Content).ScrollableWidth < 2 && ((ScrollViewer)import.Content).ScrollableWidth < 2,
@@ -87,13 +138,51 @@ internal static class AppearanceSmokeTests
                     Require(Contrast((SolidColorBrush)app.Resources["TextColor"], (SolidColorBrush)app.Resources["CardBackground"]) >= 4.5, "Insufficient body text contrast.");
                     Require(Contrast((SolidColorBrush)app.Resources["MutedText"], (SolidColorBrush)app.Resources["CardBackground"]) >= 4.5, "Insufficient secondary text contrast.");
                     Save(main, Path.Combine(output, $"main-{language}-{theme}.png"));
+                    var dropdownNic = new AdapterViewModel(new AdapterSnapshot { Name="WLAN (demo)", MacAddress="02:00:00:00:00:23", Enabled=true, ConnectionStatus="Up",
+                        Config=new NetworkConfig { IPv4Addresses=[new() {Address="198.51.100.8",PrefixLength=23}] } });
+                    vm.Adapters.Add(dropdownNic);
+                    var selector=(ComboBox)main.FindName("AdapterSelector");
+                    var closedHeight=selector.ActualHeight;
+                    selector.IsDropDownOpen=true; Flush(main);
+                    var popup=(System.Windows.Controls.Primitives.Popup)selector.Template.FindName("PART_Popup",selector);
+                    var popupContent=(FrameworkElement)popup.Child; popupContent.UpdateLayout();
+                    var rendered=string.Join("\n",Descendants(popupContent).OfType<TextBlock>().Where(t=>t.IsVisible).Select(t=>t.Text));
+                    Require(rendered.Contains("00:11:22:33:44:55") && rendered.Contains("192.0.2.10/24") && rendered.Contains("255.255.255.0")
+                        && rendered.Contains("02:00:00:00:00:23") && rendered.Contains("198.51.100.8/23") && rendered.Contains("255.255.254.0"), "Dropdown must render each adapter's MAC, IP and subnet mask.");
+                    Require(Math.Abs(selector.ActualHeight-closedHeight)<1,"Opening details changed the compact selector height.");
+                    var popupBitmap=new RenderTargetBitmap((int)Math.Ceiling(popupContent.ActualWidth),(int)Math.Ceiling(popupContent.ActualHeight),96,96,PixelFormats.Pbgra32);
+                    popupBitmap.Render(popupContent);var popupPng=new PngBitmapEncoder();popupPng.Frames.Add(BitmapFrame.Create(popupBitmap));
+                    using(var file=File.Create(Path.Combine(output,$"adapter-dropdown-{language}-{theme}.png"))) popupPng.Save(file);
+                    selector.IsDropDownOpen=false; vm.Adapters.Remove(dropdownNic);
+                    Save(overview, Path.Combine(output, $"overview-{language}-{theme}.png"));
+                    ((Expander)overview.FindName("BatchTools")).IsExpanded = true; Flush(overview);
+                    Save(overview, Path.Combine(output, $"overview-batch-{language}-{theme}.png"));
+                    ((Expander)overview.FindName("BatchTools")).IsExpanded = false;
                     Save(editor, Path.Combine(output, $"editor-{language}-{theme}.png"));
                     Save(settings, Path.Combine(output, $"settings-{language}-{theme}.png"));
+                    var tabs = Descendants(settings).OfType<TabControl>().First();
+                    tabs.SelectedIndex = 1; Flush(settings);
+                    Save(settings, Path.Combine(output, $"display-settings-{language}-{theme}.png"));
+                    tabs.SelectedIndex = 0;
                     Save(preview, Path.Combine(output, $"preview-{language}-{theme}.png"));
                     Save(import, Path.Combine(output, $"import-{language}-{theme}.png"));
                     Save(binding, Path.Combine(output, $"binding-{language}-{theme}.png"));
                     Save(diagnostics, Path.Combine(output, $"diagnostics-{language}-{theme}.png"));
                 }
+                // Automatic fields collapse; advanced addresses and mismatched templates stay discoverable.
+                vm.IsDhcp = true; vm.IsDnsAutomatic = true; Flush(main);
+                Require(((Grid)main.FindName("StaticIpFields")).Visibility == Visibility.Collapsed && ((Grid)main.FindName("StaticDnsFields")).Visibility == Visibility.Collapsed, "Automatic modes must collapse static fields.");
+                Save(main, Path.Combine(output, "dhcp-compact.png"));
+                ((Expander)main.FindName("AdditionalAddressesExpander")).IsExpanded = true;
+                vm.AdditionalAddressesText = "192.0.2.40/24\n192.0.2.41/24"; Flush(main);
+                Save(main, Path.Combine(output, "dhcp-advanced.png"));
+                vm.SelectedPreset = null;
+                preset.AdapterName = "Other adapter"; preset.AdapterInterfaceGuid = "other-guid"; vm.SelectedPreset = preset; Flush(main);
+                Require(((Border)main.FindName("CrossAdapterWarning")).Visibility == Visibility.Visible, "Cross-adapter warning missing.");
+                Save(main, Path.Combine(output, "cross-adapter-warning.png"));
+                preset.AdapterInterfaceGuid = snapshot.InterfaceGuid; vm.SelectedPreset = null; vm.SelectedPreset = preset; Flush(main);
+                Require(preset.MatchesSelectedAdapter && !vm.IsCrossAdapter, "Matching template not highlighted.");
+                vm.IsStatic = true; vm.PreferredDns = "192.0.2.53";
                 var savedAdapter = new AdapterViewModel(new AdapterSnapshot { Name = "Offline adapter (demo)",
                     InterfaceGuid = "offline-demo-guid", Enabled = false, UsesSavedIPv4Configuration = true,
                     Config = snapshot.Config.Clone() });
@@ -102,13 +191,22 @@ internal static class AppearanceSmokeTests
                 foreach (var theme in new[] { "light", "dark" })
                 {
                     Localizer.SetLanguage(language); ThemeService.Apply(theme); Flush(main);
-                    var status = (TextBlock)main.FindName("AdapterConfigurationStatus");
-                    Require(status.Text == Localizer.T("Network.ShowingSaved") && status.ActualHeight > 0,
-                        "Saved configuration source label did not render or translate.");
+                    Require(vm.ActualConfigurationTitle == Localizer.T("Ops.SavedConfiguration") && savedAdapter.IsAbnormal,
+                        "Inactive saved state must have a distinct title and abnormal marker.");
                     Require(vm.IPv4Address == "192.0.2.10", "Offline saved IP missing from editor.");
                     Save(main, Path.Combine(output, $"saved-{language}-{theme}.png"));
                 }
                 editor.Close(); settings.Close(); group.Close(); preview.Close(); import.Close(); binding.Close(); diagnostics.Close();
+                // Exercise independent font enlargement, which previously clipped fixed dialog rows.
+                var scaledEditor = new PresetEditorWindow("Scaled preset", GroupIds.Ungrouped, snapshot.Config);
+                scaledEditor.Show();
+                foreach (var scale in new[] { 1.0, 1.25, 1.5 })
+                {
+                    UiDisplayService.Apply(new() { FollowSystemDpi = false, UiScale = scale, FontScale = scale });
+                    Flush(scaledEditor); VerifyPresetButtons(scaledEditor);
+                    Save(scaledEditor, Path.Combine(output, $"preset-buttons-scale-{scale:F2}.png"));
+                }
+                UiDisplayService.Apply(new()); scaledEditor.Close();
                 var preferencePath = Path.Combine(output, "isolated-settings-" + Guid.NewGuid().ToString("N") + ".json");
                 var preferenceService = new PreferencesService(preferencePath);
                 preferenceService.Load();
@@ -121,10 +219,27 @@ internal static class AppearanceSmokeTests
                 WaitSaved(interactiveSettings);
                 var reloaded = new PreferencesService(preferencePath); reloaded.Load();
                 Require(reloaded.Current.Language == "en" && reloaded.Current.Theme == "dark", "Settings controls did not persist the choice.");
+                Descendants(interactiveSettings).OfType<TabControl>().First().SelectedIndex = 1; Flush(interactiveSettings);
+                ((CheckBox)interactiveSettings.FindName("FollowDpiBox")).IsChecked = false;
+                ((Slider)interactiveSettings.FindName("UiScaleSlider")).Value = 125;
+                ((Slider)interactiveSettings.FindName("FontScaleSlider")).Value = 115;
+                ((Button)interactiveSettings.FindName("ApplyDisplayButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(interactiveSettings);
+                reloaded.Load();
+                Require(!reloaded.Current.FollowSystemDpi && reloaded.Current.UiScale == 1.25 && reloaded.Current.FontScale == 1.15, "Display controls did not persist.");
+                Save(main, Path.Combine(output, "custom-scale-font.png"));
+                var confirm = new RiskConfirmationWindow("Confirm (demo)", "Template: Office preset\nTarget: Ethernet\nThis will overwrite the target IPv4 configuration. Continue?", null);
+                confirm.Show(); Flush(confirm); Save(confirm, Path.Combine(output, "scaled-confirmation.png")); confirm.Close();
+                UiDisplayService.Apply(new() { FollowSystemDpi=false, UiScale=1.75, FontScale=1.5 }); Flush(main); Flush(interactiveSettings);
+                Save(main, Path.Combine(output, "maximum-custom-scale.png"));
+                Save(interactiveSettings, Path.Combine(output, "maximum-display-settings.png"));
+                ((Button)interactiveSettings.FindName("ResetDisplayButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(interactiveSettings);
+                reloaded.Load();
+                Require(reloaded.Current.FollowSystemDpi && reloaded.Current.UiScale==1 && reloaded.Current.FontScale==1, "One-click reset did not restore saved defaults.");
+                UiDisplayService.Apply(new());
                 Require(((SolidColorBrush)interactiveSettings.Background).Color == ((SolidColorBrush)app.Resources["WindowBackground"]).Color, "Settings window background does not follow theme.");
                 interactiveSettings.Close();
                 Localizer.SetLanguage("en"); ThemeService.Apply("light");
-                var overview = new PresetOverviewWindow(vm); overview.Show(); Flush(overview);
+                Flush(overview);
                 Save(overview, Path.Combine(output, "overview-en-light.png")); overview.Close();
                 // Exercise busy settings without starting a real operation.
                 var completion = new TaskCompletionSource();
@@ -151,7 +266,7 @@ internal static class AppearanceSmokeTests
                 Save(main, Path.Combine(output, "high-contrast-palette-en.png"));
                 ThemeService.Apply("dark"); Require(ThemeService.EffectiveTheme == "dark", "Theme preference not restored.");
                 main.Close(); app.Shutdown();
-                Console.WriteLine("Appearance smoke: 6 language/theme combinations; 54 screenshots including diagnostics privacy, simulated update UI, preview/import/binding, saved state, simulated 125/150/200% layout scaling, minimum size and injected high-contrast palette. Real DPI/monitor transitions and English Windows not exercised. No real HTTP or network writes.");
+                Console.WriteLine("Appearance smoke: 6 language/theme combinations; screenshots including diagnostics privacy, simulated update UI, preview/import/binding, saved state, simulated 125/150/200% layout scaling, minimum size and injected high-contrast palette. Real DPI/monitor transitions and English Windows not exercised. No real HTTP or network writes.");
             }
             catch (Exception ex) { error = ex; }
         });
@@ -160,6 +275,24 @@ internal static class AppearanceSmokeTests
         Console.Error.WriteLine(error); return 1;
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+    private static void VerifyPresetButtons(Window editor)
+    {
+        foreach (var name in new[] { "ClosePresetButton", "CancelPresetButton", "SavePresetButton" })
+        {
+            var button = (Button)editor.FindName(name);
+            var chrome = (Border)button.Template.FindName("ButtonChrome", button);
+            var available = chrome.ActualHeight - chrome.Padding.Top - chrome.Padding.Bottom
+                - chrome.BorderThickness.Top - chrome.BorderThickness.Bottom;
+            var text = new FormattedText((string)button.Content, System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight, new Typeface(button.FontFamily, button.FontStyle, button.FontWeight, button.FontStretch),
+                button.FontSize, Brushes.Black, 1);
+            Require(text.Height <= available + 1, $"Preset button text clipped vertically: {name}");
+            var parent = (FrameworkElement)VisualTreeHelper.GetParent(button);
+            var origin = button.TranslatePoint(new Point(), parent);
+            Require(origin.Y >= -1 && origin.Y + button.ActualHeight <= parent.ActualHeight + 1,
+                $"Preset button extends outside its layout row: {name}");
+        }
+    }
     private static void WaitSaved(SettingsWindow window)
     {
         var deadline = DateTime.UtcNow.AddSeconds(5);

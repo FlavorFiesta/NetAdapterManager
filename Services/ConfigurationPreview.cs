@@ -30,6 +30,7 @@ public static class ConfigurationPreview
         return [new(L.T("Preview.Mode"), Mode(before.Config), Mode(expected)),
             new("IPv4", Addresses(before.Config), expected.IpMode == IpMode.Dhcp ? L.T("Preview.Automatic") : Addresses(expected)),
             new(L.T("Preview.Gateway"), Gateways(before.Config), expected.IpMode == IpMode.Dhcp ? L.T("Preview.Automatic") : Gateways(expected)),
-            new("DNS", Dns(before.Config), Dns(expected))];
+            new("DNS", Dns(before.Config), Dns(expected)),
+            new(L.T("Ops.Additional"), Value(before.Config.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}")), Value(expected.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}")))];
     }
 }

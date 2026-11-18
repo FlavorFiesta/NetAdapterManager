@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using NetAdapterManager.Models;
 using NetAdapterManager.Services;
 using NetAdapterManager.ViewModels;
@@ -117,6 +117,7 @@ public partial class PresetEditorWindow : Window
 
     private void LoadConfig(NetworkConfig config)
     {
+        PresetAdditionalBox.Text = string.Join("\n", config.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}"));
         DhcpRadio.IsChecked = config.IpMode == IpMode.Dhcp;
         StaticRadio.IsChecked = config.IpMode == IpMode.Static;
         var managed = config.IPv4Addresses.Where(x => x is not null).FirstOrDefault(x => x.IsManaged)
@@ -146,6 +147,7 @@ public partial class PresetEditorWindow : Window
         var config = new NetworkConfig
         {
             IpMode = StaticRadio.IsChecked == true ? IpMode.Static : IpMode.Dhcp,
+            DhcpStaticAddresses = DhcpRadio.IsChecked == true ? MainViewModel.ParseAdditionalAddresses(PresetAdditionalBox.Text) : [],
             DnsMode = DnsStaticRadio.IsChecked == true ? DnsMode.Static : DnsMode.Automatic,
             DnsServers = DnsStaticRadio.IsChecked == true
                 ? [.. new[] { PreferredDnsBox.Text, AlternateDnsBox.Text }

@@ -6,6 +6,14 @@ namespace NetAdapterManager.Views;
 
 public partial class MainWindow : Window
 {
+    private void ConfigurationHelp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { ToolTip: System.Windows.Controls.ToolTip tip } button)
+        {
+            tip.PlacementTarget = button;
+            tip.IsOpen = true;
+        }
+    }
     private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_viewModel) { Owner = this }.ShowDialog();
     private void PresetList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {

@@ -23,9 +23,11 @@ public partial class SettingsWindow : Window
         NetAdapterManager.Services.WindowCompatibility.Attach(this);
         DataContext = viewModel;
         RestoreSelection();
+        RestoreDisplay();
         FallbackUrlBox.Text = _preferences.Current.UpdateFallbackUrl;
         if (_preferences.LoadError is { } error) ErrorText.Text = L.T("Settings.LoadError") + " " + error;
         _loading = false;
+        UpdateDisplayPreview();
         RefreshUpdateText();
         System.ComponentModel.PropertyChangedEventManager.AddHandler(L.Instance, (_, _) => RefreshUpdateText(), string.Empty);
     }
@@ -102,6 +104,44 @@ public partial class SettingsWindow : Window
         }
         catch (Exception ex) { ErrorText.Text = L.T("Settings.SaveError") + " " + ex.Message; }
         finally { _saving = false; IsEnabled = true; }
+    }
+    private void RestoreDisplay()
+    {
+        var p = _preferences.Current;
+        FollowDpiBox.IsChecked = p.FollowSystemDpi;
+        UiScaleSlider.Value = p.UiScale * 100;
+        FontScaleSlider.Value = p.FontScale * 100;
+    }
+    private void Display_Changed(object sender, RoutedEventArgs e) { if (!_loading) UpdateDisplayPreview(); }
+    private void UpdateDisplayPreview()
+    {
+        if (UiScaleSlider is null || FontScaleSlider is null || DisplayPreview is null) return;
+        UiScaleSlider.IsEnabled = FollowDpiBox.IsChecked != true;
+        var scale = FollowDpiBox.IsChecked == true ? 1 : UiScaleSlider.Value / 100;
+        DisplayPreview.LayoutTransform = new System.Windows.Media.ScaleTransform(scale, scale);
+        DisplayPreviewText.FontSize = 13 * FontScaleSlider.Value / 100;
+        PreviewAddressText.FontSize = 12 * FontScaleSlider.Value / 100;
+    }
+    private void DisplayPreset_Click(object sender, RoutedEventArgs e)
+    {
+        var (scale, font) = ((sender as Button)?.Tag as string) switch
+        { "small" => (85d, 90d), "large" => (115d, 110d), "xl" => (130d, 120d), _ => (100d, 100d) };
+        FollowDpiBox.IsChecked = (sender as Button)?.Tag as string == "default"; UiScaleSlider.Value = scale; FontScaleSlider.Value = font; UpdateDisplayPreview();
+    }
+    private void ResetDisplay_Click(object sender, RoutedEventArgs e)
+    { FollowDpiBox.IsChecked = true; UiScaleSlider.Value = FontScaleSlider.Value = 100; UpdateDisplayPreview(); ApplyDisplay_Click(sender, e); }
+    private async void ApplyDisplay_Click(object sender, RoutedEventArgs e)
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            await _preferences.SaveAsync(_preferences.Current with { FollowSystemDpi = FollowDpiBox.IsChecked == true, UiScale = UiScaleSlider.Value / 100, FontScale = FontScaleSlider.Value / 100 });
+            UiDisplayService.Apply(_preferences.Current);
+            ErrorText.Text = "";
+        }
+        catch (Exception ex) { ErrorText.Text = L.T("Settings.SaveError") + " " + ex.Message; }
+        finally { _saving = false; }
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

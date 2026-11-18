@@ -34,6 +34,8 @@ public sealed class NetworkConfig
         set => _ipv4Addresses = value ?? [];
     }
     public string? ManagedIPv4Address { get; set; }
+    private List<Ipv4AddressEntry> _dhcpStaticAddresses = [];
+    public List<Ipv4AddressEntry> DhcpStaticAddresses { get => _dhcpStaticAddresses; set => _dhcpStaticAddresses = value ?? []; }
     public DnsMode DnsMode { get; set; } = DnsMode.Automatic;
     public List<string> DnsServers
     {
@@ -46,6 +48,7 @@ public sealed class NetworkConfig
         IpMode = IpMode,
         IPv4Addresses = IPv4Addresses.Where(a => a is not null).Select(a => a.Clone()).ToList(),
         ManagedIPv4Address = ManagedIPv4Address,
+        DhcpStaticAddresses = DhcpStaticAddresses.Where(a => a is not null).Select(a => a.Clone()).ToList(),
         DnsMode = DnsMode,
         DnsServers = [.. DnsServers.Where(x => x is not null)]
     };
@@ -69,6 +72,7 @@ public sealed class NetworkConfig
 
 public sealed class AdapterSnapshot
 {
+    public bool AdditionalAddressStateKnown { get; set; } = true;
     public string Name { get; set; } = string.Empty;
     public string MacAddress { get; set; } = string.Empty;
     public string InterfaceGuid { get; set; } = string.Empty;
@@ -84,6 +88,14 @@ public sealed class AdapterSnapshot
 
 public sealed class Preset : INotifyPropertyChanged
 {
+    private bool _matchesSelectedAdapter;
+    [JsonIgnore] public bool MatchesSelectedAdapter
+    {
+        get => _matchesSelectedAdapter;
+        set { if (_matchesSelectedAdapter == value) return; _matchesSelectedAdapter = value; PropertyChanged?.Invoke(this, new(nameof(MatchesSelectedAdapter))); }
+    }
+    [JsonIgnore] public string CreatedSummary => L.F("Ops.Created", CreatedAt.ToString("yyyy-MM-dd HH:mm"));
+    [JsonIgnore] public string BoundMacSummary => L.F("Ops.BoundMac", string.IsNullOrWhiteSpace(AdapterMacAddress) ? L.T("Preview.Empty") : AdapterMacAddress);
     public Preset() => System.ComponentModel.PropertyChangedEventManager.AddHandler(L.Instance, LanguageChanged, string.Empty);
     private void LanguageChanged(object? sender, PropertyChangedEventArgs e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     private string _name = string.Empty;
@@ -151,6 +163,7 @@ public sealed class Preset : INotifyPropertyChanged
             _adapterMacAddress = normalized;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AdapterMacAddress)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MacSummary)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BoundMacSummary)));
         }
     }
     public string AdapterInterfaceGuid
@@ -205,7 +218,7 @@ public sealed class Preset : INotifyPropertyChanged
     [JsonIgnore]
     public string DnsSummary => Config.DnsMode == DnsMode.Automatic
         ? L.T("Loc_36A84A014003")
-        : $"DNS：{string.Join("，", Config.DnsServers.Where(x => x is not null))}";
+        : Config.DnsServers.Any(x => !string.IsNullOrWhiteSpace(x)) ? $"DNS：{string.Join("，", Config.DnsServers.Where(x => !string.IsNullOrWhiteSpace(x)))}" : L.T("Ops.NoDns");
 
     [JsonIgnore]
     public string AdapterSummary => string.IsNullOrWhiteSpace(AdapterName) ? L.T("Loc_877E25224243") : L.F("Loc_E6BD4D087F2A", AdapterName);

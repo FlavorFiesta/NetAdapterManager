@@ -6,7 +6,12 @@ namespace NetAdapterManager.ViewModels;
 public sealed partial class MainViewModel
 {
     public RelayCommand ImportPresetsCommand => new(ImportPresetsAsync, () => !HasPendingOperation);
-    public RelayCommand ExportPresetsCommand => new(ExportPresetsAsync, _ => !HasPendingOperation);
+    public RelayCommand ExportPresetsCommand => new(ExportPresetsAsync, scope => !HasPendingOperation && ((scope as string) switch
+    {
+        "all" => _allPresets.Count > 0,
+        "batch" => BatchSelectedPresets.Count > 0,
+        _ => SelectedPreset is not null
+    }));
     public RelayCommand BindPresetCommand => new(BindPresetAsync, () => !HasPendingOperation && SelectedPreset is not null);
 
     private async void ImportPresetsAsync()

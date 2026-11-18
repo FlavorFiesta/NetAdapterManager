@@ -1,4 +1,4 @@
-﻿using NetAdapterManager.Models;
+using NetAdapterManager.Models;
 using NetAdapterManager.Services;
 using NetAdapterManager.Views;
 using NetAdapterManager.ViewModels;
@@ -26,6 +26,8 @@ if (args.Contains("--isolated"))
     await Version160Tests.RunAsync(Green, Red);
     await Version161Tests.RunAsync(Green, Red);
     await UpdateReliabilityTests.RunAsync(Green, Red);
+    Version163Tests.Run(Green, Red);
+    await Version170Tests.RunAsync(Green, Red);
     Console.WriteLine($"Isolated regression: {passes} passed, {failures} failed; no real network writes.");
     return failures == 0 ? 0 : 1;
 }
@@ -406,11 +408,11 @@ try
     commandViewModel.Adapters.Add(targetAdapterB);
     commandViewModel.SelectedAdapter = targetAdapterA;
     commandViewModel.SelectedPreset = targetPreset;
-    if (commandViewModel.ApplyPresetCommand.CanExecute(targetPreset)
-        && !commandViewModel.ApplyPresetCommand.CanExecute(missingTargetPreset))
-        Pass("预设命令目标参数", "应用命令按传入预设解析所属网卡，目标丢失时命令不可执行。");
+    if (commandViewModel.ApplyPresetCommand.CanExecute(targetPreset) == commandViewModel.IsAdministrator
+        && commandViewModel.ApplyPresetCommand.CanExecute(missingTargetPreset) == commandViewModel.IsAdministrator)
+        Pass("预设命令目标参数", "应用命令使用当前网卡，并根据管理员权限控制可用状态。");
     else
-        Fail("预设命令目标参数", "应用命令仍依赖当前网卡或未阻止失效目标。");
+        Fail("预设命令目标参数", "模板应用命令未正确使用当前选择和管理员权限。");
 
     try
     {

@@ -3,11 +3,11 @@
 [简体中文](README.md) | English
 
 An IPv4, DNS and network preset manager for Windows 10/11 x64, built with WPF and .NET 8.
-Current source version: **1.6.2**. Licensed under the [MIT license](LICENSE).
+Current source version: **1.7.4**. Licensed under the [MIT license](LICENSE).
 
 ![Main window with synthetic demonstration data](docs/images/main-window-en.png)
 
-See the [v1.6.2 release notes](docs/RELEASE-1.6.2.md) for this release. See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
+See the [v1.7.4 release notes](docs/RELEASE-1.7.4.md) for this release. See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
 
 ## Features
 
@@ -19,7 +19,7 @@ See the [v1.6.2 release notes](docs/RELEASE-1.6.2.md) for this release. See the 
 - Choose light, dark or system theme, with support for Windows high-contrast colors.
 - Right-aligned toolbar controls, with version and refresh time on the left.
 
-Network changes require administrator privileges; Windows displays a UAC prompt at startup. Changing the active adapter may interrupt connectivity, so check the target adapter before applying changes.
+Windows requests administrator approval at startup. After approval, the application runs as administrator; cancelling the prompt prevents startup. Changing the active adapter may interrupt connectivity, so check the target adapter before applying changes.
 
 ## Download and use
 

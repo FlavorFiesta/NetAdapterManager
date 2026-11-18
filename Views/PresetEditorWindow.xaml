@@ -9,20 +9,22 @@
             BorderThickness="1" CornerRadius="6" Padding="1">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="42" />
+                <RowDefinition Height="Auto" MinHeight="44" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="58" />
+                <RowDefinition Height="Auto" MinHeight="58" />
             </Grid.RowDefinitions>
 
             <Grid x:Name="TitleBar" Background="{DynamicResource HeaderBackground}"
                   MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <TextBlock TextWrapping="Wrap" Text="{DynamicResource Loc_3AB57DD1E321}" FontSize="15" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Margin="16,0,0,0" />
-                <Button Content="×" Width="36" Height="32" Padding="0" Margin="0,5,6,5"
+                           VerticalAlignment="Center" Margin="16,8,10,8" />
+                <Button x:Name="ClosePresetButton" Grid.Column="1" Content="×" MinWidth="36" MinHeight="34" Padding="6,0" Margin="0,5,6,5"
+                        FontSize="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         HorizontalAlignment="Right" Click="Close_Click" Style="{StaticResource QuietButton}" />
             </Grid>
 
-            <ScrollViewer Grid.Row="1" Padding="14,12" VerticalScrollBarVisibility="Auto"
+            <ScrollViewer x:Name="PresetEditorScroll" Grid.Row="1" Padding="14,12" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     <Border Background="{DynamicResource SoftBlue}" BorderBrush="{DynamicResource HeaderBadgeBorder}"
@@ -50,7 +52,7 @@
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions>
                         <StackPanel Margin="0,0,8,0">
                             <TextBlock TextWrapping="Wrap" Text="{DynamicResource Loc_5FE110AA6D1D}" Foreground="{DynamicResource MutedText}" FontSize="11" />
-                            <TextBox x:Name="NameBox" Margin="0,3,0,7" />
+                            <TextBox x:Name="NameBox" MinHeight="42" VerticalContentAlignment="Center" Margin="0,3,0,7" />
                         </StackPanel>
                         <StackPanel Grid.Column="1">
                             <TextBlock TextWrapping="Wrap" Text="{DynamicResource Loc_399EE6934772}" Foreground="{DynamicResource MutedText}" FontSize="11" />
@@ -66,7 +68,7 @@
                                 <RadioButton x:Name="DhcpRadio" Content="{DynamicResource Loc_620D67C03E6D}" GroupName="PresetIpMode" />
                                 <RadioButton x:Name="StaticRadio" Content="{DynamicResource Loc_69050783CAFB}" GroupName="PresetIpMode" />
                             </StackPanel>
-                            <Grid IsEnabled="{Binding ElementName=StaticRadio, Path=IsChecked}" Margin="0,0,0,1">
+                            <Grid Visibility="{Binding ElementName=StaticRadio, Path=IsChecked, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,1">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
                                 <TextBlock TextWrapping="Wrap" Text="{DynamicResource Loc_EDDFCE79A619}" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
@@ -87,7 +89,7 @@
                                              ToolTip="{DynamicResource Loc_989AA413A7FB}" />
                                 <RadioButton x:Name="DnsStaticRadio" Content="{DynamicResource Loc_7046ECFB8361}" GroupName="PresetDnsMode" />
                             </StackPanel>
-                            <Grid IsEnabled="{Binding ElementName=DnsStaticRadio, Path=IsChecked}">
+                            <Grid Visibility="{Binding ElementName=DnsStaticRadio, Path=IsChecked, Converter={StaticResource BoolVisibility}}">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
                                 <TextBlock TextWrapping="Wrap" Text="{DynamicResource Loc_3EA51B185EAA}" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
@@ -95,8 +97,27 @@
                                 <TextBlock TextWrapping="Wrap" Grid.Row="1" Text="{DynamicResource Loc_D3E3C8F130A7}" Foreground="{DynamicResource MutedText}" VerticalAlignment="Center" />
                                 <TextBox Grid.Row="1" Grid.Column="1" x:Name="AlternateDnsBox" />
                             </Grid>
+                            <TextBlock x:Name="EmptyDnsHint" Text="{DynamicResource Ops.EmptyDnsHint}" FontSize="11"
+                                       Foreground="{DynamicResource MutedText}" TextWrapping="Wrap" Margin="0,2,0,4">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding ElementName=DnsStaticRadio, Path=IsChecked}" Value="True" />
+                                                    <Condition Binding="{Binding ElementName=PreferredDnsBox, Path=Text}" Value="" />
+                                                    <Condition Binding="{Binding ElementName=AlternateDnsBox, Path=Text}" Value="" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
+                    <Expander x:Name="PresetAdditionalExpander" Header="{DynamicResource Ops.Additional}" Margin="0,8,0,4" Visibility="{Binding ElementName=DhcpRadio, Path=IsChecked, Converter={StaticResource BoolVisibility}}"><StackPanel><TextBlock Text="{DynamicResource Ops.AdditionalHint}" FontSize="11" TextWrapping="Wrap"/><TextBox x:Name="PresetAdditionalBox" AcceptsReturn="True" MinHeight="65" VerticalScrollBarVisibility="Auto"/></StackPanel></Expander>
                     <TextBlock x:Name="ValidationMessage" Foreground="{DynamicResource DangerColor}"
                                TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
                                Visibility="Collapsed" />
@@ -105,9 +126,9 @@
 
             <Border Grid.Row="2" Background="{DynamicResource HeaderBackground}" BorderBrush="{DynamicResource HeaderBorder}"
                     BorderThickness="0,1,0,0" Padding="14,10">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{DynamicResource Loc_2CD0F3BE8738}" Click="Cancel_Click" Style="{StaticResource QuietButton}" />
-                    <Button x:Name="SavePresetButton" Content="{DynamicResource Loc_3AB57DD1E321}" Click="Save_Click" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="CancelPresetButton" Content="{DynamicResource Loc_2CD0F3BE8738}" Click="Cancel_Click" Style="{StaticResource QuietButton}" Margin="0" MinHeight="36" VerticalContentAlignment="Center" />
+                    <Button x:Name="SavePresetButton" Content="{DynamicResource Loc_3AB57DD1E321}" Click="Save_Click" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" MinHeight="36" VerticalContentAlignment="Center" />
                 </StackPanel>
             </Border>
         </Grid>

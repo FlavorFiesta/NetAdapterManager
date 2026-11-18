@@ -1,4 +1,4 @@
-﻿{
+{
   "Loc_0194448410D5": {
     "zh-CN": "已删除分组“{0}”，关联预设已移到“未分组”。",
     "zh-TW": "已刪除分組“{0}”，關聯預設已移到“未分組”。",
@@ -1560,7 +1560,9 @@
     "en": "Fallback update feed (optional HTTPS URL)"
   },
   "Updates.SaveFeed": {
-    "zh-CN": "保存", "zh-TW": "儲存", "en": "Save"
+    "zh-CN": "保存",
+    "zh-TW": "儲存",
+    "en": "Save"
   },
   "Updates.FeedHint": {
     "zh-CN": "仅填写项目维护者提供的更新地址；留空可关闭备用源。下载仍使用项目的 GitHub 发布页。",
@@ -1573,10 +1575,14 @@
     "en": "Enter a public HTTPS URL without credentials, query parameters or a fragment."
   },
   "Updates.FeedSaved": {
-    "zh-CN": "备用更新源设置已保存。", "zh-TW": "備用更新來源設定已儲存。", "en": "Fallback feed settings saved."
+    "zh-CN": "备用更新源设置已保存。",
+    "zh-TW": "備用更新來源設定已儲存。",
+    "en": "Fallback feed settings saved."
   },
   "Updates.UsedFallback": {
-    "zh-CN": "本次通过备用源获取版本信息。", "zh-TW": "本次透過備用來源取得版本資訊。", "en": "Version information retrieved from the fallback feed."
+    "zh-CN": "本次通过备用源获取版本信息。",
+    "zh-TW": "本次透過備用來源取得版本資訊。",
+    "en": "Version information retrieved from the fallback feed."
   },
   "Updates.Timeout": {
     "zh-CN": "检查超时，请稍后重试。",
@@ -1592,9 +1598,7 @@
     "zh-CN": "无法打开浏览器，请稍后重试。",
     "zh-TW": "無法開啟瀏覽器，請稍後重試。",
     "en": "Could not open the browser. Try again later."
-  }
-,
-
+  },
   "Validation.StaticRequiresStaticDns": {
     "zh-CN": "静态 IPv4 不能使用自动 DNS。请选择静态 DNS；不需要 DNS 时可留空。",
     "zh-TW": "靜態 IPv4 不能使用自動 DNS。請選擇靜態 DNS；不需要 DNS 時可留空。",
@@ -1609,5 +1613,245 @@
     "zh-CN": "已启用 · 未连接",
     "zh-TW": "已啟用 · 未連線",
     "en": "Enabled · Disconnected"
+  },
+  "Ui.OperationHelp": {
+    "zh-CN": "操作说明（点击展开或收起）",
+    "zh-TW": "操作說明（點擊展開或收起）",
+    "en": "How applying changes works"
+  },
+  "Ui.GroupTools": {
+    "zh-CN": "分组管理",
+    "zh-TW": "分組管理",
+    "en": "Manage groups"
+  },
+  "Ui.BatchTools": {
+    "zh-CN": "批量操作（勾选预设后使用）",
+    "zh-TW": "批次操作（勾選預設後使用）",
+    "en": "Bulk actions (checked presets)"
+  },
+  "Ui.SelectionHelp": {
+    "zh-CN": "点击卡片选中一项；复选框用于批量操作。",
+    "zh-TW": "點擊卡片選取一項；核取方塊用於批次操作。",
+    "en": "Click a card for single-item actions; use checkboxes for bulk actions."
+  },
+  "Ui.TargetGroup": {
+    "zh-CN": "目标分组",
+    "zh-TW": "目標分組",
+    "en": "Move to group"
+  },
+  "Ui.ExportSelected": {
+    "zh-CN": "导出当前项",
+    "zh-TW": "匯出目前項目",
+    "en": "Export selected"
+  },
+  "Draft.DnsAdjusted": {
+    "zh-CN": "当前系统为静态 IPv4 + 自动 DNS；编辑区已改为静态 DNS，应用后才会生效。",
+    "zh-TW": "目前系統為靜態 IPv4 + 自動 DNS；編輯區已改為靜態 DNS，套用後才會生效。",
+    "en": "The system uses static IPv4 with automatic DNS. The editor uses static DNS; this takes effect only after Apply."
+  },
+  "Ops.Adapter": {
+    "zh-CN": "网卡选择",
+    "zh-TW": "網卡選擇",
+    "en": "Network adapter"
+  },
+  "Ops.Library": {
+    "zh-CN": "预设模板库",
+    "zh-TW": "預設範本庫",
+    "en": "Preset templates"
+  },
+  "Ops.LiveConfiguration": {
+    "zh-CN": "当前实际配置（实时生效）",
+    "zh-TW": "目前實際設定（即時生效）",
+    "en": "Current active configuration"
+  },
+  "Ops.SavedConfiguration": {
+    "zh-CN": "系统保存配置（当前未生效）",
+    "zh-TW": "系統儲存設定（目前未生效）",
+    "en": "Saved configuration (inactive)"
+  },
+  "Ops.NoDns": {
+    "zh-CN": "DNS：无",
+    "zh-TW": "DNS：無",
+    "en": "DNS: none"
+  },
+  "Ops.EmptyDnsHint": {
+    "zh-CN": "静态 DNS 两项均留空时，应用此配置会清空目标网卡的 IPv4 DNS，不会保留原 DNS。",
+    "zh-TW": "靜態 DNS 兩項皆留空時，套用此設定會清空目標網卡的 IPv4 DNS，不會保留原 DNS。",
+    "en": "Leaving both static DNS fields blank clears the target adapter's IPv4 DNS when applied; existing DNS is not retained."
+  },
+  "Ops.Created": {
+    "zh-CN": "创建时间：{0}",
+    "zh-TW": "建立時間：{0}",
+    "en": "Created: {0}"
+  },
+  "Ops.BoundMac": {
+    "zh-CN": "模板绑定网卡MAC（可选）：{0}",
+    "zh-TW": "範本繫結網卡MAC（選填）：{0}",
+    "en": "Bound adapter MAC (optional): {0}"
+  },
+  "Ops.CidrLabel": {
+    "zh-CN": "子网掩码 / CIDR",
+    "zh-TW": "子網路遮罩 / CIDR",
+    "en": "Subnet / CIDR"
+  },
+  "Ops.CidrHint": {
+    "zh-CN": "输入前缀长度，例如 24；不是四段子网掩码。",
+    "zh-TW": "輸入前綴長度，例如 24；不是四段子網路遮罩。",
+    "en": "Enter a prefix length, e.g. 24, rather than a dotted subnet mask."
+  },
+  "Ops.Search": {
+    "zh-CN": "搜索预设名称 / 网卡MAC",
+    "zh-TW": "搜尋範本名稱 / 網卡MAC",
+    "en": "Search name / adapter MAC"
+  },
+  "Ops.Additional": {
+    "zh-CN": "高级：添加附加静态地址",
+    "zh-TW": "進階：新增附加靜態位址",
+    "en": "Advanced: additional static addresses"
+  },
+  "Ops.AdditionalHint": {
+    "zh-CN": "主地址由 DHCP 分配，此处仅添加附加 IP/DNS。每行一个 IPv4/前缀，例如 192.168.10.20/24；不更改 DHCP 网关。若手动指定 DNS，它将替代该接口的自动 DNS。",
+    "zh-TW": "主要位址由 DHCP 分配，此處僅新增附加 IP/DNS。每行一個 IPv4/前綴，例如 192.168.10.20/24；不變更 DHCP 閘道。手動 DNS 將取代介面的自動 DNS。",
+    "en": "DHCP supplies the primary address. Add one IPv4/prefix per line, e.g. 192.168.10.20/24. The DHCP gateway is retained. Manual DNS replaces automatic DNS for this interface."
+  },
+  "Ops.AdditionalFormat": {
+    "zh-CN": "每行一个 IPv4/前缀，最多 16 个。需 Windows 支持 DHCP/静态地址共存。",
+    "zh-TW": "每行一個 IPv4/前綴，最多 16 個。需 Windows 支援 DHCP/靜態位址共存。",
+    "en": "One IPv4/prefix per line, up to 16. Requires Windows DHCP/static coexistence support."
+  },
+  "Ops.InvalidAdditional": {
+    "zh-CN": "附加地址必须是有效且不重复的 IPv4/前缀，最多 16 个，不能指定网关。",
+    "zh-TW": "附加位址必須為有效且不重複的 IPv4/前綴，最多 16 個，不能指定閘道。",
+    "en": "Additional addresses must be unique valid IPv4/prefix pairs, at most 16, without gateways."
+  },
+  "Ops.AdditionalReadFailed": {
+    "zh-CN": "无法确认现有附加地址，已阻止写入；请刷新后重试。",
+    "zh-TW": "無法確認現有附加位址，已阻止寫入；請重新整理後重試。",
+    "en": "Existing additional addresses could not be verified. Refresh before applying."
+  },
+  "Ops.ApplySaveHint": {
+    "zh-CN": "应用配置：写入当前网卡，立即生效。保存为预设：仅保存模板，不改动网卡。",
+    "zh-TW": "套用設定：寫入目前網卡，即時生效。儲存為範本：僅儲存範本，不變更網卡。",
+    "en": "Apply writes to the selected adapter immediately. Save as preset stores a template only."
+  },
+  "Ops.CrossWarning": {
+    "zh-CN": "当前选中网卡：{0}；模板原始绑定网卡：{1}。本次应用属于跨网卡配置。",
+    "zh-TW": "目前選取網卡：{0}；範本原始繫結網卡：{1}。此次套用屬於跨網卡設定。",
+    "en": "Selected adapter: {0}; originally bound adapter: {1}. This applies a template across adapters."
+  },
+  "Ops.Matched": {
+    "zh-CN": "绑定匹配",
+    "zh-TW": "繫結符合",
+    "en": "Binding match"
+  },
+  "Ops.Admin": {
+    "zh-CN": "管理员模式",
+    "zh-TW": "系統管理員模式",
+    "en": "Administrator"
+  },
+  "Ops.ReadOnly": {
+    "zh-CN": "普通用户 · 只读",
+    "zh-TW": "一般使用者 · 唯讀",
+    "en": "Standard user · read only"
+  },
+  "Ops.PrivilegeHint": {
+    "zh-CN": "启动时由 Windows 请求管理员授权；确认后以管理员身份进入，才能修改网络配置。",
+    "zh-TW": "啟動時由 Windows 要求系統管理員授權；確認後以系統管理員身分進入，才能變更網路設定。",
+    "en": "Windows requests administrator approval at startup. After approval, the application can change network configuration."
+  },
+  "Ops.NetworkConnections": {
+    "zh-CN": "网络连接",
+    "zh-TW": "網路連線",
+    "en": "Connections"
+  },
+  "Ops.Help": {
+    "zh-CN": "悬停查看操作说明",
+    "zh-TW": "停留查看操作說明",
+    "en": "Hover for configuration help"
+  },
+  "Display.Title": {
+    "zh-CN": "界面显示",
+    "zh-TW": "介面顯示",
+    "en": "Interface display"
+  },
+  "Display.Follow": {
+    "zh-CN": "跟随系统DPI缩放",
+    "zh-TW": "跟隨系統DPI縮放",
+    "en": "Follow system DPI scaling"
+  },
+  "Display.Scale": {
+    "zh-CN": "整体缩放",
+    "zh-TW": "整體縮放",
+    "en": "UI scale"
+  },
+  "Display.Font": {
+    "zh-CN": "字体大小",
+    "zh-TW": "字型大小",
+    "en": "Font size"
+  },
+  "Display.Small": {
+    "zh-CN": "小",
+    "zh-TW": "小",
+    "en": "Small"
+  },
+  "Display.Default": {
+    "zh-CN": "默认",
+    "zh-TW": "預設",
+    "en": "Default"
+  },
+  "Display.Large": {
+    "zh-CN": "大",
+    "zh-TW": "大",
+    "en": "Large"
+  },
+  "Display.ExtraLarge": {
+    "zh-CN": "超大",
+    "zh-TW": "超大",
+    "en": "Extra large"
+  },
+  "Display.Reset": {
+    "zh-CN": "重置UI尺寸",
+    "zh-TW": "重設UI尺寸",
+    "en": "Reset UI size"
+  },
+  "Display.Apply": {
+    "zh-CN": "应用显示设置",
+    "zh-TW": "套用顯示設定",
+    "en": "Apply display settings"
+  },
+  "Display.Preview": {
+    "zh-CN": "实时预览：网卡 IPv4 / DNS 配置",
+    "zh-TW": "即時預覽：網卡 IPv4 / DNS 設定",
+    "en": "Live preview: adapter IPv4 / DNS"
+  },
+  "Display.Hint": {
+    "zh-CN": "关闭“跟随系统DPI缩放”后可自定义整体缩放。预览不会写入网络配置；点击应用保存尺寸。",
+    "zh-TW": "關閉「跟隨系統DPI縮放」後可自訂整體縮放。預覽不會寫入網路設定；按套用儲存尺寸。",
+    "en": "Turn off system DPI scaling to customize UI scale. Preview affects display only; Apply saves your display settings."
+  },
+  "Ops.Cancel": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en": "Cancel"
+  },
+  "Ops.Confirm": {
+    "zh-CN": "确认继续",
+    "zh-TW": "確認繼續",
+    "en": "Confirm"
+  },
+  "Ops.DeleteTemplate": {
+    "zh-CN": "确定删除模板“{0}”？此操作不会更改网卡配置。",
+    "zh-TW": "確定刪除範本「{0}」？此操作不會變更網卡設定。",
+    "en": "Delete template “{0}”? This does not change network configuration."
+  },
+  "Adapter.SubnetMask": {
+    "zh-CN": "掩码",
+    "zh-TW": "遮罩",
+    "en": "Mask"
+  },
+  "Adapter.NoIPv4": {
+    "zh-CN": "IPv4：未分配",
+    "zh-TW": "IPv4：未分配",
+    "en": "IPv4: not assigned"
   }
 }
