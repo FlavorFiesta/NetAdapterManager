@@ -1,99 +1,115 @@
-# NetAdapterManager
+<p align="center">
+  <img src="Assets/AppIcon.png" alt="NetAdapterManager icon" width="88" height="88">
+</p>
 
-[简体中文](README.md) | English
+<h1 align="center">NetAdapterManager</h1>
 
-An IPv4, DNS and network preset manager for Windows 10/11 x64, built with WPF and .NET 8.
-Current source version: **1.7.10**. Licensed under the [MIT license](LICENSE).
+<p align="center"><strong>Switch IPv4, DNS, and network presets on Windows.</strong></p>
 
-![Main window with synthetic demonstration data](docs/images/main-window-en.png)
+<p align="center">
+  <a href="https://github.com/FlavorFiesta/NetAdapterManager/releases/latest"><strong>Download latest release</strong></a>
+  · <a href="#quick-start">Quick start</a>
+  · <a href="CHANGELOG.md">Changelog</a>
+  · <a href="README.md">简体中文</a>
+</p>
 
-v1.7.10 improves Start menu icon refresh after an upgrade. See the [changelog (Chinese)](CHANGELOG.md). See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
+<p align="center">
+  <a href="https://github.com/FlavorFiesta/NetAdapterManager/actions/workflows/build.yml"><img src="https://github.com/FlavorFiesta/NetAdapterManager/actions/workflows/build.yml/badge.svg?branch=main" alt="Build status"></a>
+  · <strong>Windows 10 / 11 x64</strong> · <a href="LICENSE">MIT</a>
+</p>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/main-window-en-dark.png">
+  <img src="docs/images/main-window-en.png" alt="Main window with the adapter and IPv4 and DNS settings on the left and the collapsible preset library on the right">
+</picture>
+
+<sub>Captured in v1.7.10 with a synthetic adapter and documentation example addresses.</sub>
+
+## Download
+
+Choose a Windows x64 package from [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest). Both packages include the .NET runtime.
+
+| Package | How to use it |
+| --- | --- |
+| **Installer · EXE** | Run the setup wizard. Start menu and desktop shortcuts are selected by default. The default install location is `%LocalAppData%\Programs\NetAdapterManager`. |
+| **Portable · ZIP** | Extract the full archive, run `NetAdapterManager.exe`, and keep the extracted files together. |
+| **Checksums** | `SHA256SUMS.txt` contains the SHA-256 checksums for both packages. |
+
+## Quick start
+
+1. Launch the app and approve the Windows administrator prompt.
+2. Select an adapter and check its name, current IPv4 address, gateway, and DNS.
+3. Edit the settings and select **Apply configuration** to review and confirm the changes. Select **Save as preset** to use the configuration again later.
+
+> Changing an adapter in use may interrupt your connection. Check the target adapter and the preview before applying changes.
 
 ## Features
 
-- View physical, virtual and VPN adapters. Switch between DHCP and static IPv4, with independent automatic or static DNS.
-- Save, edit and apply adapter-specific presets. Organize them into groups, search, move or delete multiple presets.
-- Capture configuration before changes, verify the result and attempt rollback on failure.
-- Enable or disable adapters, keep the window on top and open Windows Network Connections.
-- Switch between Simplified Chinese, Traditional Chinese, English and the system language in Settings.
-- Choose light, dark or system theme, with support for Windows high-contrast colors.
-- Right-aligned toolbar controls, with version and refresh time on the left.
+| Feature | What you can do |
+| --- | --- |
+| **Adapters and addresses** | View physical, virtual, and VPN adapters. Switch DHCP or static IPv4 and set automatic or static DNS. Additional static addresses with DHCP are under Settings → Advanced. |
+| **Preset library** | Save, search, group, bind, import, and export presets. Collapse the library to work in a narrower window. |
+| **Preview and verification** | Compare current and target settings before applying. The app checks the result and attempts to roll back if a change fails. Review outcomes in History & diagnostics. |
+| **Desktop controls** | Use light, dark, or high-contrast themes in English, Simplified Chinese, or Traditional Chinese. Choose whether closing the window exits the app or minimizes it to the system tray. |
 
-Windows requests administrator approval at startup. After approval, the application runs as administrator; cancelling the prompt prevents startup. Changing the active adapter may interrupt connectivity, so check the target adapter before applying changes.
+<details>
+<summary><strong>More screenshots: compact window and configuration preview</strong></summary>
 
-## Download and use
+**Collapsed preset library**
 
-Download a Windows x64 package from [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest):
+![Compact main window with the preset library collapsed](docs/images/compact-window-en.png)
 
-- `NetAdapterManager-v<version>-Setup-win-x64.exe`: installation wizard, defaulting to `%LocalAppData%\Programs\NetAdapterManager`.
-- `NetAdapterManager-v<version>-portable-win-x64.zip`: extract the entire archive and run `NetAdapterManager.exe`. Keep all extracted files together.
-- `SHA256SUMS.txt`: SHA-256 checksums for both packages.
+**Review before applying**
 
-Packages include the .NET runtime. The installer preselects a supported language based on the Windows display language, with English as the fallback; you can select another language before installation. The first application launch uses the installer language. Portable installations initially follow the system language. Existing language and theme settings survive upgrades.
+![Configuration preview comparing current and target settings](docs/images/configuration-preview-en.png)
 
-Language changes are temporarily disabled during network operations. Windows controls the appearance and language of native dialogs and raw system error messages.
-
-## What's new in 1.5.2
-
-This release includes all changes developed in the local 1.5.0 and 1.5.1 candidates: languages, themes, installer language selection, toolbar alignment and reliability improvements. It also fixes stale editor values after a successful preset application and makes composed status messages update when switching languages. See the [bilingual release notes](docs/RELEASE-1.5.2.md) and [full changelog in Chinese](CHANGELOG.md).
+</details>
 
 ## Data and privacy
 
-Application data lives beside the executable: `preset-library.json` (presets and groups), `managed-addresses.json` and `settings.json` (language and theme). Errors are logged to `logs/NetAdapterManager.log`. Upgrades preserve data; uninstalling may leave generated data files behind.
+Presets, settings, and logs are stored in the application directory and survive upgrades. Remove adapter names, MAC addresses, IP addresses, and DNS details before sharing diagnostics, logs, or screenshots.
 
-The unified preset library introduced in 1.4.12 imports legacy `presets.json` and `preset-groups.json` from the application directory, or from `%AppData%\NetAdapterManager` if local legacy files are absent. Successful saving creates the unified library and retains the originals. Once the unified library exists, legacy files are no longer imported. Downgrading to 1.4.11 does not expose subsequent unified-library changes; preserve the full application directory first.
+<details>
+<summary>Local files and migration</summary>
 
-Replacing an existing data file keeps its previous contents as `.bak`. Restore Backup restores presets and groups together, validates the backup first and preserves the replaced file as `.corrupt-*`. Corrupt or inaccessible preset data is reported and protected from overwriting. Damaged settings are preserved when a new preference is saved.
+- `preset-library.json` keeps presets and groups, `settings.json` stores preferences, and `managed-addresses.json` records addresses managed by the app. The log is at `logs/NetAdapterManager.log`.
+- Previous data files are kept as `.bak`. **Restore backup** in the preset library restores presets and groups together. The app blocks overwriting a corrupt preset library.
+- Before the unified library is first saved, the app can load legacy `presets.json` and `preset-groups.json` from the application directory or `%AppData%\NetAdapterManager`. Back up the entire application directory before downgrading or replacing files by hand.
 
-Only one instance runs per user. Closing during configuration, verification or recovery waits for the operation to finish; this cannot protect against forced termination or power loss. Adapter enable/disable operations stop waiting after 15 seconds, but Windows may still be working. Further writes are blocked; inspect the system state before restarting the app.
+</details>
 
-Preferences are stored per application directory. Running the same installation under another elevated account uses the same explicit preferences; system defaults refer to the account running the application. User-created names are never translated.
+## Build from source
 
-Presets, screenshots and logs may reveal adapter names, MAC addresses, IP addresses and DNS servers. Remove personal information before sharing them. Runtime data, build outputs and local test evidence are excluded from Git. The screenshot above uses synthetic adapters and documentation example addresses.
-
-## Build and test
-
-Requires Windows 10/11 x64 and the .NET 8 SDK. Building the application does not require Python or Inno Setup.
-
-```powershell
-dotnet restore .\NetAdapterManager.csproj
-dotnet build .\NetAdapterManager.csproj -c Release --no-restore
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-FullTest.ps1
-```
-
-The default tests read system network state and write isolated test files and logs. Command-generation checks capture commands for synthetic adapters; they do not change real network settings.
+Requires Windows 10/11 x64 and the .NET 8 SDK.
 
 ```powershell
-# Regression tests without real adapters, WMI or user data
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --isolated
-# Three languages combined with light/dark themes, using synthetic data
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --appearance-smoke
+dotnet build .\NetAdapterManager.csproj -c Release
 ```
 
-CI builds the project, runs isolated regressions and queries dependency vulnerabilities. Local full tests require adapters for read-only WMI checks. Real write tests require the explicit `-RunSafeWriteTest` option and administrator privileges; use only an eligible virtual adapter with a static IPv4 address and no default gateway. Never run write tests on the active connection.
+<details>
+<summary>Isolated tests and packaging</summary>
 
-DNS mode is read independently from IP DHCP state using the Windows DNS settings API, with a read-only registry fallback on older Windows 10 systems. Changes and rollback verify the full IPv4 address set, gateway and DNS. DNS-only edits do not rewrite static IP addresses. Command cancellation or timeout must confirm process termination before recovery begins.
+```powershell
+dotnet build .\tests\NetAdapterManager.SelfTest -c Release
+dotnet .\tests\NetAdapterManager.SelfTest\bin\Release\net8.0-windows\NetAdapterManager.SelfTest.dll --isolated
+dotnet .\tests\NetAdapterManager.SelfTest\bin\Release\net8.0-windows\NetAdapterManager.SelfTest.dll --appearance-smoke
+```
 
-## Package
+Isolated regressions and appearance checks use synthetic data. Real adapter write tests require an elevated PowerShell and the explicit `-RunSafeWriteTest` option in `tests/Run-FullTest.ps1`. Only a virtual adapter with a static IPv4 address and no default gateway is eligible.
 
-Additional requirements: Python 3, Pillow 11.1.0 and Inno Setup 6.5.0+ (6.x).
+Packaging also requires Python 3 and Inno Setup 6.5.0+ (6.x). Packages are written to `artifacts\<version>\`.
 
 ```powershell
 python -m pip install -r .\build\requirements.txt
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
-Outputs are self-contained, untrimmed, multi-file `win-x64` packages in `artifacts\1.5.3\`. The script replaces only the named ZIP and installer, collects dependency licenses and rejects runtime user data in the publishing directory. `-OutputRootOverride` must point inside `artifacts`, without symlinks or junctions. Version numbers come from the main project. The `.iss` script is the production installer; the C# project under Installer is a legacy prototype.
+See the [installer notes](Installer/README.md) and the [update feed documentation](docs/UPDATE-FEED.md).
 
-Publish both packages and matching SHA-256 checksums. Do not package an application directory that has been used with personal data.
+</details>
 
-## Contributing
+## Feedback and contributions
 
-Issues and pull requests are welcome. Include your Windows version, reproduction steps and expected/actual behavior; redact logs and screenshots. Run the build and default self-tests before submitting code. Real adapter write tests are not required for ordinary contributions.
+[Issues](https://github.com/FlavorFiesta/NetAdapterManager/issues) and pull requests are welcome. Include your Windows version, reproduction steps, and expected and actual results. Redact any attachments before sharing.
 
-See [third-party notices](THIRD-PARTY-NOTICES.md) for bundled materials. Internal working notes and raw acceptance logs remain local.
-
-[v1.6.0 local candidate and acceptance limits](docs/RELEASE-1.6.0.md): configuration review, adapter drafts, preset import/export and explicit binding.
-
-[v1.6.1 local candidate and acceptance limits](docs/RELEASE-1.6.1.md): operation history, diagnostic preview/export and manual update checking.
+[MIT license](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.md) · [Changelog](CHANGELOG.md)
