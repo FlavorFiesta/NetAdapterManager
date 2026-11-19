@@ -201,7 +201,12 @@ try
         Ipv4InterfacePresent = false,
         Config = new NetworkConfig()
     });
-    var disconnectedViewModel = new MainViewModel();
+    var disconnectedNetwork = new NetworkService(
+        _ => throw new InvalidOperationException("Unexpected adapter read."),
+        (_, _, _) => throw new InvalidOperationException("Unexpected configuration write."),
+        (_, _) => throw new InvalidOperationException("Unexpected network retry."),
+        (_, _, _) => throw new InvalidOperationException("Unexpected managed address write."));
+    var disconnectedViewModel = new MainViewModel(disconnectedNetwork);
     disconnectedViewModel.SelectedAdapter = disconnectedAdapter;
     if (disconnectedViewModel.CanConfigure)
         Pass("断线网卡可配置", "没有 IPv4 接口的已禁用网卡仍允许提交系统网络连接配置。");
