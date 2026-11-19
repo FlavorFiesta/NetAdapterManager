@@ -1,131 +1,115 @@
-# 网络适配器管理器
+<p align="center">
+  <img src="Assets/AppIcon.png" alt="NetAdapterManager 图标" width="88" height="88">
+</p>
 
-简体中文 | [English](README.en.md)
+<h1 align="center">网络适配器管理器</h1>
 
-Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前源码版本：**1.7.11**
+<p align="center"><strong>为 Windows 网卡切换 IPv4、DNS 和网络预设。</strong></p>
 
-![主界面（虚构演示数据）](docs/images/main-window.png)
+<p align="center">
+  <a href="https://github.com/FlavorFiesta/NetAdapterManager/releases/latest"><strong>下载最新版</strong></a>
+  · <a href="#快速上手">快速上手</a>
+  · <a href="CHANGELOG.md">更新记录</a>
+  · <a href="README.en.md">English</a>
+</p>
 
-v1.7.11 移除了预设模板库的恢复备份入口，并修复了预设管理窗口的关闭按钮。详见 [更新记录](CHANGELOG.md)。客户反馈的禁用网卡 IP 读取和 DNS 复核问题修复见 [v1.5.3 说明](docs/RELEASE-1.5.3.md)。后续功能见 [v1.6.0 更新计划](docs/PLAN-1.6.0.md)。
+<p align="center">
+  <a href="https://github.com/FlavorFiesta/NetAdapterManager/actions/workflows/build.yml"><img src="https://github.com/FlavorFiesta/NetAdapterManager/actions/workflows/build.yml/badge.svg?branch=main" alt="构建状态"></a>
+  · <strong>Windows 10 / 11 x64</strong> · <a href="LICENSE">MIT</a>
+</p>
 
-## 功能
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/main-window-dark.png">
+  <img src="docs/images/main-window.png" alt="主窗口：左侧为网卡和 IPv4、DNS 配置，右侧为可折叠的预设模板库">
+</picture>
 
-- 查看物理、虚拟与 VPN 网卡，切换 DHCP / 静态 IPv4、自动 / 静态 DNS。
-- 按所属网卡保存、编辑和应用预设，支持分组、搜索、批量换组及删除。
-- 写入前获取快照，写入后复核；失败时尝试回滚。
-- 启用 / 禁用网卡、窗口置顶、打开系统网络连接。
-- 设置中切换简体中文、繁体中文、英语或跟随系统，界面即时更新。
-- 浅色、深色与跟随系统主题；保存偏好，兼容系统高对比度。
+<sub>截图来自 v1.7.10，使用虚构网卡与文档示例地址。</sub>
 
-启动时会请求 Windows 管理员授权，确认后进入管理员模式；取消授权则不启动程序。
-更改当前联网网卡可能中断网络；请先确认目标网卡。
+## 下载
 
-## 下载与使用
+从 [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest) 选择 Windows x64 包。两种包均自带 .NET 运行时。
 
-在 [GitHub Releases](https://github.com/FlavorFiesta/NetAdapterManager/releases/latest) 选择 Windows x64 包：
+| 下载选项 | 使用方式 |
+| --- | --- |
+| **安装版 · EXE** | 运行安装向导。开始菜单和桌面快捷方式默认勾选，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。 |
+| **便携版 · ZIP** | 完整解压后运行 `NetAdapterManager.exe`，保留同目录下的所有文件。 |
+| **校验清单** | `SHA256SUMS.txt` 包含安装包和便携包的 SHA-256。 |
 
-- `NetAdapterManager-v<版本>-portable-win-x64.zip`：完整解压后运行 `NetAdapterManager.exe`。
-- `NetAdapterManager-v<版本>-Setup-win-x64.exe`：安装向导，默认安装到 `%LocalAppData%\Programs\NetAdapterManager`。
+## 快速上手
 
-发布包自带 .NET 运行时，无需另装运行时。免安装版必须保留解压出的全部文件，不能只复制 EXE。
-本仓库不包含预生成二进制，公开下载以实际发布的 Release 为准。
+1. 启动程序并确认 Windows 管理员授权。
+2. 选择目标网卡，核对网卡名称及当前 IPv4、网关和 DNS。
+3. 按需修改设置，点 **应用配置** 查看变更预览并确认。想留着下次使用时，点 **保存为预设**。
 
-安装器默认选择 Windows 显示语言，用户可在语言选择框改选；不支持的语言回退英语。
-首次启动沿用安装选择，便携版首次启动跟随系统。已有语言与主题偏好在升级时保留。
-“设置”中可随时切换主题；网络操作期间暂不可切换语言。系统原生对话框外观和错误原文由 Windows 决定。
+> 切换当前正在联网的网卡可能中断连接。应用前请核对目标网卡和预览中的配置。
+
+## 主要功能
+
+| 功能 | 可以做什么 |
+| --- | --- |
+| **网卡与地址** | 查看物理、虚拟和 VPN 网卡，切换 DHCP 或静态 IPv4，设置自动或手动 DNS。DHCP 附加静态地址位于「设置 → 高级」。 |
+| **预设模板库** | 保存、搜索、分组、绑定和导入导出预设。收起模板库后，主窗口会随之缩窄。 |
+| **变更预览与复核** | 写入前对比当前配置和目标配置，写入后复核，失败时尝试回滚。可在「记录与诊断」中查看结果。 |
+| **桌面使用** | 支持浅色、深色和高对比度，提供简体中文、繁体中文和英文。可设置关闭窗口时退出或收进系统托盘。 |
+
+<details>
+<summary><strong>查看更多截图：紧凑模式和配置预览</strong></summary>
+
+**收起模板库**
+
+![收起预设模板库后的紧凑主窗口](docs/images/compact-window.png)
+
+**应用前预览**
+
+![应用前对照当前配置与目标配置](docs/images/configuration-preview.png)
+
+</details>
 
 ## 数据与隐私
 
-数据保存在程序目录：`preset-library.json`（预设与分组统一保存）、`managed-addresses.json`、`settings.json`（语言与主题）；
-错误日志位于 `logs/NetAdapterManager.log`。升级时保留数据，卸载后可能仍保留运行时生成的文件。
-首次使用 1.4.12 时，会读取程序目录中的旧 `presets.json` 和 `preset-groups.json`；没有本地旧文件时兼容读取 `%AppData%\NetAdapterManager` 中的数据。
-第一次成功保存时建立统一预设库，原文件保留。统一库建立后，不再从旧文件导入。
-每次替换已存在的数据文件会保留上一份 `.bak`。
-读取损坏或无法访问的数据时会显示错误并阻止覆盖。降级到 1.4.11 不会读取统一库中的后续修改，请先保留完整程序目录。
-同一用户只允许一个实例；配置应用、复核或恢复期间关闭窗口，会等待操作结束后再退出。
-启停网卡超过 15 秒或被取消时，界面停止等待，但 Windows 操作可能仍在进行；程序阻止继续写入，直到用户确认系统状态后重启。
-设置按程序目录保存，提权为不同账号运行同一份安装时仍使用同一份显式偏好；“跟随系统”读取当前运行账号的显示语言和应用颜色模式。
+预设、设置和日志保存在程序目录，升级时会保留这些数据。发布诊断信息、日志或截图前，请检查是否含有网卡名、MAC、IP 或 DNS 等信息。
 
-预设和截图可能包含网卡名称、MAC、IP、DNS 等信息。提交问题前请脱敏；
-这些运行数据、编译输出和本地测试证据已纳入 `.gitignore`。
-本页截图由自测使用虚构网卡与文档示例地址生成。
+<details>
+<summary>本地文件与旧版迁移</summary>
 
-## 构建
+- `preset-library.json` 保存预设和分组，`settings.json` 保存偏好，`managed-addresses.json` 记录程序管理的地址。日志位于 `logs/NetAdapterManager.log`。
+- 程序会保留上一份数据文件（`.bak`）。发现预设库损坏时，程序会阻止覆盖。
+- 统一预设库首次保存前可读取旧的 `presets.json` 和 `preset-groups.json`，也兼容从 `%AppData%\NetAdapterManager` 读取旧数据。降级或手动替换文件前，请备份整个程序目录。
 
-需要 Windows 10/11 x64 和 .NET 8 SDK。主程序构建不需要 Python 或 Inno Setup。
+</details>
+
+## 从源码构建
+
+需要 Windows 10/11 x64 和 .NET 8 SDK。
 
 ```powershell
-dotnet restore .\NetAdapterManager.csproj
-dotnet build .\NetAdapterManager.csproj -c Release --no-restore
+dotnet build .\NetAdapterManager.csproj -c Release
 ```
 
-默认自测只读取系统网络状态，并在测试输出目录写入测试文件和日志。
-命令生成验证使用虚构快照与捕获器，不执行 netsh，不应用真实网卡配置：
+<details>
+<summary>隔离测试和打包</summary>
 
 ```powershell
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-FullTest.ps1
+dotnet build .\tests\NetAdapterManager.SelfTest -c Release
+dotnet .\tests\NetAdapterManager.SelfTest\bin\Release\net8.0-windows\NetAdapterManager.SelfTest.dll --isolated
+dotnet .\tests\NetAdapterManager.SelfTest\bin\Release\net8.0-windows\NetAdapterManager.SelfTest.dll --appearance-smoke
 ```
 
-只运行无需网卡、WMI 或用户文件的网络回归（包含中途失败、回滚复核及 DNS 模式组合）：
+隔离回归和界面冒烟测试使用合成数据。真实网卡写入测试需要管理员 PowerShell，并在 `tests/Run-FullTest.ps1` 中明确启用 `-RunSafeWriteTest`。仅允许无默认网关、已有静态 IPv4 的虚拟网卡。
 
-```powershell
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --network-regression
-```
-
-运行全部无需真实网卡的校验、预设、存储、进程超时与取消回归（CI 默认执行）：
-
-```powershell
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --isolated
-```
-
-三语言与浅色/深色组合的界面、设置保存及对比度验收（合成数据）：
-
-```powershell
-dotnet run --project .\tests\NetAdapterManager.SelfTest -c Release -- --appearance-smoke
-```
-
-UI 自测使用演示数据；全功能脚本的 WMI 检查仍需要本机存在网卡，
-不适用于所有无硬件的 CI 环境。GitHub Actions 默认执行构建、完整隔离回归与依赖漏洞查询。
-
-DNS 自动/手动模式独立于 IP 的 DHCP 状态读取：优先使用 Windows DNS 设置 API，
-较早版本 Windows 10 使用只读的网卡注册表配置兼容路径。有效 DNS 地址列表仍由 Windows DNS 客户端读取。
-应用与恢复都复核完整 IPv4 地址集合、网关和 DNS，仅 DNS 改变时不会重写静态 IP。
-系统命令有超时和取消处理，终止并确认退出后才进入恢复；恢复仍须读回复核后才报告成功。
-正常关闭窗口保护不覆盖系统强杀或断电。
-
-真实写入 / 回滚测试必须显式指定 `-RunSafeWriteTest`，并使用管理员 PowerShell。
-它仅允许无默认网关、已有静态 IPv4 的安全虚拟网卡，排除 Wi-Fi 和物理网卡；
-不要在当前联网网卡上执行写入测试。
-
-## 打包
-
-额外需要 Python 3、Pillow 11.1.0 和 Inno Setup 6.5.0+（6.x）：
+打包额外需要 Python 3 和 Inno Setup 6.5.0+（6.x）。产物位于 `artifacts\<版本>\`。
 
 ```powershell
 python -m pip install -r .\build\requirements.txt
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
-正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.5.3\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
-重建只覆盖这两个指定产物，保留目录中的其他文件。
-`-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
-版本从主项目读取并传给安装脚本。
+详见 [安装器说明](Installer/README.md) 和 [更新源说明](docs/UPDATE-FEED.md)。
 
-打包会按实际依赖版本收集许可与第三方声明，并检查发布目录没有预设或日志。
-请将完整 ZIP、安装包及对应 SHA-256 发布到 Release，不要打包运行过的程序目录。
-安装器目录中的 C# 工程是旧原型，正式构建使用 `.iss`，详见 [安装器说明](Installer/README.md)。
+</details>
 
-## 贡献与反馈
+## 反馈与贡献
 
-欢迎提交 Issue 和 Pull Request。请描述系统版本、操作步骤、预期与实际结果；
-附日志或截图前删除个人信息。提交代码前运行构建和默认自测，真实网卡写入测试不作为普通贡献的前提。
+欢迎提交 [Issue](https://github.com/FlavorFiesta/NetAdapterManager/issues) 或 Pull Request。反馈时请提供 Windows 版本、复现步骤、预期与实际结果，并先对附件脱敏。
 
-版本变化见 [CHANGELOG](CHANGELOG.md)，第三方材料见 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)。
-内部项目记录与原始验收日志仅在本地保留，不作为公开源码提交。
-
-[v1.6.0 本地功能与验收边界](docs/RELEASE-1.6.0.md)：变更预览、网卡草稿、预设导入/导出与手动绑定。
-
-[v1.6.1 本地功能与验收边界](docs/RELEASE-1.6.1.md)：操作记录、诊断预览导出及手动检查更新。
+[MIT 许可证](LICENSE) · [第三方声明](THIRD-PARTY-NOTICES.md) · [完整更新记录](CHANGELOG.md)
