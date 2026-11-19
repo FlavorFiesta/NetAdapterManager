@@ -1,6 +1,6 @@
 #define AppName "网络适配器管理器"
 #ifndef AppVersion
-#define AppVersion "1.7.10"
+#define AppVersion "1.7.11"
 #endif
 #define AppPublisher "NetAdapterManager"
 #define AppExeName "NetAdapterManager.exe"

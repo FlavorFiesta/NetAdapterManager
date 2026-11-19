@@ -635,7 +635,15 @@ static int RunUiSmokeTest()
             app.InitializeComponent();
             NetAdapterManager.Services.Localization.SetLanguage("zh-CN");
             // Public screenshots use only synthetic data and never load user presets.
-            var window = new MainWindow(CreateDemoViewModel(), initializeOnLoad: false);
+            var preferencePath = Path.GetTempFileName();
+            var preferences = new PreferencesService(preferencePath);
+            try
+            {
+                File.WriteAllText(preferencePath, System.Text.Json.JsonSerializer.Serialize(new AppPreferences { CloseBehavior = CloseBehavior.Exit }));
+                preferences.Load();
+            }
+            finally { File.Delete(preferencePath); }
+            var window = new MainWindow(CreateDemoViewModel(), initializeOnLoad: false, preferences);
             if (window.Icon is null) throw new InvalidOperationException("窗口图标资源未加载。");
             if (window.FindName("PresetOverviewButton") is not Button)
                 throw new InvalidOperationException("预设总览入口未正确加载。");
@@ -687,10 +695,14 @@ static int RunUiSmokeTest()
             var preferredDnsBox = (TextBox)presetDialog.FindName("PreferredDnsBox")!;
             var staticIpRadio = (RadioButton)presetDialog.FindName("StaticRadio")!;
             var automaticDnsRadio = (RadioButton)presetDialog.FindName("DnsAutomaticRadio")!;
-            staticIpRadio.IsChecked = true;
+            var staticDnsRadio = (RadioButton)presetDialog.FindName("DnsStaticRadio")!;
+            ((RadioButton)presetDialog.FindName("DhcpRadio")!).IsChecked = true;
+            if (!automaticDnsRadio.IsEnabled)
+                throw new InvalidOperationException("DHCP 下未启用自动获取 DNS。");
             automaticDnsRadio.IsChecked = true;
-            if (automaticDnsRadio.IsEnabled != true || automaticDnsRadio.IsChecked != true)
-                throw new InvalidOperationException("静态 IPv4 下 DNS 自动获取被错误禁用或强制切换。");
+            staticIpRadio.IsChecked = true;
+            if (automaticDnsRadio.IsEnabled || staticDnsRadio.IsChecked != true)
+                throw new InvalidOperationException("静态 IPv4 下未切换到静态 DNS。");
             ((TextBox)presetDialog.FindName("IpBox")!).Text = "999.999.999.999";
             preferredDnsBox.Text = string.Empty;
             alternateDnsBox.Text = string.Empty;
@@ -830,7 +842,9 @@ static int RunUiSmokeTest()
             var wasClosed = false;
             window.Closed += (_, _) => wasClosed = true;
             window.Close();
-            if (wasClosed || !window.IsVisible) throw new InvalidOperationException("操作未完成时关闭窗口未被阻止。");
+            window.Dispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
+            if (wasClosed || !window.IsVisible || window.IsEnabled)
+                throw new InvalidOperationException("操作未完成时关闭窗口未被阻止。");
             operationRelease.SetResult();
             var closeFrame = new DispatcherFrame();
             var closeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };

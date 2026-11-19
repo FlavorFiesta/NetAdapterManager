@@ -3,11 +3,11 @@
 [简体中文](README.md) | English
 
 An IPv4, DNS and network preset manager for Windows 10/11 x64, built with WPF and .NET 8.
-Current source version: **1.7.10**. Licensed under the [MIT license](LICENSE).
+Current source version: **1.7.11**. Licensed under the [MIT license](LICENSE).
 
 ![Main window with synthetic demonstration data](docs/images/main-window-en.png)
 
-v1.7.10 improves Start menu icon refresh after an upgrade. See the [changelog (Chinese)](CHANGELOG.md). See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
+v1.7.11 removes the Restore Backup action from the preset library and fixes the close button in the preset manager. See the [changelog (Chinese)](CHANGELOG.md). See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
 
 ## Features
 

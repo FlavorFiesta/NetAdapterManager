@@ -3,11 +3,11 @@
 简体中文 | [English](README.en.md)
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前源码版本：**1.7.10**
+当前源码版本：**1.7.11**
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
 
-v1.7.10 改进了升级时的开始菜单图标刷新。详见 [更新记录](CHANGELOG.md)。客户反馈的禁用网卡 IP 读取和 DNS 复核问题修复见 [v1.5.3 说明](docs/RELEASE-1.5.3.md)。后续功能见 [v1.6.0 更新计划](docs/PLAN-1.6.0.md)。
+v1.7.11 移除了预设模板库的恢复备份入口，并修复了预设管理窗口的关闭按钮。详见 [更新记录](CHANGELOG.md)。客户反馈的禁用网卡 IP 读取和 DNS 复核问题修复见 [v1.5.3 说明](docs/RELEASE-1.5.3.md)。后续功能见 [v1.6.0 更新计划](docs/PLAN-1.6.0.md)。
 
 ## 功能
 
