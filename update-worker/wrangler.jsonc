@@ -1,0 +1,7 @@
+{
+  "name": "netadaptermanager-updates",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-11",
+  "workers_dev": true,
+  "account_id": "d94b15f70302c701bd57778fc9b79846"
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>切换落点 / NetAdapterManager</title>
+<polyline points="52.00,103.00 107.00,103.00" fill="none" stroke="#4c8fc9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="149.00,103.00 204.00,103.00" fill="none" stroke="#4c8fc9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="184.00,83.00 204.00,103.00 184.00,123.00" fill="none" stroke="#4c8fc9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="128.00,154.00 126.54,152.09 125.12,150.15 123.72,148.19 122.36,146.21 121.04,144.22 119.76,142.21 118.52,140.18 117.33,138.16 116.19,136.12 115.10,134.09 114.07,132.05 113.09,130.02 112.18,128.00 111.33,125.99 110.54,123.99 109.83,122.00 109.19,120.04 108.63,118.10 108.14,116.18 107.74,114.29 107.42,112.44 107.19,110.61 107.05,108.83 107.00,107.08 107.21,103.61 107.83,100.44 108.80,97.57 110.11,95.01 111.71,92.74 113.56,90.78 115.63,89.12 117.89,87.76 120.29,86.70 122.80,85.95 125.38,85.50 128.00,85.34 130.62,85.50 133.20,85.95 135.71,86.70 138.11,87.76 140.37,89.12 142.44,90.78 144.29,92.74 145.89,95.00 147.20,97.57 148.17,100.44 148.79,103.61 149.00,107.08 148.95,108.83 148.81,110.61 148.58,112.44 148.26,114.29 147.86,116.18 147.37,118.10 146.81,120.04 146.17,122.00 145.46,123.99 144.67,125.99 143.82,128.00 142.91,130.02 141.93,132.05 140.90,134.09 139.81,136.12 138.67,138.16 137.48,140.18 136.24,142.21 134.96,144.22 133.64,146.21 132.28,148.19 130.88,150.15 129.46,152.09 128.00,154.00" fill="none" stroke="#4c8fc9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<circle cx="128" cy="106" r="5" fill="#8fc3ea" opacity="0.95"/>
+<polyline points="204.00,154.00 128.00,154.00 52.00,154.00" fill="none" stroke="#8fc3ea" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+<polyline points="72.00,134.00 52.00,154.00 72.00,174.00" fill="none" stroke="#8fc3ea" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+</svg>

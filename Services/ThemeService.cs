@@ -14,14 +14,14 @@ public static class ThemeService
     private static readonly Dictionary<string, string> Light = new()
     {
         ["WindowBackground"]="#F3F5F9", ["CardBackground"]="#FFFFFF", ["CardBorder"]="#CDD4DF",
-        ["TextColor"]="#172033", ["MutedText"]="#506078", ["PrimaryColor"]="#215EC7",
-        ["PrimaryForeground"]="#FFFFFF", ["PrimaryDark"]="#1D4E9E", ["SoftBlue"]="#EAF1FF",
+        ["TextColor"]="#172033", ["MutedText"]="#506078", ["PrimaryColor"]="#3F6694",
+        ["PrimaryForeground"]="#FFFFFF", ["PrimaryDark"]="#35577F", ["SoftBlue"]="#F0F4F8",
         ["SuccessColor"]="#087B50", ["DangerColor"]="#B42332", ["ControlBackground"]="#FFFFFF",
         ["ControlBorder"]="#8593A8", ["QuietBackground"]="#EDF1F7", ["QuietBorder"]="#ABB6C8",
-        ["HeaderBackground"]="#FFFFFF", ["HeaderBorder"]="#CDD4DF", ["HeaderBadgeBackground"]="#EAF1FF",
+        ["HeaderBackground"]="#FFFFFF", ["HeaderBorder"]="#CDD4DF", ["HeaderBadgeBackground"]="#F0F4F8",
         ["HeaderBadgeBorder"]="#92B1E4", ["PanelHeaderBackground"]="#F4F7FB", ["PanelHeaderBorder"]="#CDD4DF",
         ["ListItemBackground"]="#FFFFFF", ["ListItemBorder"]="#CDD4DF", ["ListItemSelectedBackground"]="#E1EBFF",
-        ["ListItemSelectedBorder"]="#215EC7", ["ListItemHoverBackground"]="#EEF3FA",
+        ["ListItemSelectedBorder"]="#3F6694", ["ListItemHoverBackground"]="#EEF3FA",
         ["ExistingBackground"]="#F4F7FB", ["ExistingBorder"]="#B6C5DC",
         ["WarningBackground"]="#FFF5D9", ["WarningBorder"]="#9A751E", ["WarningText"]="#765500"
     };
@@ -55,16 +55,19 @@ public static class ThemeService
     }
 
     public static void Apply(string preference)
+        => ApplyForEnvironment(preference, SystemParameters.HighContrast);
+
+    internal static void ApplyForEnvironment(string preference, bool highContrast)
     {
         _preference = preference;
         var app = Application.Current;
         if (app is null) return;
         _dark ??= Light.Keys.ToDictionary(key => key, key => ((SolidColorBrush)app.Resources[key]).Color);
         var dark = preference == "dark" || (preference == "system" && SystemUsesDark());
-        EffectiveTheme = SystemParameters.HighContrast ? "high-contrast" : dark ? "dark" : "light";
+        EffectiveTheme = highContrast ? "high-contrast" : dark ? "dark" : "light";
         foreach (var key in Light.Keys)
         {
-            var color = SystemParameters.HighContrast ? ContrastColor(key)
+            var color = highContrast ? ContrastColor(key)
                 : dark ? _dark[key] : (Color)ColorConverter.ConvertFromString(Light[key]);
             var brush = new SolidColorBrush(color);
             brush.Freeze();

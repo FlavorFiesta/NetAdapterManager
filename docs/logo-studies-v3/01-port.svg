@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>线框网口 / NetAdapterManager</title>
+<rect x="9" y="9" width="238" height="238" rx="46" fill="#263448" opacity="0.58"/>
+<rect x="10" y="10" width="236" height="236" rx="45" fill="none" stroke="#A3C9E7" stroke-opacity="0.59" stroke-width="2"/>
+<polyline points="34,76 34,57 39,45 51,36 73,36" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.6"/>
+<polyline points="184,220 204,220 218,207 221,186" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.35"/>
+<polyline points="70,77 186,77 186,153 158,153 158,182 98,182 98,153 70,153 70,77" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke="#e1effb" opacity="1"/>
+<polyline points="104,98 104,122" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<polyline points="128,98 128,122" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<polyline points="152,98 152,122" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<polyline points="115,163 141,163" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.7"/>
+</svg>

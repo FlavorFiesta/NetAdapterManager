@@ -3,9 +3,11 @@
 [简体中文](README.md) | English
 
 An IPv4, DNS and network preset manager for Windows 10/11 x64, built with WPF and .NET 8.
-Current source version: **1.5.2**. Licensed under the [MIT license](LICENSE).
+Current source version: **1.7.10**. Licensed under the [MIT license](LICENSE).
 
 ![Main window with synthetic demonstration data](docs/images/main-window-en.png)
+
+v1.7.10 improves Start menu icon refresh after an upgrade. See the [changelog (Chinese)](CHANGELOG.md). See the [1.5.3 fix notes](docs/RELEASE-1.5.3.md) for saved IPv4 and DNS verification fixes, and the [next-version plan (Chinese)](docs/PLAN-1.6.0.md).
 
 ## Features
 
@@ -17,7 +19,7 @@ Current source version: **1.5.2**. Licensed under the [MIT license](LICENSE).
 - Choose light, dark or system theme, with support for Windows high-contrast colors.
 - Right-aligned toolbar controls, with version and refresh time on the left.
 
-Network changes require administrator privileges; Windows displays a UAC prompt at startup. Changing the active adapter may interrupt connectivity, so check the target adapter before applying changes.
+Windows requests administrator approval at startup. After approval, the application runs as administrator; cancelling the prompt prevents startup. Changing the active adapter may interrupt connectivity, so check the target adapter before applying changes.
 
 ## Download and use
 
@@ -41,7 +43,7 @@ Application data lives beside the executable: `preset-library.json` (presets and
 
 The unified preset library introduced in 1.4.12 imports legacy `presets.json` and `preset-groups.json` from the application directory, or from `%AppData%\NetAdapterManager` if local legacy files are absent. Successful saving creates the unified library and retains the originals. Once the unified library exists, legacy files are no longer imported. Downgrading to 1.4.11 does not expose subsequent unified-library changes; preserve the full application directory first.
 
-Replacing an existing data file keeps its previous contents as `.bak`. Restore Backup restores presets and groups together, validates the backup first and preserves the replaced file as `.corrupt-*`. Corrupt or inaccessible preset data is reported and protected from overwriting. Damaged settings are preserved when a new preference is saved.
+Replacing an existing data file keeps its previous contents as `.bak`. Corrupt or inaccessible preset data is reported and protected from overwriting. Damaged settings are preserved when a new preference is saved.
 
 Only one instance runs per user. Closing during configuration, verification or recovery waits for the operation to finish; this cannot protect against forced termination or power loss. Adapter enable/disable operations stop waiting after 15 seconds, but Windows may still be working. Further writes are blocked; inspect the system state before restarting the app.
 
@@ -82,7 +84,7 @@ python -m pip install -r .\build\requirements.txt
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
-Outputs are self-contained, untrimmed, multi-file `win-x64` packages in `artifacts\1.5.2\`. The script replaces only the named ZIP and installer, collects dependency licenses and rejects runtime user data in the publishing directory. `-OutputRootOverride` must point inside `artifacts`, without symlinks or junctions. Version numbers come from the main project. The `.iss` script is the production installer; the C# project under Installer is a legacy prototype.
+Outputs are self-contained, untrimmed, multi-file `win-x64` packages in `artifacts\1.5.3\`. The script replaces only the named ZIP and installer, collects dependency licenses and rejects runtime user data in the publishing directory. `-OutputRootOverride` must point inside `artifacts`, without symlinks or junctions. Version numbers come from the main project. The `.iss` script is the production installer; the C# project under Installer is a legacy prototype.
 
 Publish both packages and matching SHA-256 checksums. Do not package an application directory that has been used with personal data.
 
@@ -91,3 +93,7 @@ Publish both packages and matching SHA-256 checksums. Do not package an applicat
 Issues and pull requests are welcome. Include your Windows version, reproduction steps and expected/actual behavior; redact logs and screenshots. Run the build and default self-tests before submitting code. Real adapter write tests are not required for ordinary contributions.
 
 See [third-party notices](THIRD-PARTY-NOTICES.md) for bundled materials. Internal working notes and raw acceptance logs remain local.
+
+[v1.6.0 local candidate and acceptance limits](docs/RELEASE-1.6.0.md): configuration review, adapter drafts, preset import/export and explicit binding.
+
+[v1.6.1 local candidate and acceptance limits](docs/RELEASE-1.6.1.md): operation history, diagnostic preview/export and manual update checking.

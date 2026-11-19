@@ -146,7 +146,7 @@ public sealed class PresetService
             ? string.Empty
             : string.Join("|", config.DnsServers.Where(x => x is not null).Select(x => x?.Trim() ?? string.Empty));
         return string.Join("\u001f", config.IpMode, addresses,
-            managedAddress, config.DnsMode, dns);
+            managedAddress, config.DnsMode, dns, string.Join("|", config.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}").OrderBy(a => a)));
     }
 }
 

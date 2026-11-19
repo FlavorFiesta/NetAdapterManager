@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using NetAdapterManager.Models;
@@ -45,6 +45,7 @@ internal static class Version150Tests
             var network = new NetworkService(_ => { reads++; return Task.FromResult<IReadOnlyList<AdapterSnapshot>>([Snapshot(Initial())]); },
                 (_, _, _) => throw new Exception("Unexpected write"), (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var vm = new MainViewModel(network, new PresetService(path));
+            vm.ReviewConfiguration = (_, _) => true;
             await vm.InitializeAsync();
             Require(reads == 1 && vm.Adapters.Count == 1 && vm.DetailMessage.Length > 0, "Adapter load or preset warning missing.");
             Require(await File.ReadAllTextAsync(path) == "{broken", "Damaged preset file was changed.");
@@ -56,9 +57,10 @@ internal static class Version150Tests
                 (_, config, _) => { writes++; state = config.Clone(); },
                 (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var vm = new MainViewModel(network, new PresetService(Path.Combine(root, "preset-success.json")));
+            vm.ReviewConfiguration = (_, _) => true;
             await vm.InitializeAsync();
             var preset = new Preset { Name = "Target", AdapterInterfaceGuid = Snapshot(state).InterfaceGuid,
-                Config = NetworkConfig.ForPreset("192.0.2.20", 24, null, DnsMode.Automatic, []) };
+                Config = NetworkConfig.ForPreset("192.0.2.20", 24, null, DnsMode.Static, []) };
             vm.ApplyPresetCommand.Execute(preset); await vm.ActiveOperation;
             Require(state.ManagedIPv4Address == "192.0.2.20" && vm.IPv4Address == "192.0.2.20", "Successful preset left stale editor values.");
             vm.ApplyCommand.Execute(null); await vm.ActiveOperation;
@@ -71,6 +73,7 @@ internal static class Version150Tests
             var network = new NetworkService(_ => Task.FromResult<IReadOnlyList<AdapterSnapshot>>([Snapshot(Initial())]),
                 (_, _, _) => throw new Exception("Unexpected write"), (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var vm = new MainViewModel(network, new PresetService(path));
+            vm.ReviewConfiguration = (_, _) => true;
             await vm.InitializeAsync();
             foreach (var language in new[] { "en", "zh-TW", "zh-CN" })
             {
@@ -96,6 +99,7 @@ internal static class Version150Tests
                 (_, config, _) => { if (++writes == 1) state = config.Clone(); throw new IOException("Synthetic failure"); },
                 (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var vm = new MainViewModel(network, new PresetService(Path.Combine(root, "missing.json")));
+            vm.ReviewConfiguration = (_, _) => true;
             await vm.InitializeAsync(); vm.IPv4Address = "192.0.2.20";
             vm.ApplyCommand.Execute(null); await vm.ActiveOperation;
             Require(writes == 2 && vm.SelectedAdapter!.Snapshot.Config.ManagedIPv4Address == "192.0.2.20", "Displayed snapshot is stale.");
@@ -111,6 +115,7 @@ internal static class Version150Tests
                 (_, _, _) => { writes++; throw new IOException("Writer failed"); },
                 (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
             var vm = new MainViewModel(network, new PresetService(Path.Combine(root, "missing2.json")));
+            vm.ReviewConfiguration = (_, _) => true;
             await vm.InitializeAsync(); vm.ApplyCommand.Execute(null); await vm.ActiveOperation;
             vm.HideVirtual = true;
             Require(vm.Adapters.Count == 0 && !vm.CanConfigure && vm.DetailMessage.Contains("状态未知"), "Stale state can still be used.");
@@ -127,6 +132,9 @@ internal static class Version150Tests
                 var invoked = false;
                 var blocked = await NoNetwork().ToggleWithTimeoutAsync(() => { invoked = true; return Task.FromResult(0u); }, TimeSpan.FromSeconds(1));
                 Require(!blocked.Succeeded && !invoked, "Concurrent writer started after uncertain timeout.");
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                var reviewed = await NoNetwork().ApplyReviewedAsync(new(), new(), timeout.Token);
+                Require(!reviewed.Succeeded, "Reviewed apply must refuse uncertain writes without waiting on the held gate.");
             }
             finally { completion.TrySetResult(0); }
             var stillBlocked = await service.ToggleWithTimeoutAsync(() => throw new Exception("Unexpected retry"), TimeSpan.FromSeconds(1));
@@ -197,7 +205,7 @@ internal static class Version150Tests
         });
     }
     private static string Placeholders(string text) => string.Join("|", Regex.Matches(text, @"\{\d+(?:[^}]*)\}").Select(m => m.Value).Order());
-    private static NetworkConfig Initial() => NetworkConfig.ForPreset("192.0.2.10", 24, null, DnsMode.Automatic, []);
+    private static NetworkConfig Initial() => NetworkConfig.ForPreset("192.0.2.10", 24, null, DnsMode.Static, []);
     private static AdapterSnapshot Snapshot(NetworkConfig config) => new() { Name = "Synthetic adapter", InterfaceGuid = "00000000-0000-0000-0000-000000000042", InterfaceIndex = 42, Enabled = true, Ipv4InterfacePresent = true, Config = config.Clone() };
     private static NetworkService NoNetwork() => new(_ => Task.FromResult<IReadOnlyList<AdapterSnapshot>>([]), (_, _, _) => throw new Exception("Unexpected network write"), (_, _) => Task.CompletedTask, (_, _, _) => Task.CompletedTask);
 }

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>折页线路 / NetAdapterManager</title>
+<polygon points="53,85 100,64 100,174 53,195" fill="#8bbee5" opacity="0.2"/>
+<polygon points="153,85 203,64 203,174 153,195" fill="#8bbee5" opacity="0.22"/>
+<polyline points="53.00,195.00 53.00,85.00 100.00,64.00 153.00,85.00 203.00,64.00 203.00,174.00 153.00,195.00 100.00,174.00 53.00,195.00" fill="none" stroke="#4587c1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="100.00,64.00 100.00,174.00" fill="none" stroke="#8bbee5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="153.00,85.00 153.00,195.00" fill="none" stroke="#8bbee5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="72.00,149.00 97.00,130.00 125.00,143.00 151.00,126.00" fill="none" stroke="#4587c1" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="151.00,126.00 142.00,112.00 142.00,101.00 151.00,94.00 161.00,101.00 161.00,112.00 151.00,126.00" fill="none" stroke="#4587c1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<circle cx="151" cy="104" r="3" fill="#8bbee5" opacity="1"/>
+</svg>

@@ -43,3 +43,7 @@ storage-probe.json
 *.p12
 *.pem
 *.key
+
+operation-history.json
+/.wrangler/
+/update-worker/.wrangler/

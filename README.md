@@ -3,9 +3,11 @@
 简体中文 | [English](README.en.md)
 
 Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .NET 8。
-当前源码版本：**1.5.2**，采用 [MIT 许可证](LICENSE)。
+当前源码版本：**1.7.10**
 
 ![主界面（虚构演示数据）](docs/images/main-window.png)
+
+v1.7.10 改进了升级时的开始菜单图标刷新。详见 [更新记录](CHANGELOG.md)。客户反馈的禁用网卡 IP 读取和 DNS 复核问题修复见 [v1.5.3 说明](docs/RELEASE-1.5.3.md)。后续功能见 [v1.6.0 更新计划](docs/PLAN-1.6.0.md)。
 
 ## 功能
 
@@ -16,7 +18,7 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 - 设置中切换简体中文、繁体中文、英语或跟随系统，界面即时更新。
 - 浅色、深色与跟随系统主题；保存偏好，兼容系统高对比度。
 
-修改网络配置需要管理员权限，启动时会出现 Windows UAC 提示。
+启动时会请求 Windows 管理员授权，确认后进入管理员模式；取消授权则不启动程序。
 更改当前联网网卡可能中断网络；请先确认目标网卡。
 
 ## 下载与使用
@@ -39,7 +41,7 @@ Windows 10/11 x64 上的网卡 IPv4、DNS 与预设管理工具，基于 WPF / .
 错误日志位于 `logs/NetAdapterManager.log`。升级时保留数据，卸载后可能仍保留运行时生成的文件。
 首次使用 1.4.12 时，会读取程序目录中的旧 `presets.json` 和 `preset-groups.json`；没有本地旧文件时兼容读取 `%AppData%\NetAdapterManager` 中的数据。
 第一次成功保存时建立统一预设库，原文件保留。统一库建立后，不再从旧文件导入。
-每次替换已存在的数据文件会保留上一份 `.bak`；预设区域的“恢复备份”可同时恢复预设和分组，恢复前文件另存为 `.corrupt-*`。
+每次替换已存在的数据文件会保留上一份 `.bak`。
 读取损坏或无法访问的数据时会显示错误并阻止覆盖。降级到 1.4.11 不会读取统一库中的后续修改，请先保留完整程序目录。
 同一用户只允许一个实例；配置应用、复核或恢复期间关闭窗口，会等待操作结束后再退出。
 启停网卡超过 15 秒或被取消时，界面停止等待，但 Windows 操作可能仍在进行；程序阻止继续写入，直到用户确认系统状态后重启。
@@ -107,7 +109,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 ```
 
 正式包为 `win-x64`、自包含、多文件、不裁剪。
-默认输出到 `artifacts\1.5.2\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
+默认输出到 `artifacts\1.5.3\`，临时目录自动清理；最终生成 ZIP 和安装 EXE。
 重建只覆盖这两个指定产物，保留目录中的其他文件。
 `-OutputRootOverride` 只能指定项目 `artifacts` 下的子目录，不允许路径中包含符号链接或目录联接。
 版本从主项目读取并传给安装脚本。
@@ -123,3 +125,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build\Build-Packages.ps1
 
 版本变化见 [CHANGELOG](CHANGELOG.md)，第三方材料见 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)。
 内部项目记录与原始验收日志仅在本地保留，不作为公开源码提交。
+
+[v1.6.0 本地功能与验收边界](docs/RELEASE-1.6.0.md)：变更预览、网卡草稿、预设导入/导出与手动绑定。
+
+[v1.6.1 本地功能与验收边界](docs/RELEASE-1.6.1.md)：操作记录、诊断预览导出及手动检查更新。

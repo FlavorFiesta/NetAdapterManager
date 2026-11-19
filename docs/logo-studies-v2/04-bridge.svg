@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>连接桥 / NetAdapterManager</title>
+<rect x="8" y="8" width="240" height="240" rx="48" fill="#263448"/>
+<polyline points="94,78 66,78 66,178 94,178" fill="none" stroke="#F2F5FA" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="162,78 190,78 190,178 162,178" fill="none" stroke="#F2F5FA" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="96,128 160,128" fill="none" stroke="#81AED8" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="85" y="112" width="24" height="32" rx="6" fill="#81AED8"/>
+<rect x="147" y="112" width="24" height="32" rx="6" fill="#81AED8"/>
+</svg>

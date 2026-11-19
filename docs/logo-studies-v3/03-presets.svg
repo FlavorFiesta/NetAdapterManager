@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>叠层配置 / NetAdapterManager</title>
+<rect x="9" y="9" width="238" height="238" rx="46" fill="#263448" opacity="0.58"/>
+<rect x="10" y="10" width="236" height="236" rx="45" fill="none" stroke="#A3C9E7" stroke-opacity="0.59" stroke-width="2"/>
+<polyline points="34,76 34,57 39,45 51,36 73,36" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.6"/>
+<polyline points="184,220 204,220 218,207 221,186" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.35"/>
+<polyline points="76,165 62,165 62,66 162,66 162,80" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="0.65"/>
+<polyline points="88,91 188,91 188,191 88,191 88,91" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke="#e1effb" opacity="1"/>
+<polyline points="109,116 167,116" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<polyline points="109,141 154,141" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<polyline points="109,166 167,166" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke="#82c0ec" opacity="1"/>
+<rect x="119" y="109" width="6" height="14" rx="3" fill="#e1effb" opacity="1"/>
+<rect x="143" y="134" width="6" height="14" rx="3" fill="#e1effb" opacity="1"/>
+</svg>

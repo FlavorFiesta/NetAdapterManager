@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>网口落点 / NetAdapterManager</title>
+<polyline points="65.00,65.00 191.00,65.00 191.00,147.00 158.00,147.00 158.00,171.00 128.00,200.00 98.00,171.00 98.00,147.00 65.00,147.00 65.00,65.00" fill="none" stroke="#4c8fc9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="100.00,89.00 100.00,114.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="128.00,89.00 128.00,114.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="156.00,89.00 156.00,114.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="111.00,153.00 145.00,153.00" fill="none" stroke="#8fc3ea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<circle cx="128" cy="175" r="5" fill="#8fc3ea" opacity="0.9"/>
+</svg>

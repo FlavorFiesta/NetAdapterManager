@@ -1,6 +1,7 @@
 param(
     [string]$Configuration = "Release",
-    [string]$OutputRootOverride = ""
+    [string]$OutputRootOverride = "",
+    [switch]$NoRestore
 )
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -39,13 +40,15 @@ New-Item -ItemType Directory -Path $publishRoot, $installerStagingRoot | Out-Nul
 try {
     & python (Join-Path $PSScriptRoot "generate_icon.py")
     if ($LASTEXITCODE -ne 0) { throw "Icon generation failed. Install build/requirements.txt." }
-    & dotnet publish $mainProject -c $Configuration -r win-x64 --self-contained true `
+    [string[]]$restoreArguments = @()
+    if ($NoRestore) { $restoreArguments = @('--no-restore') }
+    & dotnet publish $mainProject -c $Configuration -r win-x64 --self-contained true @restoreArguments `
         -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o $publishRoot
     if ($LASTEXITCODE -ne 0) { throw "Main program publish failed." }
     if (-not (Test-Path -LiteralPath (Join-Path $publishRoot "NetAdapterManager.exe"))) { throw "Missing executable." }
     & (Join-Path $PSScriptRoot "Collect-Licenses.ps1") -PublishRoot $publishRoot
     $runtimeData = @(Get-ChildItem -LiteralPath $publishRoot -File -Recurse | Where-Object {
-        $_.Name -match '^(presets|preset-groups|preset-library|managed-addresses|history|settings)\.json($|\.)' -or $_.Name -eq 'install-language.txt' -or $_.Extension -eq ".log"
+        $_.Name -match '^(presets|preset-groups|preset-library|managed-addresses|history|operation-history|settings)\.json($|\.)' -or $_.Name -eq 'install-language.txt' -or $_.Extension -eq ".log"
     })
     if ($runtimeData.Count -gt 0) { throw "Publish output contains runtime user data." }
     $portableName = "NetAdapterManager-v$version-portable-win-x64.zip"
@@ -69,6 +72,11 @@ try {
     foreach ($package in $packages) {
         Copy-Item -LiteralPath $package.Source -Destination (Join-Path $outputRoot $package.Name) -Force
     }
+    $sums = foreach ($package in $packages) {
+        $hash = (Get-FileHash -LiteralPath (Join-Path $outputRoot $package.Name) -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  $($package.Name)"
+    }
+    [IO.File]::WriteAllLines((Join-Path $outputRoot 'SHA256SUMS.txt'), $sums, [Text.Encoding]::ASCII)
 }
 finally {
     # The only recursive deletion is our newly created, uniquely named staging.

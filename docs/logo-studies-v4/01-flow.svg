@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>流转链路 / NetAdapterManager</title>
+<polyline points="59,102 86,65 165,65 194,94 194,120" fill="none" stroke="#5aa4dd" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="175,106 194,125 213,106" fill="none" stroke="#5aa4dd" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="197,154 170,191 91,191 62,162 62,136" fill="none" stroke="#9fcff1" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+<polyline points="43,150 62,131 81,150" fill="none" stroke="#9fcff1" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+<polyline points="103,108 153,148" fill="none" stroke="#3c6799" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+<circle cx="103" cy="108" r="7" fill="#9fcff1" opacity="1"/>
+<circle cx="153" cy="148" r="7" fill="#5aa4dd" opacity="1"/>
+</svg>

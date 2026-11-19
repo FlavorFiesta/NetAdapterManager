@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>线缆插头 / NetAdapterManager</title>
+<polygon points="94,112 148,58 198,108 144,162" fill="#8fc3ea" opacity="0.25"/>
+<polyline points="94,112 148,58 198,108 144,162 94,112" fill="none" stroke="#4c8fc9" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="111,96 161,146" fill="none" stroke="#8fc3ea" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="144,81 130,95" fill="none" stroke="#375b87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+<polyline points="157,94 143,108" fill="none" stroke="#375b87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+<polyline points="170,107 156,121" fill="none" stroke="#375b87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+<polyline points="119,137 94,162 70,162 54,178 54,202" fill="none" stroke="#4c8fc9" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="135,153 110,178 86,178" fill="none" stroke="#8fc3ea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>

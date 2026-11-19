@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>方向链路 / NetAdapterManager</title>
+<polyline points="56.00,88.00 93.00,88.00 109.00,106.00" fill="none" stroke="#4587c1" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="200.00,168.00 163.00,168.00 147.00,150.00" fill="none" stroke="#4587c1" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="56.00,168.00 94.00,168.00 109.00,150.00" fill="none" stroke="#8bbee5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+<polyline points="200.00,88.00 162.00,88.00 147.00,106.00" fill="none" stroke="#8bbee5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+<polygon points="108,148 125,111 149,91 132,145" fill="#8bbee5" opacity="0.55"/>
+<polygon points="108,148 125,111 132,129" fill="#4587c1" opacity="0.95"/>
+<polyline points="108.00,148.00 125.00,111.00 149.00,91.00 132.00,145.00 108.00,148.00" fill="none" stroke="#4587c1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<circle cx="56" cy="88" r="13" fill="#4587c1" opacity="0.18"/>
+<circle cx="56" cy="88" r="7" fill="#4587c1" opacity="1"/>
+<circle cx="200" cy="168" r="13" fill="#4587c1" opacity="0.18"/>
+<circle cx="200" cy="168" r="7" fill="#4587c1" opacity="1"/>
+<circle cx="56" cy="168" r="7" fill="#8bbee5" opacity="0.8"/>
+<circle cx="200" cy="88" r="7" fill="#8bbee5" opacity="0.8"/>
+</svg>

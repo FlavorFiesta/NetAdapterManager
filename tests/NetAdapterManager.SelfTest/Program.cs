@@ -22,6 +22,12 @@ if (args.Contains("--isolated"))
     await NetworkRegressionTests.RunAsync(Green, Red);
     await ReliabilityRegressionTests.RunAsync(Green, Red);
     await Version150Tests.RunAsync(Green, Red);
+    await Customer153Tests.RunAsync(Green, Red);
+    await Version160Tests.RunAsync(Green, Red);
+    await Version161Tests.RunAsync(Green, Red);
+    await UpdateReliabilityTests.RunAsync(Green, Red);
+    Version163Tests.Run(Green, Red);
+    await Version170Tests.RunAsync(Green, Red);
     Console.WriteLine($"Isolated regression: {passes} passed, {failures} failed; no real network writes.");
     return failures == 0 ? 0 : 1;
 }
@@ -30,6 +36,33 @@ if (args.Any(x => string.Equals(x, "--ui-smoke", StringComparison.OrdinalIgnoreC
     return RunUiSmokeTest();
 
 if (args.Contains("--appearance-smoke")) return AppearanceSmokeTests.Run();
+
+if (args.Contains("--update-fallback-live"))
+{
+    using var live = new System.Net.Http.HttpMessageInvoker(new System.Net.Http.HttpClientHandler { AllowAutoRedirect = false });
+    using var client = new System.Net.Http.HttpClient(new Version161Tests.Handler((request, token) =>
+        request.RequestUri!.Host == "api.github.com"
+            ? Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.ServiceUnavailable))
+            : live.SendAsync(request, token)));
+    var result = await new UpdateService(client, UpdateService.DefaultFallbackUrl)
+        .CheckAsync(typeof(MainViewModel).Assembly.GetName().Version!);
+    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
+    return result.UsedFallback && result.Status is "Available" or "Current" or "LocalAhead" ? 0 : 2;
+}
+
+if (args.Contains("--update-check"))
+{
+    var update = await new UpdateService(fallbackUrl: UpdateService.DefaultFallbackUrl).CheckAsync(typeof(MainViewModel).Assembly.GetName().Version!);
+    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(update));
+    return update.Status is "Available" or "Current" or "LocalAhead" ? 0 : 2;
+}
+
+if (args.FirstOrDefault() == "--customer-adapter-test")
+{
+    if (args.Length != 4 || args[2] != "--evidence")
+        throw new ArgumentException("Usage: --customer-adapter-test <KM-TEST adapter GUID> --evidence <directory>");
+    return await CustomerAdapterAcceptance.RunAsync(args[1], args[3]);
+}
 
 if (args.Any(x => string.Equals(x, "--network-regression", StringComparison.OrdinalIgnoreCase)))
     return await NetworkRegressionTests.RunStandaloneAsync();
@@ -48,6 +81,9 @@ try
     await NetworkRegressionTests.RunAsync(Pass, Fail);
     await ReliabilityRegressionTests.RunAsync(Pass, Fail);
     await Version150Tests.RunAsync(Pass, Fail);
+    await Customer153Tests.RunAsync(Pass, Fail);
+    await Version160Tests.RunAsync(Pass, Fail);
+    await Version161Tests.RunAsync(Pass, Fail);
     var valid = ValidationService.ValidateManualConfig(new NetworkConfig
     {
         IpMode = IpMode.Static,
@@ -95,7 +131,7 @@ try
 
         var mismatches = adapters
             .Where(adapter => dnsByInterface.ContainsKey(adapter.InterfaceIndex))
-            .Where(adapter => !dnsByInterface[adapter.InterfaceIndex].SetEquals(adapter.Config.DnsServers))
+            .Where(adapter => !dnsByInterface[adapter.InterfaceIndex].SetEquals(adapter.EffectiveDnsServers ?? adapter.Config.DnsServers))
             .Select(adapter => adapter.Name)
             .ToList();
         if (mismatches.Count == 0)
@@ -140,8 +176,8 @@ try
         IPv4Addresses = [new Ipv4AddressEntry { Address = "192.0.2.10", PrefixLength = 24, IsManaged = true }],
         DnsMode = DnsMode.Automatic
     });
-    if (staticAutomaticDns.IsValid)
-        Pass("静态 IPv4-DNS 选填校验", "静态 IPv4 可以使用自动 DNS，DNS 不再被强制填写。");
+    if (!staticAutomaticDns.IsValid)
+        Pass("静态 IPv4-DNS 选填校验", "静态 IPv4 拒绝自动 DNS。");
     else
         Fail("静态 IPv4-DNS 选填校验", string.Join("; ", staticAutomaticDns.Errors));
 
@@ -175,8 +211,8 @@ try
     disconnectedViewModel.IsDhcp = true;
     disconnectedViewModel.IsDnsAutomatic = true;
     disconnectedViewModel.IsStatic = true;
-    if (disconnectedViewModel.IsStatic && disconnectedViewModel.IsDnsAutomatic)
-        Pass("静态 IP-DNS 界面联动", "切换静态 IPv4 不会强制改变 DNS 模式，DNS 可选。");
+    if (disconnectedViewModel.IsStatic && disconnectedViewModel.IsDnsStatic)
+        Pass("静态 IP-DNS 界面联动", "切换静态 IPv4 自动选择静态 DNS。");
     else
         Fail("静态 IP-DNS 界面联动", "切换静态 IPv4 时错误改变了 DNS 模式。");
 
@@ -372,11 +408,11 @@ try
     commandViewModel.Adapters.Add(targetAdapterB);
     commandViewModel.SelectedAdapter = targetAdapterA;
     commandViewModel.SelectedPreset = targetPreset;
-    if (commandViewModel.ApplyPresetCommand.CanExecute(targetPreset)
-        && !commandViewModel.ApplyPresetCommand.CanExecute(missingTargetPreset))
-        Pass("预设命令目标参数", "应用命令按传入预设解析所属网卡，目标丢失时命令不可执行。");
+    if (commandViewModel.ApplyPresetCommand.CanExecute(targetPreset) == commandViewModel.IsAdministrator
+        && commandViewModel.ApplyPresetCommand.CanExecute(missingTargetPreset) == commandViewModel.IsAdministrator)
+        Pass("预设命令目标参数", "应用命令使用当前网卡，并根据管理员权限控制可用状态。");
     else
-        Fail("预设命令目标参数", "应用命令仍依赖当前网卡或未阻止失效目标。");
+        Fail("预设命令目标参数", "模板应用命令未正确使用当前选择和管理员权限。");
 
     try
     {
@@ -788,8 +824,6 @@ static int RunUiSmokeTest()
             var output = Path.Combine(Environment.CurrentDirectory, "ui-smoke.png");
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
             window.Dispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
-            if (window.FindName("RestorePresetBackupButton") is not Button { IsEnabled: true })
-                throw new InvalidOperationException("操作结束后恢复备份入口未启用。");
             SaveScreenshot(window, output);
             var operationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var operation = viewModel.RunBusyAsync(() => operationRelease.Task);

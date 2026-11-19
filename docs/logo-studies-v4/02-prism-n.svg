@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>折线 N / NetAdapterManager</title>
+<polyline points="63,191 63,65 193,191" fill="none" stroke="#5aa4dd" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" opacity="0.86"/>
+<polyline points="63,65 193,191 193,65" fill="none" stroke="#9fcff1" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="84,191 84,119" fill="none" stroke="#3c6799" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+<polyline points="172,65 172,137" fill="none" stroke="#5aa4dd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+<circle cx="63" cy="65" r="9" fill="#9fcff1" opacity="1"/>
+<circle cx="193" cy="191" r="9" fill="#5aa4dd" opacity="1"/>
+</svg>

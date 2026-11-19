@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>网口 · 地点标记 / NetAdapterManager</title>
+<polyline points="60.00,67.00 178.00,67.00 178.00,145.00 149.00,145.00 149.00,178.00 89.00,178.00 89.00,145.00 60.00,145.00 60.00,67.00" fill="none" stroke="#4c8fc9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+<polyline points="92.00,88.00 92.00,111.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="119.00,88.00 119.00,111.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="146.00,88.00 146.00,111.00" fill="none" stroke="#8fc3ea" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="103.00,157.00 135.00,157.00" fill="none" stroke="#8fc3ea" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+<polyline points="210.00,213.00 208.80,211.70 207.62,210.38 206.48,209.05 205.37,207.70 204.31,206.33 203.29,204.96 202.31,203.58 201.39,202.20 200.52,200.82 199.70,199.45 198.95,198.08 198.27,196.71 197.65,195.36 197.10,194.03 196.62,192.71 196.23,191.41 195.91,190.13 195.69,188.89 195.55,187.67 195.50,186.48 195.71,184.15 196.31,182.06 197.26,180.21 198.52,178.62 200.03,177.27 201.76,176.16 203.67,175.30 205.71,174.69 207.83,174.32 210.00,174.19 212.17,174.32 214.29,174.69 216.33,175.30 218.24,176.16 219.97,177.27 221.48,178.62 222.74,180.21 223.69,182.06 224.29,184.15 224.50,186.48 224.45,187.67 224.31,188.89 224.09,190.13 223.77,191.41 223.38,192.71 222.90,194.03 222.35,195.36 221.73,196.71 221.05,198.08 220.30,199.45 219.48,200.82 218.61,202.20 217.69,203.58 216.71,204.96 215.69,206.33 214.63,207.70 213.52,209.05 212.38,210.38 211.20,211.70 210.00,213.00" fill="none" stroke="#8fc3ea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+<circle cx="210" cy="187" r="4" fill="#8fc3ea" opacity="0.7"/>
+</svg>

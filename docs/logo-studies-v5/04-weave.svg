@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>交织链路 / NetAdapterManager</title>
+<polyline points="58,88 96,88 160,168 198,168" fill="none" stroke="#4c8fc9" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+<polyline points="58,168 96,168 113,147" fill="none" stroke="#8fc3ea" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="141,112 160,88 198,88" fill="none" stroke="#8fc3ea" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="62,110 87,110 143,180" fill="none" stroke="#375b87" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+<polyline points="113,77 169,147 194,147" fill="none" stroke="#8fc3ea" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+<circle cx="58" cy="88" r="7" fill="#8fc3ea" opacity="1"/>
+<circle cx="198" cy="168" r="7" fill="#4c8fc9" opacity="1"/>
+</svg>

@@ -4,10 +4,22 @@ using System.Text.Json;
 
 namespace NetAdapterManager.Services;
 
+public enum CloseBehavior
+{
+    Ask,
+    MinimizeToTray,
+    Exit
+}
+
 public sealed record AppPreferences
 {
     public string Language { get; init; } = "system";
     public string Theme { get; init; } = "system";
+    public CloseBehavior CloseBehavior { get; init; } = CloseBehavior.Ask;
+    public bool FollowSystemDpi { get; init; } = true;
+    public double UiScale { get; init; } = 1;
+    public double FontScale { get; init; } = 1;
+    public string UpdateFallbackUrl { get; init; } = UpdateService.DefaultFallbackUrl;
 }
 
 public sealed class PreferencesService(string? filePath = null)
@@ -20,7 +32,12 @@ public sealed class PreferencesService(string? filePath = null)
     internal static AppPreferences Normalize(AppPreferences value) => new()
     {
         Language = value.Language is "system" or "zh-CN" or "zh-TW" or "en" ? value.Language : "system",
-        Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system"
+        Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system",
+        CloseBehavior = Enum.IsDefined(value.CloseBehavior) ? value.CloseBehavior : CloseBehavior.Ask,
+        FollowSystemDpi = value.FollowSystemDpi,
+        UiScale = double.IsFinite(value.UiScale) ? Math.Clamp(value.UiScale, .75, 1.75) : 1,
+        FontScale = double.IsFinite(value.FontScale) ? Math.Clamp(value.FontScale, .85, 1.5) : 1,
+        UpdateFallbackUrl = UpdateService.ValidFeedUrl(value.UpdateFallbackUrl?.Trim()) ? value.UpdateFallbackUrl!.Trim() : ""
     };
 
     public void Load()
@@ -70,6 +87,7 @@ public sealed class PreferencesService(string? filePath = null)
     {
         Localization.SetLanguage(Current.Language == "system" ? SystemLanguage() : Current.Language);
         ThemeService.Apply(Current.Theme);
+        UiDisplayService.Apply(Current);
     }
 
     private static string SystemLanguage()

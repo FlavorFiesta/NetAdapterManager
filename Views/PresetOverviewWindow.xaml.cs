@@ -12,6 +12,7 @@ public partial class PresetOverviewWindow : Window
     public PresetOverviewWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+        NetAdapterManager.Services.WindowCompatibility.Attach(this);
         DataContext = viewModel;
         viewModel.ClearBatchSelection();
         viewModel.Presets.CollectionChanged += Presets_CollectionChanged;
@@ -35,6 +36,7 @@ public partial class PresetOverviewWindow : Window
         BatchCountText.Text = L.F("Loc_6EAADD746DC7", count);
         BatchMoveButton.IsEnabled = count > 0;
         BatchDeleteButton.IsEnabled = count > 0;
+        CommandManager.InvalidateRequerySuggested();
     }
     private void SelectAll_Click(object sender, RoutedEventArgs e)
     {
@@ -62,8 +64,7 @@ public partial class PresetOverviewWindow : Window
     private async void BatchDelete_Click(object sender, RoutedEventArgs e)
     {
         var ids = ViewModel.BatchSelectedPresets.Select(x => x.Id).ToArray();
-        if (ids.Length == 0 || MessageBox.Show(this, L.F("Loc_572B62D5A86B", ids.Length), L.T("Loc_DDAE7A0FC554"),
-            MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (ids.Length == 0 || !RiskConfirmationWindow.Confirm(this, L.F("Loc_572B62D5A86B", ids.Length), L.T("Loc_DDAE7A0FC554"))) return;
         BatchMoveButton.IsEnabled = BatchDeleteButton.IsEnabled = false;
         await ViewModel.UpdatePresetBatchAsync(ids, null, true);
         UpdateBatchControls();

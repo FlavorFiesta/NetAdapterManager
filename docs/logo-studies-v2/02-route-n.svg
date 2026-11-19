@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>N 字路由 / NetAdapterManager</title>
+<rect x="8" y="8" width="240" height="240" rx="48" fill="#263448"/>
+<polyline points="75,181 75,75 181,181 181,75" fill="none" stroke="#F2F5FA" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="61" y="59" width="28" height="32" rx="7" fill="#81AED8"/>
+<rect x="167" y="165" width="28" height="32" rx="7" fill="#81AED8"/>
+</svg>

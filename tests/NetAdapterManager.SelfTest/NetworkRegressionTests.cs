@@ -1,4 +1,4 @@
-using NetAdapterManager.Models;
+﻿using NetAdapterManager.Models;
 using NetAdapterManager.Services;
 using System.IO;
 
@@ -40,8 +40,8 @@ internal static class NetworkRegressionTests
         await Check("静态 IP + 自动 DNS", async () =>
         {
             var h = new Harness(Dhcp());
-            Require((await h.ApplyAsync(Static(DnsMode.Automatic))).Succeeded, "静态 IP 不能强制改为手动 DNS。");
-            Require(h.Commands.Any(IsAutomaticDns), "切换 IP 模式后应明确应用自动 DNS。");
+            Require(!(await h.ApplyAsync(Static(DnsMode.Automatic))).Succeeded, "Invalid combination must be rejected.");
+            Require(h.Commands.Count == 0, "Rejected configuration must not write.");
         });
         await Check("DNS 来源独立于 IP 和有效地址", () =>
         {

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Management;
 using System.Net;
 using System.Net.Sockets;
@@ -19,6 +19,7 @@ namespace NetAdapterManager.Services;
 /// </summary>
 public sealed class NetworkService
 {
+    public bool CanWrite { get; private set; }
     private readonly JsonStore<Dictionary<string, string?>> _managedStore = new("managed-addresses.json");
     private static readonly Encoding NetshEncoding = CreateNetshEncoding();
     private readonly Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>> _snapshotReader;
@@ -32,6 +33,7 @@ public sealed class NetworkService
 
     public NetworkService()
     {
+        CanWrite = PrivilegeService.IsAdministrator;
         _snapshotReader = ReadAdaptersCoreAsync;
         // Recovery must still read OS state if local managed-address metadata becomes unreadable.
         _recoverySnapshotReader = token => Task.Run<IReadOnlyList<AdapterSnapshot>>(() => ReadAdapters([]), token).WaitAsync(token);
@@ -56,9 +58,10 @@ public sealed class NetworkService
         Func<AdapterSnapshot, NetworkConfig, bool, CancellationToken, Task> configurationWriter,
         Func<TimeSpan, CancellationToken, Task> delay,
         Func<AdapterSnapshot, NetworkConfig, CancellationToken, Task> saveManagedAddress,
-        Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>>? recoverySnapshotReader = null)
+        Func<CancellationToken, Task<IReadOnlyList<AdapterSnapshot>>>? recoverySnapshotReader = null, bool allowWrites = true)
     {
         _snapshotReader = snapshotReader;
+        CanWrite = allowWrites; // Injected test transport never touches Windows networking.
         _recoverySnapshotReader = recoverySnapshotReader ?? snapshotReader;
         _configurationWriter = configurationWriter;
         _delay = delay;
@@ -92,9 +95,29 @@ public sealed class NetworkService
         CancellationToken cancellationToken = default)
         => await ApplyInternalAsync(adapter, target, exactAddressSet: true, cancellationToken);
 
+    public async Task<ApplyResult> ApplyReviewedAsync(AdapterSnapshot reviewed, NetworkConfig target,
+        CancellationToken cancellationToken = default)
+    {
+        if (!CanWrite) return new ApplyResult { Message = L.T("Ops.ReadOnly") };
+        if (_writesUnsafe || Volatile.Read(ref _pendingUncertainWrite) != 0)
+            return new ApplyResult { Message = L.T("Loc_4BFF1AF76C86") };
+        await WriteGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (_writesUnsafe || Volatile.Read(ref _pendingUncertainWrite) != 0)
+                return new ApplyResult { Message = L.T("Loc_4BFF1AF76C86") };
+            // Read while holding the same gate used by every application write.
+            var current = (await GetAdaptersAsync(cancellationToken)).SingleOrDefault(x => SameId(x.InterfaceGuid, reviewed.InterfaceGuid));
+            if (current is null || ConfigurationPreview.StateKey(current) != ConfigurationPreview.StateKey(reviewed))
+                return new ApplyResult { Message = L.T("Preview.Stale") };
+            return await ApplyCoreAsync(current, target.Clone(), false, cancellationToken, reviewed);
+        }
+        finally { WriteGate.Release(); }
+    }
+
     public async Task<(bool Succeeded, string? ErrorDetail)> SetAdapterEnabledAsync(AdapterSnapshot adapter,
         bool enabled, CancellationToken cancellationToken = default)
-        => await ToggleWithTimeoutAsync(() => Task.Run(() =>
+        => !CanWrite ? (false, L.T("Ops.ReadOnly")) : await ToggleWithTimeoutAsync(() => Task.Run(() =>
         {
             using var networkAdapter = FindNetworkAdapter(adapter);
             if (networkAdapter is null)
@@ -143,6 +166,7 @@ public sealed class NetworkService
     private async Task<ApplyResult> ApplyInternalAsync(AdapterSnapshot adapter, NetworkConfig target,
         bool exactAddressSet, CancellationToken cancellationToken)
     {
+        if (!CanWrite) return new ApplyResult { Message = L.T("Ops.ReadOnly") };
         if (_writesUnsafe || Volatile.Read(ref _pendingUncertainWrite) != 0)
             return new ApplyResult { Message = L.T("Loc_4BFF1AF76C86") };
         await WriteGate.WaitAsync(cancellationToken);
@@ -155,7 +179,7 @@ public sealed class NetworkService
     }
 
     private async Task<ApplyResult> ApplyCoreAsync(AdapterSnapshot adapter, NetworkConfig target,
-        bool exactAddressSet, CancellationToken cancellationToken)
+        bool exactAddressSet, CancellationToken cancellationToken, AdapterSnapshot? reviewed = null)
     {
         var validation = ValidationService.ValidateManualConfig(target);
         if (!validation.IsValid)
@@ -172,6 +196,8 @@ public sealed class NetworkService
             var current = await GetAdaptersAsync(cancellationToken);
             before = current.FirstOrDefault(x => SameId(x.InterfaceGuid, adapter.InterfaceGuid))
                 ?? throw new InvalidOperationException(L.T("Loc_82216E310560"));
+            if (reviewed is not null && ConfigurationPreview.StateKey(before) != ConfigurationPreview.StateKey(reviewed))
+                return new ApplyResult { Message = L.T("Preview.Stale") };
         }
         catch (Exception ex)
         {
@@ -183,6 +209,8 @@ public sealed class NetworkService
             };
         }
 
+        if (target.IpMode == IpMode.Dhcp && (target.DhcpStaticAddresses.Count > 0 || before.Config.DhcpStaticAddresses.Count > 0) && !before.AdditionalAddressStateKnown)
+            return new ApplyResult { Message = L.T("Ops.AdditionalReadFailed") };
         try
         {
             var expected = BuildExpectedConfiguration(before, target, exactAddressSet);
@@ -191,7 +219,7 @@ public sealed class NetworkService
             if (after is null)
                 throw new InvalidOperationException(L.T("Loc_1B0A00450922"));
             if (!MatchesTarget(after, expected, true))
-                throw new InvalidOperationException(L.T("Loc_B576104ABD7B"));
+                throw new InvalidOperationException(L.F("Network.VerificationMismatch", DescribeConfiguration(expected), DescribeConfiguration(after.Config)));
 
             await _saveManagedAddress(before, target, cancellationToken);
 
@@ -199,11 +227,16 @@ public sealed class NetworkService
             foreach (var address in after.Config.IPv4Addresses)
                 address.IsManaged = string.Equals(address.Address, after.Config.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase);
 
+            var warnings = validation.Warnings.ToList();
+            if (target.DnsMode == DnsMode.Static && after.EffectiveDnsServers is { } effectiveDns
+                && !target.DnsServers.SequenceEqual(effectiveDns, StringComparer.OrdinalIgnoreCase))
+                warnings.Add(L.T("Network.EffectiveDnsDiffers"));
+
             return new ApplyResult
             {
                 Succeeded = true,
-                Message = L.T("Loc_58EF0332A611"),
-                Warnings = validation.Warnings,
+                Message = L.T(after.UsesSavedIPv4Configuration ? "Network.SavedVerified" : "Loc_58EF0332A611"),
+                Warnings = warnings,
                 FinalSnapshot = after
             };
         }
@@ -238,6 +271,10 @@ public sealed class NetworkService
 
     private static IReadOnlyList<AdapterSnapshot> ReadAdapters(Dictionary<string, string?> managed)
     {
+        Dictionary<int, List<Ipv4AddressEntry>> additional = [];
+        var additionalKnown = true;
+        try { additional = WindowsAdditionalIPv4.Read(); }
+        catch (Exception ex) { additionalKnown = false; AppLogger.Error("Cannot read manual IPv4 addresses", ex); }
         var configurations = new Dictionary<string, WmiConfigurationData>(StringComparer.OrdinalIgnoreCase);
         using (var configurationSearcher = new ManagementObjectSearcher(
                    "root\\CIMV2",
@@ -276,30 +313,45 @@ public sealed class NetworkService
                         ? authoritativeDns.ToList()
                         : []
                     : configuration?.DnsServers.ToList() ?? [];
+                var configuredDns = WindowsDnsSettings.Read(guid);
                 var config = new NetworkConfig
                 {
                     IpMode = configuration?.DhcpEnabled == true ? IpMode.Dhcp : IpMode.Static,
-                    DnsMode = WindowsDnsSettings.ReadMode(guid),
-                    DnsServers = resolvedDnsServers
+                    DnsMode = configuredDns.Mode,
+                    DnsServers = WindowsDnsSettings.ResolveServers(configuredDns, resolvedDnsServers)
                 };
+                if (config.IpMode == IpMode.Dhcp && additional.TryGetValue(interfaceIndex, out var manualAddresses))
+                    config.DhcpStaticAddresses = manualAddresses;
                 if (configuration is not null)
                     config.IPv4Addresses = configuration.Addresses.Select(x => x.Clone()).ToList();
+
+                var enabled = IsAdapterEnabled(ReadInt(adapterObject, "ConfigManagerErrorCode", 0),
+                    ReadInt(adapterObject, "NetConnectionStatus", -1));
+                var saved = !enabled || configuration?.IpEnabled != true ? WindowsIPv4Settings.Read(guid) : null;
+                var usesSaved = WindowsIPv4Settings.UseSavedConfiguration(enabled, configuration?.IpEnabled == true, saved);
+                if (usesSaved)
+                {
+                    config.IpMode = saved!.IpMode;
+                    config.IPv4Addresses = saved.IPv4Addresses.Select(x => x.Clone()).ToList();
+                }
 
                 var managedAddress = managed.FirstOrDefault(x => SameId(x.Key, key)).Value;
                 config.ManagedIPv4Address = managedAddress;
                 foreach (var address in config.IPv4Addresses)
                     address.IsManaged = string.Equals(address.Address, managedAddress, StringComparison.OrdinalIgnoreCase);
 
-                var enabled = ReadBool(adapterObject, "NetEnabled", ReadInt(adapterObject, "ConfigManagerErrorCode", 0) != 22);
                 var connectionStatus = GetConnectionStatus(adapterObject, enabled);
                 rows.Add(new AdapterSnapshot
                 {
+                    AdditionalAddressStateKnown = additionalKnown,
                     Name = connectionName,
                     MacAddress = ReadString(adapterObject, "MACAddress"),
                     InterfaceGuid = key,
                     InterfaceIndex = interfaceIndex,
                     Enabled = enabled,
                     Ipv4InterfacePresent = configuration?.IpEnabled == true,
+                    UsesSavedIPv4Configuration = usesSaved,
+                    EffectiveDnsServers = resolvedDnsServers.ToList(),
                     ConnectionStatus = connectionStatus,
                     Type = Classify(ReadString(adapterObject, "Name"), ReadString(adapterObject, "Description"),
                         ReadBool(adapterObject, "PhysicalAdapter", false)),
@@ -393,6 +445,13 @@ public sealed class NetworkService
                 Execute("interface", "ipv4", "set", "address",
                     interfaceSelector, "source=dhcp");
             }
+            var currentManual = before.Config.IpMode == IpMode.Dhcp ? before.Config.DhcpStaticAddresses : [];
+            if (target.DhcpStaticAddresses.Count > 0)
+                Execute("interface", "ipv4", "set", "interface", $"interface={(before.InterfaceIndex > 0 ? before.InterfaceIndex.ToString() : before.Name)}", "dhcpstaticipcoexistence=enabled");
+            foreach (var address in currentManual.Where(a => !target.DhcpStaticAddresses.Any(b => b.Address == a.Address && b.PrefixLength == a.PrefixLength)))
+                Execute("interface", "ipv4", "delete", "address", interfaceSelector, $"address={address.Address}");
+            foreach (var address in target.DhcpStaticAddresses.Where(a => !currentManual.Any(b => b.Address == a.Address && b.PrefixLength == a.PrefixLength)))
+                Execute("interface", "ipv4", "add", "address", interfaceSelector, $"address={address.Address}", $"mask={PrefixToMask(address.PrefixLength)}", "skipassource=true");
         }
         else
         {
@@ -526,7 +585,8 @@ public sealed class NetworkService
         if (before.Config.IpMode == IpMode.Dhcp)
             return [managed.Clone()];
 
-        var oldManaged = before.Config.ManagedIPv4Address
+        var oldManaged = before.Config.IPv4Addresses.FirstOrDefault(x =>
+            string.Equals(x.Address, before.Config.ManagedIPv4Address, StringComparison.OrdinalIgnoreCase))?.Address
             ?? before.Config.IPv4Addresses.FirstOrDefault()?.Address;
         var preserved = before.Config.IPv4Addresses
             .Where(x => !string.Equals(x.Address, oldManaged, StringComparison.OrdinalIgnoreCase)
@@ -580,6 +640,9 @@ public sealed class NetworkService
     internal static bool MatchesTarget(AdapterSnapshot actual, NetworkConfig target, bool exactAddressSet)
     {
         if (actual.Config.IpMode != target.IpMode) return false;
+        if (target.IpMode == IpMode.Dhcp && !actual.AdditionalAddressStateKnown) return false;
+        if (target.IpMode == IpMode.Dhcp && !actual.Config.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}").OrderBy(x => x)
+            .SequenceEqual(target.DhcpStaticAddresses.Select(a => $"{a.Address}/{a.PrefixLength}").OrderBy(x => x))) return false;
         if (target.IpMode == IpMode.Static)
         {
             if (exactAddressSet && target.IPv4Addresses.Count == 0)
@@ -657,6 +720,16 @@ public sealed class NetworkService
             _ => "Unknown"
         };
     }
+
+    // NetEnabled can be false when a driver's link is disconnected while its
+    // administrative state remains enabled. Device code 22 / status 5 mean disabled.
+    internal static bool IsAdapterEnabled(int deviceErrorCode, int connectionStatus) =>
+        deviceErrorCode != 22 && connectionStatus != 5;
+
+    private static string DescribeConfiguration(NetworkConfig config) =>
+        $"IPv4={config.IpMode} [{string.Join(", ", config.IPv4Addresses.Select(a => $"{a.Address}/{a.PrefixLength}"))}]; " +
+        $"Gateway={config.IPv4Addresses.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.Gateway))?.Gateway ?? "—"}; " +
+        $"DNS={config.DnsMode} [{string.Join(", ", config.DnsServers)}]";
 
     private static AdapterType Classify(string name, string description, bool physical)
     {

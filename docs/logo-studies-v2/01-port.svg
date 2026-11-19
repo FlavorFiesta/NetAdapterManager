@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<title>精简网口 / NetAdapterManager</title>
+<rect x="8" y="8" width="240" height="240" rx="48" fill="#263448"/>
+<polygon points="66,70 190,70 190,158 160,158 160,186 96,186 96,158 66,158" fill="#F2F5FA"/>
+<polygon points="84,88 172,88 172,140 142,140 142,168 114,168 114,140 84,140" fill="#263448"/>
+<rect x="101" y="88" width="10" height="30" rx="3" fill="#81AED8"/>
+<rect x="123" y="88" width="10" height="30" rx="3" fill="#81AED8"/>
+<rect x="145" y="88" width="10" height="30" rx="3" fill="#81AED8"/>
+</svg>
