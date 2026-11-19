@@ -3,9 +3,9 @@
  Title="{DynamicResource Loc_EC57B32F8731}" Width="1160" Height="800" MinWidth="640" MinHeight="420" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Topmost="{Binding IsTopmost}" Icon="{StaticResource AppIcon}" Foreground="{DynamicResource TextColor}">
  <Window.InputBindings><KeyBinding Key="F5" Command="{Binding RefreshCommand}"/><KeyBinding Key="Enter" Modifiers="Control" Command="{Binding ApplyCommand}"/><KeyBinding Key="R" Modifiers="Control" Command="{Binding RestoreCurrentCommand}"/></Window.InputBindings>
  <ScrollViewer x:Name="MainViewport" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
- <Grid MinWidth="960" MinHeight="580" Width="{Binding ViewportWidth, ElementName=MainViewport}" Height="{Binding ViewportHeight, ElementName=MainViewport}" Background="{DynamicResource WindowBackground}">
+ <Grid x:Name="MainLayout" MinWidth="960" MinHeight="580" Width="{Binding ViewportWidth, ElementName=MainViewport}" Height="{Binding ViewportHeight, ElementName=MainViewport}" Background="{DynamicResource WindowBackground}">
  <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
- <Grid Margin="16,14,16,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="440"/><ColumnDefinition Width="*" MinWidth="440"/></Grid.ColumnDefinitions>
+ <Grid Margin="16,14,16,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="440"/><ColumnDefinition x:Name="PresetLibraryColumn" Width="*" MinWidth="440"/></Grid.ColumnDefinitions>
  <Grid Margin="0,0,14,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
  <Border Style="{StaticResource CardBorderStyle}" Padding="12" Margin="0,0,0,10">
  <StackPanel>
@@ -35,10 +35,6 @@
  <TextBlock Grid.Row="1" Text="{DynamicResource Ops.CidrLabel}" VerticalAlignment="Center" ToolTip="{DynamicResource Ops.CidrHint}"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PrefixInput, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Ops.CidrHint}" AutomationProperties.Name="{DynamicResource Ops.CidrLabel}"/>
  <TextBlock Grid.Row="2" Text="{DynamicResource Loc_51AAE58F282E}" VerticalAlignment="Center"/><TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Gateway, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{DynamicResource Loc_51AAE58F282E}"/>
  </Grid>
- <Expander x:Name="AdditionalAddressesExpander" Header="{DynamicResource Ops.Additional}" Margin="0,4,0,10" Visibility="{Binding IsDhcp, Converter={StaticResource BoolVisibility}}">
- <StackPanel><TextBlock Text="{DynamicResource Ops.AdditionalHint}" Foreground="{DynamicResource MutedText}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,5"/>
- <TextBox x:Name="AdditionalAddressesBox" Text="{Binding AdditionalAddressesText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="74" VerticalScrollBarVisibility="Auto" ToolTip="{DynamicResource Ops.AdditionalFormat}" AutomationProperties.Name="{DynamicResource Ops.Additional}"/>
- </StackPanel></Expander>
  <Border BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,1,0,0" Margin="0,8,0,12"/>
  <StackPanel Orientation="Horizontal">
  <TextBlock Text="{DynamicResource Loc_F253293B1C7A}" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center"/>
@@ -65,15 +61,21 @@
  </TextBlock></StackPanel>
  <TextBlock x:Name="DraftStatus" Text="{Binding DraftStatusText}" Foreground="{DynamicResource MutedText}" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,12"/>
  <Border Background="{DynamicResource PanelHeaderBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" Padding="10">
- <StackPanel><WrapPanel><Button Content="{DynamicResource Draft.Restore}" Command="{Binding RestoreCurrentCommand}" Style="{StaticResource QuietButton}"/>
- <Button Content="{DynamicResource Loc_670F0A1D31C0}" Command="{Binding ApplyCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,22,6"/>
- <Button Content="{DynamicResource Loc_D2AA9AC606D7}" Command="{Binding SavePresetCommand}" Style="{StaticResource QuietButton}"/></WrapPanel>
+ <StackPanel>
+ <Grid>
+ <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+ <WrapPanel>
+ <Button Content="{DynamicResource Draft.Restore}" Command="{Binding RestoreCurrentCommand}" Style="{StaticResource QuietButton}"/>
+ <Button Content="{DynamicResource Loc_D2AA9AC606D7}" Command="{Binding SavePresetCommand}" Style="{StaticResource QuietButton}"/>
+ </WrapPanel>
+ <Button Grid.Column="1" Content="{DynamicResource Loc_670F0A1D31C0}" Command="{Binding ApplyCommand}" Style="{StaticResource PrimaryButton}" VerticalAlignment="Bottom" Margin="8,0,0,6"/>
+ </Grid>
  <TextBlock Text="{DynamicResource Ops.ApplySaveHint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedText}" FontSize="11"/></StackPanel>
  </Border></StackPanel></Border></ScrollViewer>
  </Grid>
- <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="14"><DockPanel>
+ <Border x:Name="PresetLibraryPanel" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="14"><DockPanel>
  <StackPanel DockPanel.Dock="Top">
- <DockPanel><WrapPanel DockPanel.Dock="Right" HorizontalAlignment="Right"><Button x:Name="RestorePresetBackupButton" Content="{DynamicResource Loc_1AE486278078}" Command="{Binding RestorePresetBackupCommand}" Style="{StaticResource QuietButton}" Padding="8,5"/><Button x:Name="PresetOverviewButton" Content="{DynamicResource Loc_FA2FF3C379A7}" Command="{Binding ViewAllPresetsCommand}" Style="{StaticResource QuietButton}" Padding="8,5"/></WrapPanel><TextBlock Text="{DynamicResource Ops.Library}" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center"/></DockPanel>
+ <DockPanel><WrapPanel DockPanel.Dock="Right" HorizontalAlignment="Right"><Button x:Name="RestorePresetBackupButton" Content="{DynamicResource Loc_1AE486278078}" Command="{Binding RestorePresetBackupCommand}" Style="{StaticResource QuietButton}" Padding="8,5"/><Button x:Name="PresetOverviewButton" Content="{DynamicResource Loc_FA2FF3C379A7}" Command="{Binding ViewAllPresetsCommand}" Style="{StaticResource QuietButton}" Padding="8,5"/><Button x:Name="CollapsePresetLibraryButton" Content="&#xE76B;" FontFamily="Segoe MDL2 Assets" Click="TogglePresetLibrary_Click" ToolTip="{DynamicResource Library.Collapse}" AutomationProperties.Name="{DynamicResource Library.Collapse}" Style="{StaticResource QuietButton}" MinWidth="30" Padding="6,5" Margin="0,0,0,6"/></WrapPanel><TextBlock Text="{DynamicResource Ops.Library}" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center"/></DockPanel>
  <TextBlock x:Name="PresetCountText" Text="{Binding PresetCountText}" FontSize="11" Foreground="{DynamicResource MutedText}" Margin="0,0,0,10"/>
  <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="125"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><ComboBox ItemsSource="{Binding PresetGroups}" ItemTemplate="{StaticResource GroupItemTemplate}" SelectedItem="{Binding PresetGroupFilter}" MinHeight="34" Padding="8,5"/>
  <Grid Grid.Column="1" Margin="8,0,0,0"><TextBox x:Name="TemplateSearch" Text="{Binding PresetSearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0" MinHeight="34" AutomationProperties.Name="{DynamicResource Ops.Search}"/><TextBlock TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{DynamicResource Ops.Search}" Foreground="{DynamicResource MutedText}" Margin="10,0" VerticalAlignment="Center" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding PresetSearchText}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Grid></Grid>
@@ -82,17 +84,51 @@
  <Border x:Name="CrossAdapterWarning" Background="{DynamicResource WarningBackground}" BorderBrush="{DynamicResource WarningBorder}" BorderThickness="1" Padding="9" Margin="0,0,0,10" Visibility="{Binding IsCrossAdapter, Converter={StaticResource BoolVisibility}}"><TextBlock Text="{Binding CrossAdapterText}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}"/></Border>
  </StackPanel>
  <ListBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" ItemTemplate="{StaticResource TemplateCard}" ItemContainerStyle="{StaticResource PresetListItemStyle}" MouseDoubleClick="PresetList_MouseDoubleClick"/>
- </DockPanel></Border></Grid>
+ </DockPanel></Border>
+ <Border x:Name="PresetLibraryRail" Grid.Column="1" Style="{StaticResource CardBorderStyle}" Visibility="Collapsed">
+ <Button x:Name="ExpandPresetLibraryButton" Click="TogglePresetLibrary_Click"
+         ToolTip="{DynamicResource Library.Expand}" AutomationProperties.Name="{DynamicResource Library.Expand}"
+         Padding="6,10" Margin="0" FocusVisualStyle="{x:Null}">
+ <Button.Template>
+ <ControlTemplate TargetType="Button">
+ <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+ <StackPanel VerticalAlignment="Top">
+ <Border x:Name="ExpandArrowBackground" HorizontalAlignment="Center" CornerRadius="2" Padding="4,2" Margin="0,0,0,10">
+ <TextBlock x:Name="ExpandArrow" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"/>
+ </Border>
+ <TextBlock Text="{DynamicResource Library.VerticalTitle}" TextAlignment="Center" TextWrapping="NoWrap" FontWeight="SemiBold"/>
+ </StackPanel>
+ </Border>
+ <ControlTemplate.Triggers>
+ <Trigger Property="IsMouseOver" Value="True">
+ <Setter TargetName="ExpandArrowBackground" Property="Background" Value="{DynamicResource QuietBackground}"/>
+ </Trigger>
+ <Trigger Property="IsKeyboardFocused" Value="True">
+ <Setter TargetName="ExpandArrowBackground" Property="Background" Value="{DynamicResource PrimaryColor}"/>
+ <Setter TargetName="ExpandArrow" Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+ </Trigger>
+ </ControlTemplate.Triggers>
+ </ControlTemplate>
+ </Button.Template>
+ </Button></Border></Grid>
  <Border Grid.Row="1" Background="{DynamicResource HeaderBackground}" BorderBrush="{DynamicResource HeaderBorder}" BorderThickness="0,1,0,0" Padding="14,6">
- <StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+ <StackPanel><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <WrapPanel VerticalAlignment="Center"><TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" MaxWidth="260" FontSize="11" Margin="0,0,12,0" ToolTip="{Binding StatusMessage}"/><TextBlock Text="{Binding VersionText}" FontSize="10" Foreground="{DynamicResource MutedText}" Margin="0,0,10,0"/><TextBlock Text="{Binding LastRefreshText}" FontSize="10" Foreground="{DynamicResource MutedText}"/></WrapPanel>
- <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+ <WrapPanel x:Name="FooterActions" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
  <TextBlock Text="{Binding PrivilegeText}" FontSize="11" Foreground="{DynamicResource MutedText}" ToolTip="{DynamicResource Ops.PrivilegeHint}" VerticalAlignment="Center" Margin="0,0,10,6"/>
  <Button Command="{Binding ToggleTopmostCommand}" Content="{Binding TopmostIconText}" FontFamily="Segoe MDL2 Assets" ToolTip="{Binding TopmostToggleText}" Style="{StaticResource QuietButton}" Padding="8,5"/>
+ <WrapPanel x:Name="ExpandedFooterActions">
  <Button Content="{DynamicResource Settings.Title}" Click="Settings_Click" Style="{StaticResource QuietButton}" Padding="8,5"/>
  <Button Content="{DynamicResource History.Title}" Command="{Binding DiagnosticsCommand}" Style="{StaticResource QuietButton}" Padding="8,5"/>
  <Button Content="{DynamicResource Ops.NetworkConnections}" Command="{Binding OpenNetworkConnectionsCommand}" ToolTip="{DynamicResource Loc_5E38EF80FE5A}" Style="{StaticResource QuietButton}" Padding="8,5"/>
- <Button Content="{DynamicResource Loc_0D01866EE42E}" Command="{Binding RefreshCommand}" Style="{StaticResource QuietButton}" Padding="8,5" Margin="0,0,0,6"/>
+ </WrapPanel>
+ <Button x:Name="MoreActionsButton" Content="{DynamicResource Library.More}" Click="MoreActions_Click" Visibility="Collapsed" Style="{StaticResource QuietButton}" Padding="8,5">
+ <Button.ContextMenu><ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+ <MenuItem x:Name="CompactSettingsItem" Header="{DynamicResource Settings.Title}" Click="Settings_Click"/>
+ <MenuItem x:Name="CompactDiagnosticsItem" Header="{DynamicResource History.Title}" Command="{Binding DiagnosticsCommand}"/>
+ <MenuItem x:Name="CompactConnectionsItem" Header="{DynamicResource Ops.NetworkConnections}" Command="{Binding OpenNetworkConnectionsCommand}"/>
+ </ContextMenu></Button.ContextMenu></Button>
+ <Button x:Name="RefreshAdaptersButton" Content="{DynamicResource Loc_0D01866EE42E}" Command="{Binding RefreshCommand}" Style="{StaticResource QuietButton}" Padding="8,5" Margin="0,0,0,6"/>
  </WrapPanel></Grid>
  <TextBlock Text="{Binding DetailMessage}" Foreground="{DynamicResource DangerColor}" Style="{StaticResource OptionalStatusText}" FontSize="11"/>
  <TextBlock Text="{Binding WarningMessage}" Foreground="{DynamicResource WarningText}" Style="{StaticResource OptionalStatusText}" FontSize="11"/>

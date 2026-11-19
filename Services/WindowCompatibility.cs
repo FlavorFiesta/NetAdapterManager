@@ -40,6 +40,17 @@ internal static class WindowCompatibility
             window.Dispatcher.BeginInvoke(() => Fit(window, handle, minimumWidth, minimumHeight), DispatcherPriority.Loaded);
         };
     }
+    internal static void ResizeToFitWorkArea(Window window, double width)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        // Select the monitor before growing the window across its edge.
+        var monitor = MonitorFromWindow(handle, 2);
+        window.Width = width;
+        if (GetMonitorInfo(monitor, ref info) && GetWindowRect(handle, out var rect))
+            FitBounds(handle, rect, info.Work);
+    }
+
     private static void Fit(Window window, IntPtr handle, double minimumWidth, double minimumHeight)
     {
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
@@ -51,10 +62,17 @@ internal static class WindowCompatibility
         window.MinWidth = Math.Min(minimumWidth, maxWidth);
         window.MinHeight = Math.Min(minimumHeight, maxHeight);
         window.MaxWidth = maxWidth; window.MaxHeight = maxHeight;
+        FitBounds(handle, rect, area);
+    }
+
+    private static void FitBounds(IntPtr handle, Rect rect, Rect area)
+    {
         var width = Math.Min(rect.Right - rect.Left, area.Right - area.Left);
         var height = Math.Min(rect.Bottom - rect.Top, area.Bottom - area.Top);
-        SetWindowPos(handle, IntPtr.Zero, Math.Clamp(rect.Left, area.Left, area.Right - width),
-            Math.Clamp(rect.Top, area.Top, area.Bottom - height), width, height, 0x0014); // no Z-order/focus changes
+        var left = Math.Clamp(rect.Left, area.Left, area.Right - width);
+        var top = Math.Clamp(rect.Top, area.Top, area.Bottom - height);
+        if (left != rect.Left || top != rect.Top || width != rect.Right - rect.Left || height != rect.Bottom - rect.Top)
+            SetWindowPos(handle, IntPtr.Zero, left, top, width, height, 0x0014); // no Z-order/focus changes
     }
     [StructLayout(LayoutKind.Sequential)] private struct Rect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct MonitorInfo { public int Size; public Rect Monitor, Work; public uint Flags; }

@@ -1,4 +1,74 @@
 {
+  "Settings.Advanced": {
+    "zh-CN": "高级",
+    "zh-TW": "進階",
+    "en": "Advanced"
+  },
+  "Settings.DhcpAdditionalTitle": {
+    "zh-CN": "DHCP 附加静态地址",
+    "zh-TW": "DHCP 附加靜態位址",
+    "en": "Additional static addresses with DHCP"
+  },
+  "Settings.DhcpAdditionalHint": {
+    "zh-CN": "主窗口选择 DHCP 后，可为当前网卡添加固定地址。每行一个 IPv4/前缀，例如 192.168.10.20/24。编辑后返回主窗口，点击“应用配置”才会写入网卡。",
+    "zh-TW": "在主視窗選擇 DHCP 後，可為目前的網路介面卡新增固定位址。每行一組 IPv4/前綴，例如 192.168.10.20/24。編輯後請回到主視窗，按一下「套用設定」才會寫入介面卡。",
+    "en": "Select DHCP in the main window to add fixed addresses for the selected adapter. Enter one IPv4/prefix per line, for example 192.168.10.20/24. Return to the main window and select Apply configuration to update the adapter."
+  },
+  "Tray.CloseBehavior": {
+    "zh-CN": "关闭窗口时",
+    "zh-TW": "關閉視窗時",
+    "en": "When closing the window"
+  },
+  "Tray.ClosePrompt": {
+    "zh-CN": "要退出程序，还是收起到系统托盘？收起后可双击托盘图标恢复窗口。",
+    "zh-TW": "要結束程式，還是縮到系統匣？縮小後可按兩下系統匣圖示還原視窗。",
+    "en": "Exit the app or minimize it to the system tray? Double-click its tray icon to restore the window."
+  },
+  "Tray.Ask": {
+    "zh-CN": "每次询问",
+    "zh-TW": "每次詢問",
+    "en": "Ask every time"
+  },
+  "Tray.Minimize": {
+    "zh-CN": "最小化到托盘",
+    "zh-TW": "最小化到系統匣",
+    "en": "Minimize to tray"
+  },
+  "Tray.Exit": {
+    "zh-CN": "退出程序",
+    "zh-TW": "結束程式",
+    "en": "Exit app"
+  },
+  "Tray.Remember": {
+    "zh-CN": "记住选择，不再提示",
+    "zh-TW": "記住選擇，不再提示",
+    "en": "Remember my choice"
+  },
+  "Tray.Restore": {
+    "zh-CN": "打开主窗口",
+    "zh-TW": "開啟主視窗",
+    "en": "Open main window"
+  },
+  "Library.VerticalTitle": {
+    "zh-CN": "预\n设\n模\n板\n库",
+    "zh-TW": "預\n設\n範\n本\n庫",
+    "en": "T\ne\nm\np\nl\na\nt\ne\ns"
+  },
+  "Library.More": {
+    "zh-CN": "更多…",
+    "zh-TW": "更多…",
+    "en": "More…"
+  },
+  "Library.Collapse": {
+    "zh-CN": "收起预设模板库",
+    "zh-TW": "收起預設範本庫",
+    "en": "Collapse preset library"
+  },
+  "Library.Expand": {
+    "zh-CN": "展开预设模板库",
+    "zh-TW": "展開預設範本庫",
+    "en": "Expand preset library"
+  },
   "Loc_0194448410D5": {
     "zh-CN": "已删除分组“{0}”，关联预设已移到“未分组”。",
     "zh-TW": "已刪除分組“{0}”，關聯預設已移到“未分組”。",
@@ -455,9 +525,9 @@
     "en": "Clear filters"
   },
   "Loc_65E25A5E51DE": {
-    "zh-CN": "网络适配器管理器已在运行，请使用已打开的窗口。",
-    "zh-TW": "網路介面卡管理器已在運行，請使用已打開的視窗。",
-    "en": "NetAdapterManager is already running. Use the existing window."
+    "zh-CN": "网络适配器管理器已在运行。如果窗口已收起，请从系统托盘打开。",
+    "zh-TW": "網路介面卡管理器已在執行。如果視窗已縮小，請從系統匣開啟。",
+    "en": "NetAdapterManager is already running. If its window is hidden, open it from the system tray."
   },
   "Loc_66F9DEFBC438": {
     "zh-CN": "{0}失败：权限不足（WMI 91）。",

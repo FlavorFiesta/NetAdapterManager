@@ -21,6 +21,15 @@
                 <ComboBoxItem Tag="dark" Content="{DynamicResource Settings.Dark}"/>
             </ComboBox>
         </StackPanel>
+        <StackPanel>
+            <TextBlock Text="{DynamicResource Tray.CloseBehavior}" Style="{StaticResource SectionTitleStyle}"/>
+            <ComboBox x:Name="CloseBehaviorBox" Margin="0,8,0,0" SelectionChanged="Preference_Changed"
+                      AutomationProperties.Name="{DynamicResource Tray.CloseBehavior}">
+                <ComboBoxItem Tag="Ask" Content="{DynamicResource Tray.Ask}"/>
+                <ComboBoxItem Tag="MinimizeToTray" Content="{DynamicResource Tray.Minimize}"/>
+                <ComboBoxItem Tag="Exit" Content="{DynamicResource Tray.Exit}"/>
+            </ComboBox>
+        </StackPanel>
 </StackPanel></ScrollViewer></TabItem>
 <TabItem Header="{DynamicResource Display.Title}"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="14">
 <TextBlock Text="{DynamicResource Display.Title}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
@@ -54,6 +63,33 @@
             </WrapPanel>
         </Grid>
 </StackPanel></ScrollViewer></TabItem>
+<TabItem x:Name="AdvancedTab" Header="{DynamicResource Settings.Advanced}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="14">
+            <TextBlock Text="{DynamicResource Settings.DhcpAdditionalTitle}" Style="{StaticResource SectionTitleStyle}"/>
+            <DockPanel Margin="0,12,0,6">
+                <TextBlock DockPanel.Dock="Left" Text="{DynamicResource Ops.Adapter}" Margin="0,0,12,0"/>
+                <TextBlock Text="{Binding SelectedAdapter.Name, TargetNullValue=—}" FontWeight="SemiBold"/>
+            </DockPanel>
+            <TextBlock Text="{DynamicResource Settings.DhcpAdditionalHint}" Foreground="{DynamicResource MutedText}" Margin="0,0,0,8"/>
+            <StackPanel IsEnabled="{Binding CanConfigure}">
+                <TextBox x:Name="AdditionalAddressesBox" Text="{Binding AdditionalAddressesText, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True" MinHeight="90" VerticalScrollBarVisibility="Auto"
+                         ToolTip="{DynamicResource Ops.AdditionalFormat}" AutomationProperties.Name="{DynamicResource Settings.DhcpAdditionalTitle}">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDhcp}" Value="False">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</TabItem>
 </TabControl>
 <TextBlock x:Name="ErrorText" Grid.Row="1" TextWrapping="Wrap" Foreground="{DynamicResource DangerColor}" Margin="0,8"/>
 <Button Grid.Row="2" Content="{DynamicResource Settings.Close}" Click="Close_Click" IsCancel="True" HorizontalAlignment="Right"/>

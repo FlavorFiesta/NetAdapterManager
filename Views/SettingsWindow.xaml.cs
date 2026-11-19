@@ -36,17 +36,28 @@ public partial class SettingsWindow : Window
         var prefs = _preferences.Current;
         LanguageBox.SelectedItem = LanguageBox.Items.Cast<ComboBoxItem>().First(x => (string)x.Tag == prefs.Language);
         ThemeBox.SelectedItem = ThemeBox.Items.Cast<ComboBoxItem>().First(x => (string)x.Tag == prefs.Theme);
+        CloseBehaviorBox.SelectedItem = CloseBehaviorBox.Items.Cast<ComboBoxItem>()
+            .First(item => (string)item.Tag == prefs.CloseBehavior.ToString());
     }
     private async void Preference_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (_loading || _saving || LanguageBox.SelectedItem is not ComboBoxItem language
-            || ThemeBox.SelectedItem is not ComboBoxItem theme) return;
+            || ThemeBox.SelectedItem is not ComboBoxItem theme
+            || CloseBehaviorBox.SelectedItem is not ComboBoxItem closeBehavior) return;
         _saving = true;
         IsEnabled = false;
         try
         {
-            await _preferences.SaveAsync(_preferences.Current with { Language = (string)language.Tag, Theme = (string)theme.Tag });
-            _preferences.Apply();
+            var previous = _preferences.Current;
+            var next = previous with
+            {
+                Language = (string)language.Tag,
+                Theme = (string)theme.Tag,
+                CloseBehavior = Enum.Parse<CloseBehavior>((string)closeBehavior.Tag)
+            };
+            await _preferences.SaveAsync(next);
+            if (next.Language != previous.Language || next.Theme != previous.Theme)
+                _preferences.Apply();
             ErrorText.Text = string.Empty;
         }
         catch (Exception ex)

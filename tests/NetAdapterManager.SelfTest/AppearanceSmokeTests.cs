@@ -138,6 +138,54 @@ internal static class AppearanceSmokeTests
                     Require(Contrast((SolidColorBrush)app.Resources["TextColor"], (SolidColorBrush)app.Resources["CardBackground"]) >= 4.5, "Insufficient body text contrast.");
                     Require(Contrast((SolidColorBrush)app.Resources["MutedText"], (SolidColorBrush)app.Resources["CardBackground"]) >= 4.5, "Insufficient secondary text contrast.");
                     Save(main, Path.Combine(output, $"main-{language}-{theme}.png"));
+                    var library = (Border)main.FindName("PresetLibraryPanel");
+                    var rail = (Border)main.FindName("PresetLibraryRail");
+                    var collapseLibrary = (Button)main.FindName("CollapsePresetLibraryButton");
+                    var expandLibrary = (Button)main.FindName("ExpandPresetLibraryButton");
+                    var configurationWidth = ((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth;
+                    var expandedWindowWidth = main.ActualWidth;
+                    var savedSearch = vm.PresetSearchText;
+                    vm.PresetSearchText = "Office"; vm.SelectedPreset = preset;
+                    collapseLibrary.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                    Require(library.Visibility == Visibility.Collapsed && rail.IsVisible && expandLibrary.IsKeyboardFocused,
+                        "Collapsed library must leave an accessible, focused expand control.");
+                    Require(Math.Abs(((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth - configurationWidth) < 2
+                        && main.ActualWidth < expandedWindowWidth - 300,
+                        "Collapsing must narrow the window while preserving the configuration editor width.");
+                    Save(main, Path.Combine(output, $"main-collapsed-focused-{language}-{theme}.png"));
+                    var more = (Button)main.FindName("MoreActionsButton");
+                    var refresh = (Button)main.FindName("RefreshAdaptersButton");
+                    Require(more.IsVisible && refresh.IsVisible && !((WrapPanel)main.FindName("ExpandedFooterActions")).IsVisible,
+                        "Compact footer must retain refresh and move secondary actions into More.");
+                    more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                    Require(more.ContextMenu.IsOpen && more.ContextMenu.Items.Count == 3
+                        && more.ContextMenu.DataContext == vm
+                        && ((System.Windows.Controls.MenuItem)more.ContextMenu.Items[1]).Command is not null
+                        && ((System.Windows.Controls.MenuItem)more.ContextMenu.Items[2]).Command is not null,
+                        "Compact menu must open with working diagnostic and connection commands.");
+                    more.ContextMenu.IsOpen = false;
+                    var footer = (WrapPanel)main.FindName("FooterActions");
+                    var footerBounds = footer.TransformToAncestor(main).TransformBounds(new Rect(footer.RenderSize));
+                    Require(footerBounds.Right <= main.ActualWidth && footerBounds.Bottom <= main.ActualHeight,
+                        "Compact footer actions must stay inside the window.");
+                    Require(Equals(collapseLibrary.ToolTip, Localizer.T("Library.Collapse"))
+                        && Equals(expandLibrary.ToolTip, Localizer.T("Library.Expand")), "Library controls must translate.");
+                    Save(main, Path.Combine(output, $"main-collapsed-{language}-{theme}.png"));
+                    main.Width = main.MinWidth; Flush(main);
+                    Require(((ScrollViewer)main.Content).ScrollableWidth < 2 && expandLibrary.IsVisible,
+                        "Collapsed library must remain reachable without horizontal scrolling at minimum width.");
+                    Save(main, Path.Combine(output, $"main-collapsed-minimum-{language}-{theme}.png"));
+                    expandLibrary.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                    Require(library.IsVisible && rail.Visibility == Visibility.Collapsed,
+                        "Expanding at minimum width must restore the library.");
+                    Require(Math.Abs(main.ActualWidth - expandedWindowWidth) < 2 && !more.IsVisible,
+                        "Expanding must restore window width and full footer actions.");
+                    main.Width = 1000; Flush(main);
+                    Require(Math.Abs(((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth - configurationWidth) < 1,
+                        "Expanding the library must restore the original column proportions.");
+                    Require(vm.IPv4Address == "192.0.2.99" && vm.HasDraft && vm.SelectedPreset == preset && vm.PresetSearchText == "Office",
+                        "Library toggles must preserve draft, search and selected preset.");
+                    vm.PresetSearchText = savedSearch;
                     var dropdownNic = new AdapterViewModel(new AdapterSnapshot { Name="WLAN (demo)", MacAddress="02:00:00:00:00:23", Enabled=true, ConnectionStatus="Up",
                         Config=new NetworkConfig { IPv4Addresses=[new() {Address="198.51.100.8",PrefixLength=23}] } });
                     vm.Adapters.Add(dropdownNic);
@@ -169,13 +217,23 @@ internal static class AppearanceSmokeTests
                     Save(binding, Path.Combine(output, $"binding-{language}-{theme}.png"));
                     Save(diagnostics, Path.Combine(output, $"diagnostics-{language}-{theme}.png"));
                 }
-                // Automatic fields collapse; advanced addresses and mismatched templates stay discoverable.
+                // Automatic fields collapse, and the advanced editor lives in settings.
                 vm.IsDhcp = true; vm.IsDnsAutomatic = true; Flush(main);
                 Require(((Grid)main.FindName("StaticIpFields")).Visibility == Visibility.Collapsed && ((Grid)main.FindName("StaticDnsFields")).Visibility == Visibility.Collapsed, "Automatic modes must collapse static fields.");
                 Save(main, Path.Combine(output, "dhcp-compact.png"));
-                ((Expander)main.FindName("AdditionalAddressesExpander")).IsExpanded = true;
-                vm.AdditionalAddressesText = "192.0.2.40/24\n192.0.2.41/24"; Flush(main);
-                Save(main, Path.Combine(output, "dhcp-advanced.png"));
+                Require(main.FindName("AdditionalAddressesExpander") is null, "The main window still shows the advanced address editor.");
+                var advancedTab = (TabItem)settings.FindName("AdvancedTab");
+                advancedTab.IsSelected = true; Flush(settings);
+                var additionalBox = (TextBox)settings.FindName("AdditionalAddressesBox");
+                Require(additionalBox.IsVisible && additionalBox.IsEnabled == vm.CanConfigure,
+                    "DHCP settings must show the editor and retain the main window's write permissions.");
+                var addressDraft = "192.0.2.40/24\n192.0.2.41/24";
+                additionalBox.Text = addressDraft; Flush(settings);
+                Require(vm.AdditionalAddressesText == addressDraft, "The settings editor did not update the current adapter draft.");
+                Save(settings, Path.Combine(output, "dhcp-advanced.png"));
+                vm.IsStatic = true; Flush(settings);
+                Require(!additionalBox.IsEnabled, "The advanced address editor must be disabled in static IPv4 mode.");
+                vm.IsDhcp = true;
                 vm.SelectedPreset = null;
                 preset.AdapterName = "Other adapter"; preset.AdapterInterfaceGuid = "other-guid"; vm.SelectedPreset = preset; Flush(main);
                 Require(((Border)main.FindName("CrossAdapterWarning")).Visibility == Visibility.Visible, "Cross-adapter warning missing.");
@@ -217,8 +275,12 @@ internal static class AppearanceSmokeTests
                 var themeBox = (ComboBox)interactiveSettings.FindName("ThemeBox");
                 themeBox.SelectedItem = themeBox.Items.Cast<ComboBoxItem>().Single(x => (string)x.Tag == "dark");
                 WaitSaved(interactiveSettings);
+                var closeBehaviorBox = (ComboBox)interactiveSettings.FindName("CloseBehaviorBox");
+                closeBehaviorBox.SelectedItem = closeBehaviorBox.Items.Cast<ComboBoxItem>().Single(x => (string)x.Tag == "Exit");
+                WaitSaved(interactiveSettings);
                 var reloaded = new PreferencesService(preferencePath); reloaded.Load();
-                Require(reloaded.Current.Language == "en" && reloaded.Current.Theme == "dark", "Settings controls did not persist the choice.");
+                Require(reloaded.Current.Language == "en" && reloaded.Current.Theme == "dark"
+                    && reloaded.Current.CloseBehavior == CloseBehavior.Exit, "Settings controls did not persist the choice.");
                 Descendants(interactiveSettings).OfType<TabControl>().First().SelectedIndex = 1; Flush(interactiveSettings);
                 ((CheckBox)interactiveSettings.FindName("FollowDpiBox")).IsChecked = false;
                 ((Slider)interactiveSettings.FindName("UiScaleSlider")).Value = 125;
@@ -258,6 +320,28 @@ internal static class AppearanceSmokeTests
                     Save(main, Path.Combine(output, $"layout-scale-{scale:F2}.png"));
                 }
                 ((FrameworkElement)main.Content).LayoutTransform = Transform.Identity;
+                var workArea = SystemParameters.WorkArea;
+                main.Left = workArea.Left + 20;
+                main.Top = workArea.Top + 20;
+                main.Width = Math.Min(1000, workArea.Width - 40);
+                Flush(main);
+                var widthBeforeEdgeTest = main.ActualWidth;
+                ((Button)main.FindName("CollapsePresetLibraryButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                main.Left = workArea.Right - main.ActualWidth - 8; Flush(main);
+                ((Button)main.FindName("ExpandPresetLibraryButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                Require(main.Left + main.ActualWidth <= workArea.Right + 2
+                    && Math.Abs(main.ActualWidth - widthBeforeEdgeTest) < 2,
+                    "Expanding near the right screen edge must fit the window without reducing its restored width.");
+                main.Left = workArea.Left + 20;
+                main.WindowState = WindowState.Maximized; Flush(main);
+                var maximizedEditorWidth = ((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth;
+                ((Button)main.FindName("CollapsePresetLibraryButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                Require(main.WindowState == WindowState.Normal
+                    && Math.Abs(((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth - maximizedEditorWidth) < 2,
+                    $"Collapsing a maximized window must preserve the editor width in a compact window: {maximizedEditorWidth} -> {((ScrollViewer)main.FindName("ConfigurationScroll")).ActualWidth}.");
+                ((Button)main.FindName("ExpandPresetLibraryButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Flush(main);
+                Require(main.WindowState == WindowState.Maximized, "Expanding must restore the previous maximized state.");
+                main.WindowState = WindowState.Normal;
                 main.Width = 640; main.Height = 420; Flush(main);
                 Require(main.InputBindings.Count >= 3, "Keyboard shortcuts missing.");
                 Save(main, Path.Combine(output, "minimum-en.png"));
@@ -265,7 +349,8 @@ internal static class AppearanceSmokeTests
                 Require(ThemeService.EffectiveTheme == "high-contrast" && ((SolidColorBrush)app.Resources["TextColor"]).Color == SystemColors.WindowTextColor, "High contrast palette not applied.");
                 Save(main, Path.Combine(output, "high-contrast-palette-en.png"));
                 ThemeService.Apply("dark"); Require(ThemeService.EffectiveTheme == "dark", "Theme preference not restored.");
-                main.Close(); app.Shutdown();
+                VerifyCloseToTray(app, vm, output);
+                app.Shutdown();
                 Console.WriteLine("Appearance smoke: 6 language/theme combinations; screenshots including diagnostics privacy, simulated update UI, preview/import/binding, saved state, simulated 125/150/200% layout scaling, minimum size and injected high-contrast palette. Real DPI/monitor transitions and English Windows not exercised. No real HTTP or network writes.");
             }
             catch (Exception ex) { error = ex; }
@@ -275,6 +360,62 @@ internal static class AppearanceSmokeTests
         Console.Error.WriteLine(error); return 1;
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+    private static void VerifyCloseToTray(Application app, MainViewModel vm, string output)
+    {
+        var path = Path.Combine(output, $"tray-settings-{Guid.NewGuid():N}.json");
+        var preferences = new PreferencesService(path);
+        var window = new MainWindow(vm, initializeOnLoad: false, preferences);
+        window.Show(); Flush(window);
+        Localizer.SetLanguage("zh-CN");
+        window.Close();
+        window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+        {
+            if (app.Windows.OfType<CloseChoiceWindow>().SingleOrDefault() is not { } dialog) return;
+            ((CheckBox)dialog.FindName("RememberChoiceBox")).IsChecked = true;
+            ((Button)dialog.FindName("MinimizeToTrayButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }));
+        WaitFor(() => !window.IsVisible, "Closing with the tray choice did not hide the window.");
+        var reloaded = new PreferencesService(path); reloaded.Load();
+        Require(reloaded.Current.CloseBehavior == CloseBehavior.MinimizeToTray, "Remembered tray choice did not persist.");
+        File.Delete(path);
+
+        var icon = (System.Windows.Forms.NotifyIcon?)typeof(MainWindow)
+            .GetField("_trayIcon", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.GetValue(window);
+        if (icon is not { Visible: true, ContextMenuStrip: { } menu })
+            throw new InvalidOperationException("Hiding the window must show the notification icon.");
+        menu.Items[0].PerformClick();
+        Require(window.IsVisible && !icon.Visible, "The tray menu did not restore the main window.");
+        window.Close();
+        WaitFor(() => !window.IsVisible && icon.Visible, "The remembered choice did not hide the window again.");
+
+        var operationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var operation = vm.RunBusyAsync(() => operationRelease.Task);
+        var closed = false;
+        window.Closed += (_, _) => closed = true;
+        menu.Items[1].PerformClick();
+        WaitFor(() => window.IsVisible && !window.IsEnabled, "Tray exit must wait for a pending operation.");
+        operationRelease.SetResult();
+        WaitFor(() => closed && operation.IsCompleted, "Tray exit did not close after the operation finished.");
+        Require(!icon.Visible, "Exiting from the tray left its icon visible.");
+
+        void WaitFor(Func<bool> condition, string message)
+        {
+            var frame = new DispatcherFrame();
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
+            timer.Tick += (_, _) =>
+            {
+                if (condition()) frame.Continue = false;
+                else if (DateTime.UtcNow >= deadline)
+                {
+                    app.Windows.OfType<CloseChoiceWindow>().SingleOrDefault()?.Close();
+                    frame.Continue = false;
+                }
+            };
+            timer.Start(); Dispatcher.PushFrame(frame); timer.Stop();
+            Require(condition(), message);
+        }
+    }
     private static void VerifyPresetButtons(Window editor)
     {
         foreach (var name in new[] { "ClosePresetButton", "CancelPresetButton", "SavePresetButton" })

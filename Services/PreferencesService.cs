@@ -4,10 +4,18 @@ using System.Text.Json;
 
 namespace NetAdapterManager.Services;
 
+public enum CloseBehavior
+{
+    Ask,
+    MinimizeToTray,
+    Exit
+}
+
 public sealed record AppPreferences
 {
     public string Language { get; init; } = "system";
     public string Theme { get; init; } = "system";
+    public CloseBehavior CloseBehavior { get; init; } = CloseBehavior.Ask;
     public bool FollowSystemDpi { get; init; } = true;
     public double UiScale { get; init; } = 1;
     public double FontScale { get; init; } = 1;
@@ -25,6 +33,7 @@ public sealed class PreferencesService(string? filePath = null)
     {
         Language = value.Language is "system" or "zh-CN" or "zh-TW" or "en" ? value.Language : "system",
         Theme = value.Theme is "system" or "light" or "dark" ? value.Theme : "system",
+        CloseBehavior = Enum.IsDefined(value.CloseBehavior) ? value.CloseBehavior : CloseBehavior.Ask,
         FollowSystemDpi = value.FollowSystemDpi,
         UiScale = double.IsFinite(value.UiScale) ? Math.Clamp(value.UiScale, .75, 1.75) : 1,
         FontScale = double.IsFinite(value.FontScale) ? Math.Clamp(value.FontScale, .85, 1.5) : 1,
